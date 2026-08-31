@@ -18,17 +18,24 @@ data class ClaudeContentBlock(val type: String = "text", val text: String)
 data class ClaudeMessage(val role: String, val content: String)
 
 @Serializable
+data class ClaudeOutputConfig(val effort: String = "low")
+
+@Serializable
 data class ClaudeRequest(
     val model: String,
     val system: String? = null,
     val messages: List<ClaudeMessage>,
     @SerialName("max_tokens")
-    val maxTokens: Int = 1024
+    val maxTokens: Int = 1024,
+    @SerialName("output_config")
+    val outputConfig: ClaudeOutputConfig = ClaudeOutputConfig()
 )
 
 @Serializable
 data class ClaudeResponse(
     val content: List<ClaudeContentBlock>? = null,
+    @SerialName("stop_reason")
+    val stopReason: String? = null,
     val error: ClaudeError? = null
 )
 
@@ -36,6 +43,8 @@ data class ClaudeResponse(
 data class ClaudeError(val message: String? = null, val type: String? = null)
 
 object ClaudeClient {
+
+    const val DEFAULT_MODEL = "claude-haiku-4-5"
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -51,7 +60,7 @@ object ClaudeClient {
 
     suspend fun generate(
         apiKey: String,
-        model: String = "claude-3-7-sonnet-20250219",
+        model: String = DEFAULT_MODEL,
         prompt: String,
         systemPrompt: String
     ): Result<String> = withContext(Dispatchers.IO) {
@@ -59,8 +68,12 @@ object ClaudeClient {
             return@withContext Result.failure(IllegalArgumentException("Claude API key is required"))
         }
 
-        val cleanModel = model.ifBlank { "claude-3-7-sonnet-20250219" }
+        val cleanModel = model.ifBlank { DEFAULT_MODEL }
         val url = "https://api.anthropic.com/v1/messages"
+
+        // Scale the output ceiling with input size instead of a flat 1024, which truncated
+        // longer rewrites; keep a sane floor/ceiling for the inline-overlay use case.
+        val maxTokens = (prompt.length / 2).coerceIn(512, 8192)
 
         val requestData = ClaudeRequest(
             model = cleanModel,
@@ -68,7 +81,10 @@ object ClaudeClient {
             messages = listOf(
                 ClaudeMessage(role = "user", content = prompt)
             ),
-            maxTokens = 1024
+            maxTokens = maxTokens,
+            // GA, no beta header required. Models in the Opus/Sonnet 5 family think by default;
+            // "low" effort keeps latency reasonable on this inline-overlay path.
+            outputConfig = ClaudeOutputConfig(effort = "low")
         )
 
         val bodyJson = json.encodeToString(ClaudeRequest.serializer(), requestData)
@@ -84,11 +100,27 @@ object ClaudeClient {
         try {
             httpClient.newCall(request).execute().use { response ->
                 val respString = response.body?.string() ?: ""
+
                 if (!response.isSuccessful) {
-                    return@withContext Result.failure(Exception("Claude API Error (${response.code}): $respString"))
+                    // Prefer the structured error message when the body parses; fall back to
+                    // the raw response only if it doesn't, instead of always dumping raw JSON.
+                    val friendlyMessage = runCatching {
+                        json.decodeFromString(ClaudeResponse.serializer(), respString).error?.message
+                    }.getOrNull()
+                    return@withContext Result.failure(
+                        Exception("Claude API Error (${response.code}): ${friendlyMessage ?: respString}")
+                    )
                 }
 
                 val parsed = json.decodeFromString(ClaudeResponse.serializer(), respString)
+
+                // stop_reason == "refusal" is a normal HTTP 200 — Claude declined the request
+                // rather than erroring. Surface it as a failure so the caller's fallback path
+                // (LocalRuleEngine) kicks in instead of injecting an empty/partial response.
+                if (parsed.stopReason == "refusal") {
+                    return@withContext Result.failure(Exception("Claude declined this request"))
+                }
+
                 val output = parsed.content?.firstOrNull()?.text
                 if (!output.isNullOrBlank()) {
                     Result.success(output.trim())

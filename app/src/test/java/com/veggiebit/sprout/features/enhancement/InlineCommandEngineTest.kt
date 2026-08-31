@@ -1,7 +1,7 @@
 ﻿package com.veggiebit.sprout.features.enhancement
 
 import com.veggiebit.sprout.features.enhancement.data.engine.InlineCommandEngine
-import com.veggiebit.sprout.features.enhancement.data.engine.UndoManager
+import com.veggiebit.sprout.features.enhancement.data.engine.TransformHistory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -11,7 +11,7 @@ class InlineCommandEngineTest {
 
     @Before
     fun setUp() {
-        UndoManager.clear()
+        TransformHistory.clear()
     }
 
     @Test
@@ -56,8 +56,49 @@ class InlineCommandEngineTest {
     }
 
     @Test
+    fun testCalculatorTriggerRespectsParentheses() {
+        // Previously the two-pass scanner silently dropped parentheses, evaluating this as
+        // 2+3*4=14 instead of the correct (2+3)*4=20.
+        val input = "Total: ?calc: (2+3)*4"
+        val result = InlineCommandEngine.evaluate(input, 123)
+
+        assertTrue(result is InlineCommandEngine.CommandResult.Replaced)
+        assertEquals("Total: 20", (result as InlineCommandEngine.CommandResult.Replaced).newText)
+    }
+
+    @Test
+    fun testCalculatorTriggerSupportsExponent() {
+        // Previously '^' was accepted into the expression charset but silently dropped by the
+        // evaluator, evaluating "2^8" as 2+8=10... (actually as digits concatenated) rather
+        // than the correct 2^8=256.
+        val input = "Value: ?calc: 2^8"
+        val result = InlineCommandEngine.evaluate(input, 123)
+
+        assertTrue(result is InlineCommandEngine.CommandResult.Replaced)
+        assertEquals("Value: 256", (result as InlineCommandEngine.CommandResult.Replaced).newText)
+    }
+
+    @Test
+    fun testCalculatorTriggerSupportsUnaryMinus() {
+        val input = "Value: ?calc: -5+10"
+        val result = InlineCommandEngine.evaluate(input, 123)
+
+        assertTrue(result is InlineCommandEngine.CommandResult.Replaced)
+        assertEquals("Value: 5", (result as InlineCommandEngine.CommandResult.Replaced).newText)
+    }
+
+    @Test
+    fun testCalculatorTriggerWithMalformedExpressionDoesNothing() {
+        // Malformed input (a stray operator) should no-op rather than inject a wrong result.
+        val input = "Value: ?calc: 5*/2"
+        val result = InlineCommandEngine.evaluate(input, 123)
+
+        assertTrue(result is InlineCommandEngine.CommandResult.None)
+    }
+
+    @Test
     fun testUndoTrigger() {
-        UndoManager.recordChange(123, "original text before edit", "new edited text")
+        TransformHistory.recordChange(123, "original text before edit", "new edited text")
         val input = "new edited text ?undo"
         val result = InlineCommandEngine.evaluate(input, 123)
 

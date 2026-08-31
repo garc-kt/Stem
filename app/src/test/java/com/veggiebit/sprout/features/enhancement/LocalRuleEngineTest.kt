@@ -1,14 +1,31 @@
 ﻿package com.veggiebit.sprout.features.enhancement
 
 import com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine
+import com.veggiebit.sprout.features.enhancement.data.models.LanguagePreference
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class LocalRuleEngineTest {
+
+    @Before
+    fun setUp() {
+        // LocalRuleEngine.languagePreference is a shared singleton var (see its own doc
+        // comment for why) — pin it explicitly so another test class's language setting can't
+        // leak in via JVM-wide test execution order.
+        LocalRuleEngine.languagePreference = LanguagePreference.ENGLISH
+    }
+
+    @After
+    fun tearDown() {
+        LocalRuleEngine.languagePreference = LanguagePreference.AUTO
+    }
 
     @Test
     fun testFixAndPolishCorrectsCommonTypoAndPunctuation() = runBlocking {
@@ -49,5 +66,48 @@ class LocalRuleEngineTest {
 
         assertTrue(result.transformedText.contains("Let's"))
         assertTrue(result.transformedText.contains("supercharge") || result.transformedText.contains("results"))
+    }
+
+    @Test
+    fun testFixAndPolishPreservesEmailAddresses() = runBlocking {
+        val payload = TextPayload("contact me at user@example.com for details")
+        val result = LocalRuleEngine.transform(payload, TransformPreset.FIX)
+
+        assertTrue(result.transformedText.contains("user@example.com"))
+    }
+
+    @Test
+    fun testFixAndPolishPreservesUrls() = runBlocking {
+        val payload = TextPayload("see https://example.com/path for more info")
+        val result = LocalRuleEngine.transform(payload, TransformPreset.FIX)
+
+        assertTrue(result.transformedText.contains("https://example.com/path"))
+    }
+
+    @Test
+    fun testFixAndPolishPreservesAbbreviations() = runBlocking {
+        val payload = TextPayload("bring snacks, e.g. chips and soda")
+        val result = LocalRuleEngine.transform(payload, TransformPreset.FIX)
+
+        assertTrue(result.transformedText.contains("e.g."))
+    }
+
+    @Test
+    fun testFixAndPolishPreservesDecimals() = runBlocking {
+        val payload = TextPayload("the total came to 3.14 dollars")
+        val result = LocalRuleEngine.transform(payload, TransformPreset.FIX)
+
+        assertTrue(result.transformedText.contains("3.14"))
+    }
+
+    @Test
+    fun testProfessionalDoesNotBreakPhrasalVerbGetUp() = runBlocking {
+        // formalReplacements maps "get" -> "obtain", but "get up"/"get together" are phrasal
+        // verbs where that substitution used to produce nonsense ("obtain up").
+        val payload = TextPayload("I need to get up early tomorrow")
+        val result = LocalRuleEngine.transform(payload, TransformPreset.PROFESSIONAL)
+
+        assertFalse(result.transformedText.contains("obtain up", ignoreCase = true))
+        assertTrue(result.transformedText.contains("get up", ignoreCase = true))
     }
 }

@@ -40,4 +40,22 @@ class DiffCalculatorTest {
         assertTrue(diff.any { it.type == DiffType.DELETED })
         assertTrue(diff.any { it.type == DiffType.ADDED })
     }
+
+    @Test
+    fun testInputAboveTokenCapCompletesViaParagraphFallback() {
+        // Deliberately exceeds MAX_DIFF_TOKENS (1200 per side) so this exercises the
+        // paragraph-level fallback path instead of the O(m*n) word-token LCS matrix, which
+        // previously allocated an unbounded matrix (~36MB for a 3,000-token paste).
+        val originalParagraph = (1..3000).joinToString(" ") { "original" }
+        val transformedParagraph = (1..3000).joinToString(" ") { "changed" }
+        val original = "$originalParagraph\nSecond paragraph is unchanged."
+        val transformed = "$transformedParagraph\nSecond paragraph is unchanged."
+
+        val diff = DiffCalculator.calculateDiff(original, transformed)
+
+        assertTrue(diff.isNotEmpty())
+        assertTrue(diff.any { it.type == DiffType.DELETED })
+        assertTrue(diff.any { it.type == DiffType.ADDED })
+        assertTrue(diff.any { it.type == DiffType.UNMODIFIED && it.text.contains("Second paragraph is unchanged") })
+    }
 }

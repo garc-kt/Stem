@@ -1,14 +1,23 @@
-﻿package com.veggiebit.sprout.core.utils
+package com.veggiebit.sprout.core.utils
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
+import android.os.PersistableBundle
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
+import java.util.ArrayDeque
 
 object AccessibilityUtils {
+
+    /** Depth/size caps for the fallback tree walk — a Chrome/WebView tree can be thousands of
+     * nodes deep; without a bound this recursion runs unbounded binder calls on the main thread. */
+    private const val MAX_SEARCH_DEPTH = 12
+    private const val MAX_VISITED_NODES = 400
 
     /**
      * Checks if a given node is an editable text field.
@@ -23,7 +32,9 @@ object AccessibilityUtils {
     }
 
     /**
-     * Traverses the accessibility node tree to find the currently focused editable node.
+     * Locates the currently focused editable node. Tries the cheap direct focus lookup first;
+     * only falls back to a bounded iterative breadth-first walk (depth- and node-count-capped)
+     * if that fails, to avoid unbounded main-thread binder traversal on deep view hierarchies.
      */
     fun findFocusedEditableNode(root: AccessibilityNodeInfoCompat?): AccessibilityNodeInfoCompat? {
         if (root == null) return null
@@ -36,11 +47,31 @@ object AccessibilityUtils {
             return directFocus
         }
 
-        for (i in 0 until root.childCount) {
-            val child = root.getChild(i) ?: continue
-            val found = findFocusedEditableNode(child)
-            if (found != null) {
-                return found
+        return findEditableNodeBounded(root)
+    }
+
+    private fun findEditableNodeBounded(root: AccessibilityNodeInfoCompat): AccessibilityNodeInfoCompat? {
+        val queue = ArrayDeque<Pair<AccessibilityNodeInfoCompat, Int>>()
+        val visitedIdentities = HashSet<Int>()
+        queue.add(root to 0)
+        var visitedCount = 0
+
+        while (queue.isNotEmpty() && visitedCount < MAX_VISITED_NODES) {
+            val (node, depth) = queue.removeFirst()
+
+            val identity = System.identityHashCode(node)
+            if (!visitedIdentities.add(identity)) continue
+            visitedCount++
+
+            if (node.isFocused && isEditableNode(node)) {
+                return node
+            }
+
+            if (depth >= MAX_SEARCH_DEPTH) continue
+
+            for (i in 0 until node.childCount) {
+                val child = node.getChild(i) ?: continue
+                queue.add(child to depth + 1)
             }
         }
         return null
@@ -98,17 +129,41 @@ object AccessibilityUtils {
             return true
         }
 
-        // 2. Clipboard fallback
+        // 2. Clipboard fallback — select the full existing buffer first so paste *replaces* it
+        // instead of inserting at the caret, then restore whatever clip the user had before.
         return try {
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-            if (clipboard != null) {
-                val clip = ClipData.newPlainText("Sprout Replacement", newText)
-                clipboard.setPrimaryClip(clip)
-                node.performAction(AccessibilityNodeInfoCompat.ACTION_SELECT)
-                node.performAction(AccessibilityNodeInfoCompat.ACTION_PASTE)
-            } else {
-                false
+                ?: return false
+
+            val previousClip = clipboard.primaryClip
+
+            val textLength = node.text?.length ?: 0
+            val selectionArgs = Bundle().apply {
+                putInt(AccessibilityNodeInfoCompat.ACTION_ARGUMENT_SELECTION_START_INT, 0)
+                putInt(AccessibilityNodeInfoCompat.ACTION_ARGUMENT_SELECTION_END_INT, textLength)
             }
+            node.performAction(AccessibilityNodeInfoCompat.ACTION_SET_SELECTION, selectionArgs)
+
+            val clip = ClipData.newPlainText("Sprout Replacement", newText).apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    description.extras = PersistableBundle().apply {
+                        putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+                    }
+                }
+            }
+            clipboard.setPrimaryClip(clip)
+
+            val pasted = node.performAction(AccessibilityNodeInfoCompat.ACTION_PASTE)
+
+            // Restore whatever was on the clipboard before Sprout touched it — the transformed
+            // text should not linger there once injection completes.
+            if (previousClip != null) {
+                clipboard.setPrimaryClip(previousClip)
+            } else {
+                clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
+            }
+
+            pasted
         } catch (_: Exception) {
             false
         }

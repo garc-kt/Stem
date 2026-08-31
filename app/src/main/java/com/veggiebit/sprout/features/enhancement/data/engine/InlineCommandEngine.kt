@@ -47,7 +47,7 @@ object InlineCommandEngine {
 
         // 3. Undo trigger: ?undo or .undo
         if (trimmed.endsWith("?undo", ignoreCase = true) || trimmed.endsWith(".undo", ignoreCase = true)) {
-            val previous = UndoManager.popUndo(nodeHashCode) ?: UndoManager.popUndo()
+            val previous = TransformHistory.popUndo(nodeHashCode) ?: TransformHistory.popUndo()
             if (previous != null) {
                 return CommandResult.Replaced(previous, "Undid last change")
             }
@@ -87,7 +87,11 @@ object InlineCommandEngine {
             Regex("(?:\\?fix|\\.fix)$", RegexOption.IGNORE_CASE) to TransformPreset.FIX,
             Regex("(?:\\?concise|\\.concise|\\?shorten|\\.shorten)$", RegexOption.IGNORE_CASE) to TransformPreset.CONCISE,
             Regex("(?:\\?formal|\\.formal|\\?prof|\\.prof)$", RegexOption.IGNORE_CASE) to TransformPreset.PROFESSIONAL,
-            Regex("(?:\\?punchy|\\.punchy)$", RegexOption.IGNORE_CASE) to TransformPreset.PUNCHY
+            Regex("(?:\\?punchy|\\.punchy)$", RegexOption.IGNORE_CASE) to TransformPreset.PUNCHY,
+            Regex("(?:\\?friendly|\\.friendly)$", RegexOption.IGNORE_CASE) to TransformPreset.FRIENDLY,
+            Regex("(?:\\?summarize|\\.summarize|\\?summary|\\.summary)$", RegexOption.IGNORE_CASE) to TransformPreset.SUMMARIZE,
+            Regex("(?:\\?bullets|\\.bullets|\\?bulletize|\\.bulletize)$", RegexOption.IGNORE_CASE) to TransformPreset.BULLETIZE,
+            Regex("(?:\\?expand|\\.expand)$", RegexOption.IGNORE_CASE) to TransformPreset.EXPAND
         )
 
         for ((regex, preset) in triggerMap) {
@@ -100,6 +104,11 @@ object InlineCommandEngine {
                         TransformPreset.CONCISE -> LocalRuleEngine.applyConcise(body)
                         TransformPreset.PROFESSIONAL -> LocalRuleEngine.applyProfessional(body)
                         TransformPreset.PUNCHY -> LocalRuleEngine.applyPunchy(body)
+                        TransformPreset.FRIENDLY -> LocalRuleEngine.applyFriendly(body)
+                        TransformPreset.SUMMARIZE -> LocalRuleEngine.applySummarize(body)
+                        TransformPreset.BULLETIZE -> LocalRuleEngine.applyBulletize(body)
+                        TransformPreset.EXPAND -> LocalRuleEngine.applyExpand(body)
+                        TransformPreset.CUSTOM -> LocalRuleEngine.applyFixAndPolish(body)
                     }
                     return CommandResult.Replaced(transformed, "Applied ${preset.title}")
                 }
@@ -109,67 +118,139 @@ object InlineCommandEngine {
         return CommandResult.None
     }
 
+    // --- Recursive-descent arithmetic parser -------------------------------------------
+    // Replaces a previous flat two-pass scanner that silently dropped parentheses and '^',
+    // producing wrong answers (e.g. "(2+3)*4" evaluated as "14" instead of 20). Grammar:
+    //   expr   := term (('+' | '-') term)*
+    //   term   := power (('*' | '/' | '%') power)*
+    //   power  := unary ('^' power)?      -- right-associative
+    //   unary  := ('-' | '+') unary | primary
+    //   primary:= NUMBER | '(' expr ')'
+    // Any malformed input (leftover tokens, unmatched parens, divide/mod by zero) yields null
+    // so the inline trigger no-ops instead of injecting a wrong result.
+
+    private sealed class MathToken {
+        data class Num(val value: Double) : MathToken()
+        data class Op(val symbol: Char) : MathToken()
+    }
+
+    private fun tokenizeMath(expr: String): List<MathToken>? {
+        val s = expr.replace(" ", "")
+        if (s.isEmpty()) return null
+        val tokens = mutableListOf<MathToken>()
+        var i = 0
+        while (i < s.length) {
+            val c = s[i]
+            when {
+                c.isDigit() || c == '.' -> {
+                    val start = i
+                    while (i < s.length && (s[i].isDigit() || s[i] == '.')) i++
+                    val value = s.substring(start, i).toDoubleOrNull() ?: return null
+                    tokens.add(MathToken.Num(value))
+                }
+                c in "+-*/%^()" -> {
+                    tokens.add(MathToken.Op(c))
+                    i++
+                }
+                else -> return null
+            }
+        }
+        return tokens
+    }
+
+    private class MathParser(private val tokens: List<MathToken>) {
+        private var pos = 0
+        private fun peek(): MathToken? = tokens.getOrNull(pos)
+
+        fun parse(): Double? {
+            val result = parseExpr() ?: return null
+            return if (pos == tokens.size) result else null
+        }
+
+        private fun parseExpr(): Double? {
+            var left = parseTerm() ?: return null
+            while (true) {
+                val tok = peek()
+                if (tok is MathToken.Op && (tok.symbol == '+' || tok.symbol == '-')) {
+                    pos++
+                    val right = parseTerm() ?: return null
+                    left = if (tok.symbol == '+') left + right else left - right
+                } else break
+            }
+            return left
+        }
+
+        private fun parseTerm(): Double? {
+            var left = parsePower() ?: return null
+            while (true) {
+                val tok = peek()
+                if (tok is MathToken.Op && (tok.symbol == '*' || tok.symbol == '/' || tok.symbol == '%')) {
+                    pos++
+                    val right = parsePower() ?: return null
+                    left = when (tok.symbol) {
+                        '*' -> left * right
+                        '/' -> if (right != 0.0) left / right else return null
+                        '%' -> if (right != 0.0) left % right else return null
+                        else -> return null
+                    }
+                } else break
+            }
+            return left
+        }
+
+        private fun parsePower(): Double? {
+            val base = parseUnary() ?: return null
+            val tok = peek()
+            return if (tok is MathToken.Op && tok.symbol == '^') {
+                pos++
+                val exponent = parsePower() ?: return null
+                Math.pow(base, exponent)
+            } else {
+                base
+            }
+        }
+
+        private fun parseUnary(): Double? {
+            val tok = peek()
+            if (tok is MathToken.Op && tok.symbol == '-') {
+                pos++
+                return parseUnary()?.let { -it }
+            }
+            if (tok is MathToken.Op && tok.symbol == '+') {
+                pos++
+                return parseUnary()
+            }
+            return parsePrimary()
+        }
+
+        private fun parsePrimary(): Double? {
+            val tok = peek() ?: return null
+            return when {
+                tok is MathToken.Num -> {
+                    pos++
+                    tok.value
+                }
+                tok is MathToken.Op && tok.symbol == '(' -> {
+                    pos++
+                    val value = parseExpr() ?: return null
+                    val closing = peek()
+                    if (closing is MathToken.Op && closing.symbol == ')') {
+                        pos++
+                        value
+                    } else {
+                        null
+                    }
+                }
+                else -> null
+            }
+        }
+    }
+
     private fun evaluateMath(expr: String): Double? {
         return try {
-            val tokens = expr.replace(" ", "")
+            val tokens = tokenizeMath(expr) ?: return null
             if (tokens.isEmpty()) return null
-
-            val numberBuffer = StringBuilder()
-            var i = 0
-            val numbers = mutableListOf<Double>()
-            val ops = mutableListOf<Char>()
-
-            while (i < tokens.length) {
-                val c = tokens[i]
-                if (c.isDigit() || c == '.') {
-                    numberBuffer.append(c)
-                } else if (c in listOf('+', '-', '*', '/', '%')) {
-                    if (numberBuffer.isNotEmpty()) {
-                        numbers.add(numberBuffer.toString().toDouble())
-                        numberBuffer.clear()
-                    }
-                    ops.add(c)
-                }
-                i++
-            }
-            if (numberBuffer.isNotEmpty()) {
-                numbers.add(numberBuffer.toString().toDouble())
-            }
-
-            if (numbers.isEmpty()) return null
-            if (numbers.size == 1 && ops.isEmpty()) return numbers[0]
-
-            var idx = 0
-            while (idx < ops.size) {
-                val op = ops[idx]
-                if (op == '*' || op == '/' || op == '%') {
-                    val n1 = numbers[idx]
-                    val n2 = numbers[idx + 1]
-                    val res = when (op) {
-                        '*' -> n1 * n2
-                        '/' -> if (n2 != 0.0) n1 / n2 else return null
-                        '%' -> n1 % n2
-                        else -> n1
-                    }
-                    numbers[idx] = res
-                    numbers.removeAt(idx + 1)
-                    ops.removeAt(idx)
-                } else {
-                    idx++
-                }
-            }
-
-            var total = numbers[0]
-            for (j in ops.indices) {
-                val op = ops[j]
-                val next = numbers[j + 1]
-                total = when (op) {
-                    '+' -> total + next
-                    '-' -> total - next
-                    else -> total
-                }
-            }
-            total
+            MathParser(tokens).parse()
         } catch (_: Exception) {
             null
         }

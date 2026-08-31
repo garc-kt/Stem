@@ -1,11 +1,8 @@
 ﻿package com.veggiebit.sprout.features.overlay.service
 
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import androidx.annotation.RequiresApi
-import com.veggiebit.sprout.R
 import com.veggiebit.sprout.app.SproutApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

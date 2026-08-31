@@ -5,9 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,7 +72,7 @@ class ProcessTextActivity : ComponentActivity() {
             val userSettings by SproutApplication.instance.preferencesRepository.settingsFlow
                 .collectAsState(initial = SproutUserSettings())
 
-            var activePreset by remember { mutableStateOf(userSettings.defaultPreset) }
+            var activePreset by remember(userSettings.defaultPreset) { mutableStateOf(userSettings.defaultPreset) }
             var result by remember { mutableStateOf<TransformResult?>(null) }
             var isLoading by remember { mutableStateOf(false) }
 
@@ -87,7 +84,7 @@ class ProcessTextActivity : ComponentActivity() {
                 isLoading = false
             }
 
-            SproutTheme(dynamicColor = true) {
+            SproutTheme(themeMode = userSettings.themeMode, dynamicColor = true) {
                 Dialog(
                     onDismissRequest = { finish() },
                     properties = DialogProperties(usePlatformDefaultWidth = false)

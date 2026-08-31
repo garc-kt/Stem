@@ -1,8 +1,6 @@
 package com.veggiebit.sprout.features.overlay.service
 
 import android.accessibilityservice.AccessibilityService
-import android.os.Handler
-import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
@@ -11,7 +9,7 @@ import com.veggiebit.sprout.core.utils.AccessibilityUtils
 import com.veggiebit.sprout.core.utils.HapticHelper
 import com.veggiebit.sprout.core.utils.PermissionHelper
 import com.veggiebit.sprout.features.enhancement.data.engine.InlineCommandEngine
-import com.veggiebit.sprout.features.enhancement.data.engine.UndoManager
+import com.veggiebit.sprout.features.enhancement.data.engine.TransformHistory
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.settings.data.SproutUserSettings
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +25,6 @@ import kotlinx.coroutines.launch
 class SproutAccessibilityService : AccessibilityService() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val mainHandler = Handler(Looper.getMainLooper())
 
     private var overlayManager: SproutOverlayManager? = null
     private var currentActiveNode: AccessibilityNodeInfoCompat? = null
@@ -47,6 +44,7 @@ class SproutAccessibilityService : AccessibilityService() {
         serviceScope.launch {
             SproutApplication.instance.preferencesRepository.settingsFlow.collectLatest { settings ->
                 userSettings = settings
+                overlayManager?.updateSettings(settings)
                 if (!settings.overlayEnabled) {
                     overlayManager?.hide()
                 }
@@ -120,7 +118,7 @@ class SproutAccessibilityService : AccessibilityService() {
                     return
                 }
                 is InlineCommandEngine.CommandResult.Replaced -> {
-                    UndoManager.recordChange(payload.nodeHashCode, payload.text, inlineResult.newText)
+                    TransformHistory.recordChange(payload.nodeHashCode, payload.text, inlineResult.newText)
                     if (userSettings.hapticFeedbackEnabled) {
                         HapticHelper.performSuccessHaptic(this)
                     }
@@ -145,14 +143,22 @@ class SproutAccessibilityService : AccessibilityService() {
     }
 
     private fun injectReplacementText(newText: String) {
-        val targetNode = currentActiveNode ?: AccessibilityUtils.findFocusedEditableNode(
-            AccessibilityNodeInfoCompat.wrap(rootInActiveWindow ?: return)
-        )
+        // The retained node reference can go stale between accessibility events (the source
+        // view may have been recycled/rebound). Refresh it before acting on it, and fall back
+        // to a fresh focus lookup rather than silently injecting into a dead node.
+        var targetNode = currentActiveNode
+        val isStillValid = targetNode?.refresh() == true
+        if (!isStillValid) {
+            targetNode = AccessibilityUtils.findFocusedEditableNode(
+                AccessibilityNodeInfoCompat.wrap(rootInActiveWindow ?: return)
+            )
+            currentActiveNode = targetNode
+        }
 
         if (targetNode != null) {
             val currentText = targetNode.text?.toString() ?: ""
             if (currentText.isNotEmpty() && currentText != newText) {
-                UndoManager.recordChange(targetNode.hashCode(), currentText, newText)
+                TransformHistory.recordChange(targetNode.hashCode(), currentText, newText)
             }
             AccessibilityUtils.injectText(targetNode, newText, this)
         }
@@ -167,5 +173,7 @@ class SproutAccessibilityService : AccessibilityService() {
         overlayManager?.destroy()
         overlayManager = null
         serviceScope.cancel()
+        // Zero-persistence policy (plan.md §4.3): history lives in process memory only.
+        TransformHistory.clear()
     }
 }

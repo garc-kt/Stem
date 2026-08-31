@@ -1,10 +1,12 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.engine
+package com.veggiebit.sprout.features.enhancement.data.engine
 
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 import com.veggiebit.sprout.features.enhancement.data.models.TransformResult
 import com.veggiebit.sprout.features.enhancement.data.ollama.OllamaClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 /**
@@ -13,26 +15,9 @@ import kotlinx.coroutines.withContext
  */
 class OllamaRuleEngine(
     private val baseUrl: String,
-    private val model: String
+    private val model: String,
+    private val customInstruction: String = ""
 ) : TextEngine {
-
-    companion object {
-        private fun getSystemPrompt(preset: TransformPreset): String {
-            return when (preset) {
-                TransformPreset.FIX ->
-                    "You are an expert text proofreader. Correct all spelling mistakes, grammar errors, casing, and punctuation in the user text. Return ONLY the polished text without any quotes, conversational filler, or explanations."
-
-                TransformPreset.CONCISE ->
-                    "You are a concise editor. Rewrite the user text to be concise, direct, and clear by removing filler words while keeping the core meaning. Return ONLY the rewritten text without quotes or preamble."
-
-                TransformPreset.PROFESSIONAL ->
-                    "You are an executive communications assistant. Rewrite the user text into polite, polished, and professional language suitable for business communication. Return ONLY the rewritten text without quotes or preamble."
-
-                TransformPreset.PUNCHY ->
-                    "You are a high-impact copywriter. Rewrite the user text to be punchy, energetic, active, and engaging. Return ONLY the rewritten text without quotes or preamble."
-            }
-        }
-    }
 
     override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.IO) {
         val original = payload.text
@@ -40,7 +25,9 @@ class OllamaRuleEngine(
             return@withContext TransformResult(original, original, preset, emptyList())
         }
 
-        val systemPrompt = getSystemPrompt(preset)
+        // Reuses GeminiRuleEngine's prompt set (previously duplicated here near-verbatim) so
+        // all four AI engines stay in sync as presets are added.
+        val systemPrompt = GeminiRuleEngine.getSystemPrompt(preset, customInstruction)
         val result = OllamaClient.generate(
             baseUrl = baseUrl,
             model = model,
@@ -78,9 +65,12 @@ class OllamaRuleEngine(
         )
     }
 
-    override suspend fun generateAllSuggestions(payload: TextPayload): Map<TransformPreset, TransformResult> = withContext(Dispatchers.IO) {
-        TransformPreset.entries.associateWith { preset ->
-            transform(payload, preset)
-        }
+    override suspend fun generateAllSuggestions(payload: TextPayload): Map<TransformPreset, TransformResult> = coroutineScope {
+        // Each preset issues its own network call; fan them out in parallel instead of
+        // awaiting one at a time (4x latency for no benefit — this is never on the
+        // per-keystroke overlay path, only the sandbox/multi-suggestion views).
+        TransformPreset.entries
+            .map { preset -> preset to async { transform(payload, preset) } }
+            .associate { (preset, deferred) -> preset to deferred.await() }
     }
 }

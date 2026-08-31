@@ -17,10 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.veggiebit.sprout.app.theme.DiffAddedGreen
-import com.veggiebit.sprout.app.theme.DiffAddedGreenBackground
-import com.veggiebit.sprout.app.theme.DiffDeletedRed
-import com.veggiebit.sprout.app.theme.DiffDeletedRedBackground
+import com.veggiebit.sprout.app.theme.LocalSproutExtendedColors
 import com.veggiebit.sprout.features.enhancement.data.models.DiffToken
 import com.veggiebit.sprout.features.enhancement.data.models.DiffType
 
@@ -32,6 +29,8 @@ fun DiffViewer(
     diffTokens: List<DiffToken>,
     modifier: Modifier = Modifier
 ) {
+    val extendedColors = LocalSproutExtendedColors.current
+
     val annotatedString = buildAnnotatedString {
         diffTokens.forEach { token ->
             when (token.type) {
@@ -41,8 +40,8 @@ fun DiffViewer(
                 DiffType.ADDED -> {
                     pushStyle(
                         SpanStyle(
-                            color = DiffAddedGreen,
-                            background = DiffAddedGreenBackground,
+                            color = extendedColors.diffAdded,
+                            background = extendedColors.diffAddedBackground,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -52,8 +51,8 @@ fun DiffViewer(
                 DiffType.DELETED -> {
                     pushStyle(
                         SpanStyle(
-                            color = DiffDeletedRed,
-                            background = DiffDeletedRedBackground,
+                            color = extendedColors.diffDeleted,
+                            background = extendedColors.diffDeletedBackground,
                             textDecoration = TextDecoration.LineThrough,
                             fontWeight = FontWeight.Normal
                         )

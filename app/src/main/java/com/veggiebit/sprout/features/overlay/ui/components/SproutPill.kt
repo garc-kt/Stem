@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,26 +42,28 @@ import com.veggiebit.sprout.app.theme.SproutPillShape
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 
 /**
- * 36dp height Collapsed Floating Pill with ambient organic pulse.
+ * 36dp height Collapsed Floating Pill. The icon badge gently pulses only while a suggestion is
+ * available — the [rememberInfiniteTransition]/frame-callback animation is only ever composed
+ * (and therefore only ever running) inside the `hasSuggestions` branch, so it's fully disposed
+ * rather than idling forever the way the original always-present infinite transition did.
+ *
+ * (M3 Expressive's [androidx.compose.material3.MaterialShapes] polygon-morph badge was the
+ * original design here, but `MaterialShapes`/`RoundedPolygon.toShape()` are `internal` — not
+ * usable from app code — in this project's resolved material3:1.4.0.)
+ *
+ * Draggable: [onDrag] reports raw pointer deltas (in px) while dragging so the caller can
+ * reposition the WindowManager layout live; [onDragEnd] fires once the gesture finishes so the
+ * caller can snap-to-edge and persist the new anchor.
  */
 @Composable
 fun SproutPill(
     activePreset: TransformPreset,
     hasSuggestions: Boolean,
     onExpandClick: () -> Unit,
+    onDrag: (dx: Float, dy: Float) -> Unit = { _, _ -> },
+    onDragEnd: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (hasSuggestions) 1.08f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseScale"
-    )
-
     Surface(
         modifier = modifier
             .height(36.dp)
@@ -70,6 +74,15 @@ fun SproutPill(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f),
                 shape = SproutPillShape
             )
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        onDrag(dragAmount.x, dragAmount.y)
+                    },
+                    onDragEnd = onDragEnd
+                )
+            }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -83,20 +96,23 @@ fun SproutPill(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .scale(pulseScale)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Spa,
-                    contentDescription = "Sprout",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(15.dp)
-                )
+            if (hasSuggestions) {
+                PulsingBadge()
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Spa,
+                        contentDescription = "Sprout",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(7.dp))
@@ -137,5 +153,35 @@ fun SproutPill(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PulsingBadge() {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .scale(pulseScale)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Spa,
+            contentDescription = "Sprout",
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(15.dp)
+        )
     }
 }

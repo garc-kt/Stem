@@ -1,5 +1,11 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.engine
+package com.veggiebit.sprout.features.enhancement.data.engine
 
+import com.veggiebit.sprout.features.enhancement.data.engine.rules.DetectedLanguage
+import com.veggiebit.sprout.features.enhancement.data.engine.rules.EnglishRules
+import com.veggiebit.sprout.features.enhancement.data.engine.rules.LanguageDetector
+import com.veggiebit.sprout.features.enhancement.data.engine.rules.LanguageRules
+import com.veggiebit.sprout.features.enhancement.data.engine.rules.SpanishRules
+import com.veggiebit.sprout.features.enhancement.data.models.LanguagePreference
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 import com.veggiebit.sprout.features.enhancement.data.models.TransformResult
@@ -11,158 +17,60 @@ import kotlinx.coroutines.withContext
  */
 object LocalRuleEngine : TextEngine {
 
-    private val typoDictionary = mapOf(
-        "teh" to "the",
-        "recieved" to "received",
-        "seperate" to "separate",
-        "definately" to "definitely",
-        "untill" to "until",
-        "truely" to "truly",
-        "accomodate" to "accommodate",
-        "occured" to "occurred",
-        "tommorow" to "tomorrow",
-        "alot" to "a lot",
-        "beleive" to "believe",
-        "goverment" to "government",
-        "calender" to "calendar",
-        "thier" to "their",
-        "wierd" to "weird",
-        "writting" to "writing",
-        "embarass" to "embarrass",
-        "adress" to "address",
-        "recommand" to "recommend",
-        "neccessary" to "necessary",
-        "succesful" to "successful",
-        "availible" to "available",
-        "completly" to "completely",
-        "peice" to "piece",
-        "noone" to "no one",
-        "alread" to "already",
-        "dont" to "don't",
-        "cant" to "can't",
-        "wont" to "won't",
-        "isnt" to "isn't",
-        "didnt" to "didn't",
-        "couldnt" to "couldn't",
-        "shouldnt" to "shouldn't",
-        "wouldnt" to "wouldn't",
-        "thats" to "that's",
-        "whats" to "what's",
-        "theres" to "there's",
-        "lets" to "let's",
-        "havent" to "haven't",
-        "hasnt" to "hasn't",
-        "arent" to "aren't",
-        "werent" to "weren't"
+    /**
+     * Set by [TextEngineProvider] right before each call. LocalRuleEngine is a stateless
+     * singleton reused everywhere in the app, so this is the least invasive way to thread the
+     * user's language preference through without changing the [TextEngine] interface (which
+     * all five engines and the existing test suite depend on) — every caller resolves the
+     * engine and immediately calls transform()/generateAllSuggestions() within the same
+     * coroutine, so there's no real race in practice. AUTO detects per-call from the text.
+     */
+    var languagePreference: LanguagePreference = LanguagePreference.AUTO
+
+    private fun resolveRules(text: String): LanguageRules {
+        val effective = when (languagePreference) {
+            LanguagePreference.AUTO -> LanguageDetector.detect(text)
+            LanguagePreference.ENGLISH -> DetectedLanguage.ENGLISH
+            LanguagePreference.SPANISH -> DetectedLanguage.SPANISH
+        }
+        return if (effective == DetectedLanguage.SPANISH) SpanishRules else EnglishRules
+    }
+
+    // Marks the start/end of a substring that must survive the transformation pipeline
+    // untouched (emails, URLs, handles, decimals, common abbreviations) so punctuation-spacing
+    // and capitalization rules don't mangle them (e.g. "user@example.com" -> "user@example. Com").
+    private const val PROTECT_OPEN = '\uE000'
+    private const val PROTECT_CLOSE = '\uE001'
+
+    // Language-agnostic character-class patterns; each language's abbreviation set is appended
+    // per-call via LanguageRules.abbreviationPattern.
+    private val sharedProtectedPatterns = listOf(
+        Regex("[\\w.+-]+@[\\w-]+\\.[\\w.-]+"), // email addresses
+        Regex("https?://\\S+", RegexOption.IGNORE_CASE), // URLs with scheme
+        Regex("\\bwww\\.[\\w-]+(?:\\.[\\w-]+)+\\S*", RegexOption.IGNORE_CASE), // URLs without scheme
+        Regex("[@#][A-Za-z0-9_]+"), // @handles and #hashtags
+        Regex("\\d+\\.\\d+") // decimals
     )
 
-    private val wordyPhrases = mapOf(
-        "in order to" to "to",
-        "due to the fact that" to "because",
-        "at this point in time" to "now",
-        "at the present time" to "now",
-        "for the purpose of" to "to",
-        "with regard to" to "regarding",
-        "in the event that" to "if",
-        "has the ability to" to "can",
-        "is able to" to "can",
-        "in spite of the fact that" to "although",
-        "take into consideration" to "consider",
-        "make a decision" to "decide",
-        "give consideration to" to "consider",
-        "a large number of" to "many",
-        "a majority of" to "most",
-        "at all times" to "always",
-        "in close proximity to" to "near",
-        "prior to" to "before",
-        "subsequent to" to "after",
-        "by means of" to "by",
-        "in terms of" to "regarding",
-        "as a matter of fact" to "in fact",
-        "it is important to note that" to "note that",
-        "each and every" to "every",
-        "first and foremost" to "first",
-        "basic fundamentals" to "fundamentals",
-        "future plans" to "plans",
-        "completely eliminate" to "eliminate",
-        "absolutely essential" to "essential",
-        "very unique" to "unique",
-        "as per your request" to "as requested",
-        "reach a consensus" to "agree"
-    )
+    private fun protectSpans(input: String, rules: LanguageRules): Pair<String, List<String>> {
+        val saved = mutableListOf<String>()
+        var text = input
+        for (pattern in sharedProtectedPatterns + rules.abbreviationPattern) {
+            text = pattern.replace(text) { match ->
+                saved.add(match.value)
+                "$PROTECT_OPEN${saved.size - 1}$PROTECT_CLOSE"
+            }
+        }
+        return text to saved
+    }
 
-    private val formalReplacements = mapOf(
-        "wanna" to "would like to",
-        "gonna" to "will",
-        "gotta" to "need to",
-        "kinda" to "somewhat",
-        "sorta" to "somewhat",
-        "dunno" to "do not know",
-        "btw" to "by the way",
-        "asap" to "as soon as possible",
-        "fyi" to "for your information",
-        "thx" to "thank you",
-        "thanks" to "thank you",
-        "hey" to "hello",
-        "yeah" to "yes",
-        "yep" to "yes",
-        "nope" to "no",
-        "talk about" to "discuss",
-        "give" to "provide",
-        "fix" to "resolve",
-        "help" to "assist",
-        "ask" to "inquire",
-        "buy" to "purchase",
-        "get" to "obtain",
-        "show" to "demonstrate",
-        "tell" to "inform",
-        "start" to "commence",
-        "end" to "conclude",
-        "make sure" to "ensure",
-        "look into" to "investigate",
-        "set up" to "configure",
-        "find out" to "determine",
-        "let me know" to "please advise",
-        "sorry for" to "I apologize for",
-        "can't" to "cannot",
-        "won't" to "will not",
-        "don't" to "do not",
-        "didn't" to "did not",
-        "couldn't" to "could not",
-        "shouldn't" to "should not",
-        "wouldn't" to "would not",
-        "it's" to "it is",
-        "that's" to "that is",
-        "there's" to "there is",
-        "what's" to "what is",
-        "we're" to "we are",
-        "they're" to "they are",
-        "I'm" to "I am"
-    )
-
-    private val punchyStarters = mapOf(
-        "i was thinking that maybe we could" to "Let's",
-        "it would be great if we could" to "Let's",
-        "we might want to consider" to "Let's",
-        "there are many reasons why" to "Key reasons:",
-        "i just wanted to check if" to "Checking in:",
-        "i am writing this to let you know" to "Update:",
-        "in my personal opinion" to "Honestly,",
-        "feel free to" to "Please"
-    )
-
-    private val punchyWords = mapOf(
-        "good" to "great",
-        "bad" to "critical",
-        "fast" to "rapid",
-        "big" to "massive",
-        "nice" to "superb",
-        "important" to "vital",
-        "hard" to "challenging",
-        "very good" to "stellar",
-        "really nice" to "exceptional",
-        "make better" to "supercharge"
-    )
+    private fun restoreSpans(input: String, saved: List<String>): String {
+        if (saved.isEmpty()) return input
+        val regex = Regex("$PROTECT_OPEN(\\d+)$PROTECT_CLOSE")
+        return regex.replace(input) { match ->
+            match.groupValues[1].toIntOrNull()?.let { idx -> saved.getOrNull(idx) } ?: match.value
+        }
+    }
 
     override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.Default) {
         val original = payload.text
@@ -170,11 +78,19 @@ object LocalRuleEngine : TextEngine {
             return@withContext TransformResult(original, original, preset, emptyList())
         }
 
+        val rules = resolveRules(original)
         val transformed = when (preset) {
-            TransformPreset.FIX -> applyFixAndPolish(original)
-            TransformPreset.CONCISE -> applyConcise(original)
-            TransformPreset.PROFESSIONAL -> applyProfessional(original)
-            TransformPreset.PUNCHY -> applyPunchy(original)
+            TransformPreset.FIX -> applyFixAndPolish(original, rules)
+            TransformPreset.CONCISE -> applyConcise(original, rules)
+            TransformPreset.PROFESSIONAL -> applyProfessional(original, rules)
+            TransformPreset.PUNCHY -> applyPunchy(original, rules)
+            TransformPreset.FRIENDLY -> applyFriendly(original, rules)
+            TransformPreset.SUMMARIZE -> applySummarize(original, rules)
+            TransformPreset.BULLETIZE -> applyBulletize(original, rules)
+            TransformPreset.EXPAND -> applyExpand(original, rules)
+            // No local model to follow an arbitrary instruction — best-effort Fix & Polish,
+            // with the summary note (below) making clear this preset needs an AI engine.
+            TransformPreset.CUSTOM -> applyFixAndPolish(original, rules)
         }
 
         val diff = DiffCalculator.calculateDiff(original, transformed)
@@ -193,14 +109,17 @@ object LocalRuleEngine : TextEngine {
         }
     }
 
-    fun applyFixAndPolish(input: String): String {
-        var text = input
+    fun applyFixAndPolish(input: String, rules: LanguageRules = resolveRules(input)): String {
+        // Emails, URLs, handles, decimals, and abbreviations must survive the punctuation and
+        // capitalization rules below untouched — protect them first, restore at the end.
+        val (protectedInput, savedSpans) = protectSpans(input, rules)
+        var text = protectedInput
 
         text = text.replace(Regex("\\s+([,.:;?!])"), "$1")
         text = text.replace(Regex("([,.:;?!])([a-zA-Z])"), "$1 $2")
         text = text.replace(Regex("[ \\t]+"), " ")
 
-        for ((wrong, right) in typoDictionary) {
+        for ((wrong, right) in rules.typoDictionary) {
             text = replacePreservingCase(text, wrong, right)
         }
 
@@ -220,13 +139,15 @@ object LocalRuleEngine : TextEngine {
             }
         }
 
+        text = restoreSpans(text, savedSpans)
+        text = rules.applyLanguageSpecificFixes(text)
         return text.trim()
     }
 
-    fun applyConcise(input: String): String {
-        var text = applyFixAndPolish(input)
+    fun applyConcise(input: String, rules: LanguageRules = resolveRules(input)): String {
+        var text = applyFixAndPolish(input, rules)
 
-        for ((wordy, concise) in wordyPhrases) {
+        for ((wordy, concise) in rules.wordyPhrases) {
             text = replacePreservingCase(text, wordy, concise)
         }
 
@@ -242,11 +163,11 @@ object LocalRuleEngine : TextEngine {
         return text.trim()
     }
 
-    fun applyProfessional(input: String): String {
-        var text = applyFixAndPolish(input)
+    fun applyProfessional(input: String, rules: LanguageRules = resolveRules(input)): String {
+        var text = applyFixAndPolish(input, rules)
 
-        for ((casual, formal) in formalReplacements) {
-            text = replacePreservingCase(text, casual, formal)
+        for ((casual, formal) in rules.formalReplacements) {
+            text = replaceFormalGuarded(text, casual, formal, rules)
         }
 
         text = text.replace(Regex("\\b(thanks a lot|thanks so much)\\b", RegexOption.IGNORE_CASE), "Thank you very much")
@@ -257,14 +178,14 @@ object LocalRuleEngine : TextEngine {
         return text.trim()
     }
 
-    fun applyPunchy(input: String): String {
-        var text = applyFixAndPolish(input)
+    fun applyPunchy(input: String, rules: LanguageRules = resolveRules(input)): String {
+        var text = applyFixAndPolish(input, rules)
 
-        for ((starter, punchy) in punchyStarters) {
+        for ((starter, punchy) in rules.punchyStarters) {
             text = replacePreservingCase(text, starter, punchy)
         }
 
-        for ((word, punchy) in punchyWords) {
+        for ((word, punchy) in rules.punchyWords) {
             text = replacePreservingCase(text, word, punchy)
         }
 
@@ -274,6 +195,92 @@ object LocalRuleEngine : TextEngine {
         text = text.replace(Regex("[ \\t]+"), " ")
         text = capitalizeSentences(text)
         return text.trim()
+    }
+
+    fun applyFriendly(input: String, rules: LanguageRules = resolveRules(input)): String {
+        var text = applyFixAndPolish(input, rules)
+
+        for ((formal, casual) in rules.friendlyReplacements) {
+            text = replacePreservingCase(text, formal, casual)
+        }
+
+        text = text.replace(Regex("\\b(please note that)\\b", RegexOption.IGNORE_CASE), "just so you know,")
+        text = text.replace(Regex("\\b(I regret to inform you)\\b", RegexOption.IGNORE_CASE), "I'm sorry to say")
+        text = text.replace(Regex("\\b(is required)\\b", RegexOption.IGNORE_CASE), "is needed")
+
+        text = capitalizeSentences(text)
+        return text.trim()
+    }
+
+    /** Approximate, offline-only summary: keeps the opening sentence plus any sentence carrying
+     * a strong signal word (numbers, deadlines, action verbs). Honestly labeled as approximate
+     * via [TransformPreset.isOfflineApproximate] — a real summary needs an AI engine. */
+    fun applySummarize(input: String, rules: LanguageRules = resolveRules(input)): String {
+        val polished = applyFixAndPolish(input, rules)
+        val sentences = splitSentences(polished)
+        if (sentences.size <= 2) return polished
+
+        val signalWords = listOf("must", "important", "deadline", "urgent", "asap", "required", "critical")
+        val signalRegex = Regex("\\b(${signalWords.joinToString("|")})\\b", RegexOption.IGNORE_CASE)
+        val hasDigit = Regex("\\d")
+
+        val kept = mutableListOf(sentences.first())
+        for (sentence in sentences.drop(1)) {
+            if (signalRegex.containsMatchIn(sentence) || hasDigit.containsMatchIn(sentence)) {
+                kept.add(sentence)
+            }
+        }
+        return kept.joinToString(" ").trim()
+    }
+
+    /** Splits terse/coordinated sentences into a bullet list — a structural rewrite, not a
+     * content generator, so it stays honest at [TransformPreset.isOfflineApproximate]. */
+    fun applyBulletize(input: String, rules: LanguageRules = resolveRules(input)): String {
+        val polished = applyFixAndPolish(input, rules)
+        val sentences = splitSentences(polished)
+        if (sentences.isEmpty()) return polished
+
+        return sentences.flatMap { sentence ->
+            // Also break on coordinating "and then"/"; " clause joins so each bullet stays short.
+            sentence.split(Regex("(?:,?\\s+and then\\s+|;\\s*)", RegexOption.IGNORE_CASE))
+        }
+            .map { it.trim().trimEnd('.', ' ') }
+            .filter { it.isNotBlank() }
+            .joinToString("\n") { "• $it" }
+    }
+
+    /** Offline "expand" is necessarily modest: it spells out common abbreviations/contractions
+     * and adds a connective lead-in rather than inventing new content — see
+     * [TransformPreset.isOfflineApproximate]. */
+    fun applyExpand(input: String, rules: LanguageRules = resolveRules(input)): String {
+        var text = applyFixAndPolish(input, rules)
+
+        val expansions = mapOf(
+            "asap" to "as soon as possible",
+            "btw" to "by the way",
+            "fyi" to "for your information",
+            "thx" to "thank you",
+            "wanna" to "want to",
+            "gonna" to "going to",
+            "gotta" to "have got to"
+        )
+        for ((short, long) in expansions) {
+            text = replacePreservingCase(text, short, long)
+        }
+
+        val prefix = "To elaborate: "
+        if (text.isNotBlank() && !text.startsWith(prefix, ignoreCase = true)) {
+            text = prefix + text.replaceFirstChar { it.lowercaseChar() }
+        }
+
+        return text.trim()
+    }
+
+    private fun splitSentences(text: String): List<String> {
+        if (text.isBlank()) return emptyList()
+        return Regex("(?<=[.!?])\\s+").split(text.trim())
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
     }
 
     private fun capitalizeSentences(text: String): String {
@@ -308,6 +315,31 @@ object LocalRuleEngine : TextEngine {
         }
     }
 
+    /**
+     * Like [replacePreservingCase], but skips the match when [target] is a guarded phrasal-verb
+     * particle (see [LanguageRules.phrasalVerbGuards]) immediately followed by one of its
+     * particles — otherwise "get up" becomes "obtain up" instead of staying a phrasal verb.
+     */
+    private fun replaceFormalGuarded(source: String, target: String, replacement: String, rules: LanguageRules): String {
+        val particles = rules.phrasalVerbGuards[target.lowercase()]
+        val pattern = if (particles != null) {
+            Regex(
+                "\\b" + Regex.escape(target) + "\\b(?!\\s+(?:" + particles.joinToString("|") { Regex.escape(it) } + ")\\b)",
+                RegexOption.IGNORE_CASE
+            )
+        } else {
+            Regex("\\b" + Regex.escape(target) + "\\b", RegexOption.IGNORE_CASE)
+        }
+        return pattern.replace(source) { matchResult ->
+            val match = matchResult.value
+            when {
+                match.all { it.isUpperCase() } && match.length > 1 -> replacement.uppercase()
+                match.firstOrNull()?.isUpperCase() == true -> replacement.replaceFirstChar { it.uppercaseChar() }
+                else -> replacement
+            }
+        }
+    }
+
     private fun buildSummaryNote(preset: TransformPreset, original: String, transformed: String): String {
         if (original == transformed) return "No changes required."
         val origWords = if (original.isBlank()) 0 else original.trim().split(Regex("\\s+")).size
@@ -319,6 +351,11 @@ object LocalRuleEngine : TextEngine {
             TransformPreset.CONCISE -> if (delta < 0) "Trimmed ${-delta} word${if (-delta > 1) "s" else ""}" else "Streamlined phrasing"
             TransformPreset.PROFESSIONAL -> "Refined formal vocabulary"
             TransformPreset.PUNCHY -> "Sharpened energetic impact"
+            TransformPreset.FRIENDLY -> "Warmed up the tone"
+            TransformPreset.SUMMARIZE -> "Approximate offline summary"
+            TransformPreset.BULLETIZE -> "Restructured into bullets"
+            TransformPreset.EXPAND -> "Modest offline expansion"
+            TransformPreset.CUSTOM -> "Custom instructions need an AI engine — applied Fix & Polish"
         }
     }
 }

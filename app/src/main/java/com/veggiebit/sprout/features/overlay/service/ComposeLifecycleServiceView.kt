@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.FrameLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -40,6 +41,7 @@ class ComposeLifecycleServiceView(
         setViewTreeLifecycleOwner(this)
         setViewTreeSavedStateRegistryOwner(this)
         setViewTreeViewModelStoreOwner(this)
+        composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnLifecycleDestroyed(this))
 
         addView(composeView)
     }

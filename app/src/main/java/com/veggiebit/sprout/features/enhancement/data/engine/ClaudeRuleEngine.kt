@@ -5,11 +5,14 @@ import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 import com.veggiebit.sprout.features.enhancement.data.models.TransformResult
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 class ClaudeRuleEngine(
     private val apiKey: String,
-    private val model: String
+    private val model: String,
+    private val customInstruction: String = ""
 ) : TextEngine {
 
     override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.IO) {
@@ -18,7 +21,7 @@ class ClaudeRuleEngine(
             return@withContext TransformResult(original, original, preset, emptyList())
         }
 
-        val systemPrompt = GeminiRuleEngine.getSystemPrompt(preset)
+        val systemPrompt = GeminiRuleEngine.getSystemPrompt(preset, customInstruction)
         val result = ClaudeClient.generate(
             apiKey = apiKey,
             model = model,
@@ -54,9 +57,12 @@ class ClaudeRuleEngine(
         )
     }
 
-    override suspend fun generateAllSuggestions(payload: TextPayload): Map<TransformPreset, TransformResult> = withContext(Dispatchers.IO) {
-        TransformPreset.entries.associateWith { preset ->
-            transform(payload, preset)
-        }
+    override suspend fun generateAllSuggestions(payload: TextPayload): Map<TransformPreset, TransformResult> = coroutineScope {
+        // Each preset issues its own network call; fan them out in parallel instead of
+        // awaiting one at a time (4x latency for no benefit — this is never on the
+        // per-keystroke overlay path, only the sandbox/multi-suggestion views).
+        TransformPreset.entries
+            .map { preset -> preset to async { transform(payload, preset) } }
+            .associate { (preset, deferred) -> preset to deferred.await() }
     }
 }

@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.engine
+package com.veggiebit.sprout.features.enhancement.data.engine
 
 import com.veggiebit.sprout.features.enhancement.data.models.DiffToken
 import com.veggiebit.sprout.features.enhancement.data.models.DiffType
@@ -8,10 +8,27 @@ import com.veggiebit.sprout.features.enhancement.data.models.DiffType
  */
 object DiffCalculator {
 
+    /**
+     * The classic LCS table is O(m*n) memory. Above this many tokens per side (well past any
+     * realistic inline-field length) we fall back to a coarser paragraph-level diff so a large
+     * paste can't allocate an unbounded matrix on the accessibility service's process.
+     */
+    private const val MAX_DIFF_TOKENS = 1200
+
     private fun tokenize(text: String): List<String> {
         if (text.isEmpty()) return emptyList()
         val tokens = mutableListOf<String>()
         val regex = Regex("(\\w+|\\s+|[^\\w\\s]+)")
+        for (match in regex.findAll(text)) {
+            tokens.add(match.value)
+        }
+        return tokens
+    }
+
+    private fun tokenizeParagraphs(text: String): List<String> {
+        if (text.isEmpty()) return emptyList()
+        val tokens = mutableListOf<String>()
+        val regex = Regex("([^\\n]+\\n?|\\n)")
         for (match in regex.findAll(text)) {
             tokens.add(match.value)
         }
@@ -32,6 +49,15 @@ object DiffCalculator {
         val origTokens = tokenize(original)
         val transTokens = tokenize(transformed)
 
+        return if (origTokens.size > MAX_DIFF_TOKENS || transTokens.size > MAX_DIFF_TOKENS) {
+            // Coarser but bounded: diff by paragraph instead of by word/punctuation token.
+            lcsDiff(tokenizeParagraphs(original), tokenizeParagraphs(transformed))
+        } else {
+            lcsDiff(origTokens, transTokens)
+        }
+    }
+
+    private fun lcsDiff(origTokens: List<String>, transTokens: List<String>): List<DiffToken> {
         val m = origTokens.size
         val n = transTokens.size
 

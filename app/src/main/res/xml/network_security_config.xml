@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sprout's Ollama LAN engine is the only feature that ever speaks cleartext HTTP — to a
+  server on the user's own local network, at whatever private IP their router assigned it
+  (192.168.x.x, 10.x.x.x, a .local mDNS name, etc). Android's NetworkSecurityConfig only
+  matches exact hostnames/IP literals, not CIDR ranges, so it cannot express "cleartext
+  allowed to any private-network address" declaratively — a static domain allow-list here
+  would silently break the feature for most real LAN setups. Cleartext is therefore left
+  permitted at this (coarse, OS-level) layer, and the actual security boundary — refusing
+  to send cleartext requests anywhere but a private/loopback/.local host — is enforced in
+  code in OllamaClient before any request leaves the device. Gemini, OpenAI-compatible, and
+  Claude always use fixed https:// endpoints and are unaffected either way.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
