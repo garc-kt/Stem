@@ -44,7 +44,7 @@ data class ClaudeError(val message: String? = null, val type: String? = null)
 
 object ClaudeClient {
 
-    const val DEFAULT_MODEL = "claude-haiku-4-5"
+    const val DEFAULT_MODEL = "claude-3-7-sonnet-20250219"
 
     private val json = Json {
         ignoreUnknownKeys = true

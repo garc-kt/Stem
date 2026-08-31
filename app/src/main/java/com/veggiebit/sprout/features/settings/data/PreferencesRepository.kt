@@ -47,7 +47,7 @@ data class SproutUserSettings(
     val openaiModel: String = "gpt-4o-mini",
     // Claude
     val claudeApiKey: String = "",
-    val claudeModel: String = "claude-haiku-4-5",
+    val claudeModel: String = "claude-3-7-sonnet-20250219",
     val appRules: Map<String, AppRuleMode> = emptyMap(),
     val snippets: Map<String, String> = defaultSnippets
 ) {
@@ -131,11 +131,10 @@ class PreferencesRepository(private val context: Context) {
             val openaiModel = preferences[PreferencesKeys.OPENAI_MODEL] ?: "gpt-4o-mini"
             val claudeApiKey = decryptStored(preferences[PreferencesKeys.CLAUDE_API_KEY])
 
-            // One-time migration: any previously stored claude-3-* ID (now retired) is mapped
-            // forward to the current default rather than silently failing every request.
+            // One-time migration: any retired or invalid placeholder is mapped forward to the current default
             val storedClaudeModel = preferences[PreferencesKeys.CLAUDE_MODEL]
-            val claudeModel = if (storedClaudeModel.isNullOrBlank() || storedClaudeModel.startsWith("claude-3-")) {
-                "claude-haiku-4-5"
+            val claudeModel = if (storedClaudeModel.isNullOrBlank() || storedClaudeModel == "claude-haiku-4-5" || storedClaudeModel.startsWith("claude-2")) {
+                "claude-3-7-sonnet-20250219"
             } else {
                 storedClaudeModel
             }
@@ -289,7 +288,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setClaudeSettings(apiKey: String, model: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.CLAUDE_API_KEY] = CryptoBox.encrypt(apiKey.trim())
-            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-haiku-4-5" }
+            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-3-7-sonnet-20250219" }
         }
     }
 
