@@ -1,4 +1,8 @@
-﻿# 🌱 Sprout — Ambient AI Writing Assistant for Android
+<p align="center">
+  <img src="art/banner.png" alt="Sprout Banner" width="700" style="border-radius: 16px;" />
+</p>
+
+# 🌱 Sprout — Ambient AI Writing Assistant for Android
 
 <p align="center">
   <b>Instant, frictionless text enhancement directly inside any Android app.</b><br>
