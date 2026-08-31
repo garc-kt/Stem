@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Sprout</string>
+    <string name="accessibility_service_label">Sprout Text Assistant</string>
+    <string name="accessibility_service_description">Sprout detects active text fields to provide inline, on-device writing enhancements, grammar corrections, and instant tone presets (Fix &amp; Polish, Concise, Professional, Punchy) without leaving your app.</string>
+</resources>
