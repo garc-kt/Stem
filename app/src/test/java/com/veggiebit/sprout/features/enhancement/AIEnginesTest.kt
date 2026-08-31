@@ -62,7 +62,7 @@ class AIEnginesTest {
 
     @Test
     fun testGeminiEngineGracefulOfflineFallback() = runBlocking {
-        val engine = GeminiRuleEngine(apiKey = "dummy_key", model = "gemini-1.5-flash")
+        val engine = GeminiRuleEngine(apiKey = "dummy_key", model = "gemini-2.0-flash")
         val payload = TextPayload("teh meeting is tommorow in order to make a decision")
         val result = engine.transform(payload, TransformPreset.FIX)
 
@@ -74,7 +74,7 @@ class AIEnginesTest {
 
     @Test
     fun testOpenAIEngineGracefulOfflineFallback() = runBlocking {
-        val engine = OpenAIRuleEngine(baseUrl = "http://127.0.0.1:59999", apiKey = "dummy", model = "gpt-4o")
+        val engine = OpenAIRuleEngine(baseUrl = "http://127.0.0.1:59999", apiKey = "dummy", model = "gpt-4o-mini")
         val payload = TextPayload("teh meeting is tommorow")
         val result = engine.transform(payload, TransformPreset.FIX)
 
@@ -86,7 +86,7 @@ class AIEnginesTest {
 
     @Test
     fun testClaudeEngineGracefulOfflineFallback() = runBlocking {
-        val engine = ClaudeRuleEngine(apiKey = "dummy_key", model = "claude-3-5-haiku-20241022")
+        val engine = ClaudeRuleEngine(apiKey = "dummy_key", model = "claude-3-7-sonnet-20250219")
         val payload = TextPayload("teh meeting is tommorow")
         val result = engine.transform(payload, TransformPreset.FIX)
 

@@ -262,7 +262,7 @@ fun EngineScreen(
                                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        listOf("gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-pro").forEach { suggestion ->
+                                        listOf("gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro").forEach { suggestion ->
                                             AssistChip(
                                                 onClick = { geminiModelInput = suggestion; onSaveGeminiSettings(geminiKeyInput, suggestion) },
                                                 label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }
@@ -347,7 +347,7 @@ fun EngineScreen(
                                         value = claudeModelInput,
                                         onValueChange = { claudeModelInput = it },
                                         label = { Text("Model") },
-                                        placeholder = { Text("claude-3-7-sonnet-20250219, claude-3-5-haiku-20241022") },
+                                        placeholder = { Text("claude-3-7-sonnet-20250219, claude-3-5-sonnet-20241022") },
                                         modifier = Modifier.fillMaxWidth().onFocusChanged {
                                             if (!it.isFocused) onSaveClaudeSettings(claudeKeyInput, claudeModelInput)
                                         },
@@ -358,7 +358,7 @@ fun EngineScreen(
                                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        listOf("claude-3-7-sonnet-20250219", "claude-3-5-haiku-20241022", "claude-3-5-sonnet-20241022", "claude-3-opus-20240229").forEach { suggestion ->
+                                        listOf("claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022").forEach { suggestion ->
                                             AssistChip(
                                                 onClick = { claudeModelInput = suggestion; onSaveClaudeSettings(claudeKeyInput, suggestion) },
                                                 label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }

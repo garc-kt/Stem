@@ -135,15 +135,26 @@ class PreferencesRepository(private val context: Context) {
             val ollamaBaseUrl = preferences[PreferencesKeys.OLLAMA_BASE_URL] ?: "http://10.0.2.2:11434"
             val ollamaModel = preferences[PreferencesKeys.OLLAMA_MODEL] ?: "llama3.3"
             val geminiApiKey = decryptStored(preferences[PreferencesKeys.GEMINI_API_KEY])
-            val geminiModel = preferences[PreferencesKeys.GEMINI_MODEL] ?: "gemini-2.0-flash"
+            // One-time migration: any retired or invalid model name is mapped forward to the current flagship default
+            val storedGeminiModel = preferences[PreferencesKeys.GEMINI_MODEL]
+            val geminiModel = if (storedGeminiModel.isNullOrBlank() || storedGeminiModel.startsWith("gemini-1.") || storedGeminiModel.startsWith("gemini-1.0")) {
+                "gemini-2.0-flash"
+            } else {
+                storedGeminiModel
+            }
+
             val openaiBaseUrl = preferences[PreferencesKeys.OPENAI_BASE_URL] ?: "https://api.openai.com/v1"
             val openaiApiKey = decryptStored(preferences[PreferencesKeys.OPENAI_API_KEY])
-            val openaiModel = preferences[PreferencesKeys.OPENAI_MODEL] ?: "gpt-4o-mini"
-            val claudeApiKey = decryptStored(preferences[PreferencesKeys.CLAUDE_API_KEY])
+            val storedOpenAIModel = preferences[PreferencesKeys.OPENAI_MODEL]
+            val openaiModel = if (storedOpenAIModel.isNullOrBlank() || storedOpenAIModel.startsWith("gpt-3.5") || storedOpenAIModel == "gpt-4-turbo" || storedOpenAIModel == "text-davinci-003") {
+                "gpt-4o-mini"
+            } else {
+                storedOpenAIModel
+            }
 
-            // One-time migration: any retired or invalid placeholder is mapped forward to the current default
+            val claudeApiKey = decryptStored(preferences[PreferencesKeys.CLAUDE_API_KEY])
             val storedClaudeModel = preferences[PreferencesKeys.CLAUDE_MODEL]
-            val claudeModel = if (storedClaudeModel.isNullOrBlank() || storedClaudeModel == "claude-haiku-4-5" || storedClaudeModel.startsWith("claude-2")) {
+            val claudeModel = if (storedClaudeModel.isNullOrBlank() || storedClaudeModel == "claude-haiku-4-5" || storedClaudeModel.startsWith("claude-2") || storedClaudeModel.startsWith("claude-3-opus") || storedClaudeModel == "claude-3-haiku-20240307" || storedClaudeModel == "claude-3-sonnet-20240229") {
                 "claude-3-7-sonnet-20250219"
             } else {
                 storedClaudeModel
