@@ -53,16 +53,16 @@ class AIEnginesTest {
     @Test
     fun testClaudeSerialization() {
         val request = ClaudeRequest(
-            model = "claude-3-5-haiku-20241022",
+            model = "claude-4.5-sonnet",
             messages = listOf(ClaudeMessage(role = "user", content = "Test"))
         )
         val encoded = json.encodeToString(ClaudeRequest.serializer(), request)
-        assertTrue(encoded.contains("claude-3-5-haiku"))
+        assertTrue(encoded.contains("claude-4.5-sonnet"))
     }
 
     @Test
     fun testGeminiEngineGracefulOfflineFallback() = runBlocking {
-        val engine = GeminiRuleEngine(apiKey = "dummy_key", model = "gemini-2.0-flash")
+        val engine = GeminiRuleEngine(apiKey = "dummy_key", model = "gemini-3.7-flash")
         val payload = TextPayload("teh meeting is tommorow in order to make a decision")
         val result = engine.transform(payload, TransformPreset.FIX)
 
@@ -74,7 +74,7 @@ class AIEnginesTest {
 
     @Test
     fun testOpenAIEngineGracefulOfflineFallback() = runBlocking {
-        val engine = OpenAIRuleEngine(baseUrl = "http://127.0.0.1:59999", apiKey = "dummy", model = "gpt-4o-mini")
+        val engine = OpenAIRuleEngine(baseUrl = "http://127.0.0.1:59999", apiKey = "dummy", model = "gpt-5-mini")
         val payload = TextPayload("teh meeting is tommorow")
         val result = engine.transform(payload, TransformPreset.FIX)
 
@@ -86,7 +86,7 @@ class AIEnginesTest {
 
     @Test
     fun testClaudeEngineGracefulOfflineFallback() = runBlocking {
-        val engine = ClaudeRuleEngine(apiKey = "dummy_key", model = "claude-3-7-sonnet-20250219")
+        val engine = ClaudeRuleEngine(apiKey = "dummy_key", model = "claude-4.5-sonnet")
         val payload = TextPayload("teh meeting is tommorow")
         val result = engine.transform(payload, TransformPreset.FIX)
 

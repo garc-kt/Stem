@@ -61,7 +61,7 @@ object GeminiClient {
 
     suspend fun generate(
         apiKey: String,
-        model: String = "gemini-2.0-flash",
+        model: String = "gemini-3.7-flash",
         prompt: String,
         systemPrompt: String,
         temperature: Float = 0.3f
@@ -70,7 +70,7 @@ object GeminiClient {
             return@withContext Result.failure(IllegalArgumentException("Gemini API key is required"))
         }
 
-        val cleanModel = model.ifBlank { "gemini-2.0-flash" }
+        val cleanModel = model.ifBlank { "gemini-3.7-flash" }
         val url = "https://generativelanguage.googleapis.com/v1beta/models/$cleanModel:generateContent?key=$apiKey"
 
         val requestBodyData = GeminiRequest(

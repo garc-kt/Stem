@@ -40,14 +40,14 @@ data class SproutUserSettings(
     val ollamaModel: String = "llama3.3",
     // Gemini
     val geminiApiKey: String = "",
-    val geminiModel: String = "gemini-2.0-flash",
+    val geminiModel: String = "gemini-3.7-flash",
     // OpenAI / Compatible
     val openaiBaseUrl: String = "https://api.openai.com/v1",
     val openaiApiKey: String = "",
-    val openaiModel: String = "gpt-4o-mini",
+    val openaiModel: String = "gpt-5-mini",
     // Claude
     val claudeApiKey: String = "",
-    val claudeModel: String = "claude-3-7-sonnet-20250219",
+    val claudeModel: String = "claude-4.5-sonnet",
     val appRules: Map<String, AppRuleMode> = emptyMap(),
     val snippets: Map<String, String> = defaultSnippets,
     val customCommands: Map<String, String> = defaultCustomCommands
@@ -137,8 +137,8 @@ class PreferencesRepository(private val context: Context) {
             val geminiApiKey = decryptStored(preferences[PreferencesKeys.GEMINI_API_KEY])
             // One-time migration: any retired or invalid model name is mapped forward to the current flagship default
             val storedGeminiModel = preferences[PreferencesKeys.GEMINI_MODEL]
-            val geminiModel = if (storedGeminiModel.isNullOrBlank() || storedGeminiModel.startsWith("gemini-1.") || storedGeminiModel.startsWith("gemini-1.0")) {
-                "gemini-2.0-flash"
+            val geminiModel = if (storedGeminiModel.isNullOrBlank() || storedGeminiModel.startsWith("gemini-1.") || storedGeminiModel.startsWith("gemini-1.0") || storedGeminiModel.startsWith("gemini-2.0")) {
+                "gemini-3.7-flash"
             } else {
                 storedGeminiModel
             }
@@ -146,16 +146,16 @@ class PreferencesRepository(private val context: Context) {
             val openaiBaseUrl = preferences[PreferencesKeys.OPENAI_BASE_URL] ?: "https://api.openai.com/v1"
             val openaiApiKey = decryptStored(preferences[PreferencesKeys.OPENAI_API_KEY])
             val storedOpenAIModel = preferences[PreferencesKeys.OPENAI_MODEL]
-            val openaiModel = if (storedOpenAIModel.isNullOrBlank() || storedOpenAIModel.startsWith("gpt-3.5") || storedOpenAIModel == "gpt-4-turbo" || storedOpenAIModel == "text-davinci-003") {
-                "gpt-4o-mini"
+            val openaiModel = if (storedOpenAIModel.isNullOrBlank() || storedOpenAIModel.startsWith("gpt-3.5") || storedOpenAIModel.startsWith("gpt-4") || storedOpenAIModel == "text-davinci-003") {
+                "gpt-5-mini"
             } else {
                 storedOpenAIModel
             }
 
             val claudeApiKey = decryptStored(preferences[PreferencesKeys.CLAUDE_API_KEY])
             val storedClaudeModel = preferences[PreferencesKeys.CLAUDE_MODEL]
-            val claudeModel = if (storedClaudeModel.isNullOrBlank() || storedClaudeModel == "claude-haiku-4-5" || storedClaudeModel.startsWith("claude-2") || storedClaudeModel.startsWith("claude-3-opus") || storedClaudeModel == "claude-3-haiku-20240307" || storedClaudeModel == "claude-3-sonnet-20240229") {
-                "claude-3-7-sonnet-20250219"
+            val claudeModel = if (storedClaudeModel.isNullOrBlank() || storedClaudeModel == "claude-haiku-4-5" || storedClaudeModel.startsWith("claude-2") || storedClaudeModel.startsWith("claude-3-opus") || storedClaudeModel.startsWith("claude-3-5") || storedClaudeModel == "claude-3-haiku-20240307" || storedClaudeModel == "claude-3-sonnet-20240229") {
+                "claude-4.5-sonnet"
             } else {
                 storedClaudeModel
             }

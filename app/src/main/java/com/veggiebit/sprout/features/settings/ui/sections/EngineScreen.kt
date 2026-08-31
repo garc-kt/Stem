@@ -251,7 +251,7 @@ fun EngineScreen(
                                         value = geminiModelInput,
                                         onValueChange = { geminiModelInput = it },
                                         label = { Text("Model") },
-                                        placeholder = { Text("gemini-2.0-flash, gemini-2.5-flash") },
+                                        placeholder = { Text("gemini-3.7-flash, gemini-3.5-pro") },
                                         modifier = Modifier.fillMaxWidth().onFocusChanged {
                                             if (!it.isFocused) onSaveGeminiSettings(geminiKeyInput, geminiModelInput)
                                         },
@@ -262,7 +262,7 @@ fun EngineScreen(
                                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        listOf("gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro").forEach { suggestion ->
+                                        listOf("gemini-3.7-flash", "gemini-3.5-pro", "gemini-3.5-flash", "gemini-3.1-pro", "gemini-2.5-flash", "gemini-2.5-pro").forEach { suggestion ->
                                             AssistChip(
                                                 onClick = { geminiModelInput = suggestion; onSaveGeminiSettings(geminiKeyInput, suggestion) },
                                                 label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }
@@ -305,7 +305,7 @@ fun EngineScreen(
                                         value = openAiModelInput,
                                         onValueChange = { openAiModelInput = it },
                                         label = { Text("Model") },
-                                        placeholder = { Text("gpt-4o-mini, deepseek-chat, o3-mini") },
+                                        placeholder = { Text("gpt-5-mini, gpt-5.6-sol, deepseek-chat") },
                                         modifier = Modifier.fillMaxWidth().onFocusChanged {
                                             if (!it.isFocused) onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput)
                                         },
@@ -316,7 +316,7 @@ fun EngineScreen(
                                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        listOf("gpt-4o-mini", "gpt-4o", "o3-mini", "deepseek-chat", "deepseek-reasoner").forEach { suggestion ->
+                                        listOf("gpt-5-mini", "gpt-5.6-sol", "gpt-5.6", "gpt-5.5", "gpt-5.2", "o3-mini", "deepseek-chat", "deepseek-reasoner").forEach { suggestion ->
                                             AssistChip(
                                                 onClick = { openAiModelInput = suggestion; onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, suggestion) },
                                                 label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }
@@ -347,7 +347,7 @@ fun EngineScreen(
                                         value = claudeModelInput,
                                         onValueChange = { claudeModelInput = it },
                                         label = { Text("Model") },
-                                        placeholder = { Text("claude-3-7-sonnet-20250219, claude-3-5-sonnet-20241022") },
+                                        placeholder = { Text("claude-4.5-sonnet, claude-opus-5") },
                                         modifier = Modifier.fillMaxWidth().onFocusChanged {
                                             if (!it.isFocused) onSaveClaudeSettings(claudeKeyInput, claudeModelInput)
                                         },
@@ -358,7 +358,7 @@ fun EngineScreen(
                                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        listOf("claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022").forEach { suggestion ->
+                                        listOf("claude-4.5-sonnet", "claude-opus-5", "claude-4.5-haiku", "claude-3-7-sonnet-20250219").forEach { suggestion ->
                                             AssistChip(
                                                 onClick = { claudeModelInput = suggestion; onSaveClaudeSettings(claudeKeyInput, suggestion) },
                                                 label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }
