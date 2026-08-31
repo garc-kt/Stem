@@ -179,7 +179,9 @@ fun SnippetsScreen(
                         OutlinedTextField(
                             value = newCmdTrigger,
                             onValueChange = { newCmdTrigger = it.removePrefix("?").removePrefix("..") },
-                            placeholder = { Text("trigger (e.g. roast)") },
+                            placeholder = {
+                                Text("trigger", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true
@@ -187,7 +189,9 @@ fun SnippetsScreen(
                         OutlinedTextField(
                             value = newCmdPrompt,
                             onValueChange = { newCmdPrompt = it },
-                            placeholder = { Text("AI prompt instruction") },
+                            placeholder = {
+                                Text("AI prompt instruction", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            },
                             modifier = Modifier.weight(2f),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true
@@ -359,7 +363,9 @@ fun SnippetsScreen(
                         OutlinedTextField(
                             value = newSnippetKey,
                             onValueChange = { newSnippetKey = it.removePrefix("..").removePrefix(".") },
-                            placeholder = { Text("key (e.g. email)") },
+                            placeholder = {
+                                Text("key", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true
@@ -367,7 +373,9 @@ fun SnippetsScreen(
                         OutlinedTextField(
                             value = newSnippetValue,
                             onValueChange = { newSnippetValue = it },
-                            placeholder = { Text("expansion text") },
+                            placeholder = {
+                                Text("expansion text", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            },
                             modifier = Modifier.weight(1.5f),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true

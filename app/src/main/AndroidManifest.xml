@@ -64,7 +64,7 @@
 
         <service
             android:name=".features.overlay.service.SproutTileService"
-            android:icon="@mipmap/ic_launcher"
+            android:icon="@drawable/ic_tile_sprout"
             android:label="Sprout Assistant"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">

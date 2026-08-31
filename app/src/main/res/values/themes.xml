@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Sprout" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- android:Theme.Material.Light.NoActionBar was light-only (no day/night resolution at
+         all), so enableEdgeToEdge()'s system-bar-icon-contrast detection always assumed a
+         light theme regardless of the app's actual dark-mode state. There's no platform
+         "DayNight" theme (that's an AppCompat/Material-Components library concept this
+         Compose-only project doesn't depend on) — day/night is resolved the platform-native
+         way instead, via this values/ (day) theme plus the values-night/ override below,
+         both based on DeviceDefault, which is the OEM's own dynamically (Monet) themed
+         platform look on Android 12+. -->
+    <style name="Theme.Sprout" parent="android:Theme.DeviceDefault.Light.NoActionBar" />
 </resources>

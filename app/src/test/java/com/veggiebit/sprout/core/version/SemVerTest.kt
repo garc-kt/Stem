@@ -10,8 +10,8 @@ class SemVerTest {
     fun testSemVerValues() {
         assertEquals(1, AppVersion.major)
         assertEquals(5, AppVersion.minor)
-        assertEquals(1, AppVersion.patch)
-        assertTrue(AppVersion.versionName.startsWith("1.5.1"))
-        assertTrue(AppVersion.displayString.startsWith("v1.5.1"))
+        assertEquals(2, AppVersion.patch)
+        assertTrue(AppVersion.versionName.startsWith("1.5.2"))
+        assertTrue(AppVersion.displayString.startsWith("v1.5.2"))
     }
 }

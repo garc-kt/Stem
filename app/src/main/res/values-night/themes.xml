@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Night-mode override of Theme.Sprout — see values/themes.xml for why this split
+         exists instead of a single "DayNight" parent. -->
+    <style name="Theme.Sprout" parent="android:Theme.DeviceDefault.NoActionBar" />
+</resources>
