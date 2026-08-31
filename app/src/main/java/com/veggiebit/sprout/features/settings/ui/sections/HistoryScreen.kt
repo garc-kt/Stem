@@ -86,7 +86,7 @@ fun HistoryScreen(
                 }
             } else {
                 LazyColumn(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)) {
-                    items(history.asReversed(), key = { it.timestamp }) { snapshot ->
+                    items(history.asReversed(), key = { it.id }) { snapshot ->
                         Surface(
                             shape = RoundedCornerShape(16.dp),
                             color = MaterialTheme.colorScheme.surfaceContainer,

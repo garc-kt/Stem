@@ -118,7 +118,6 @@ class SproutAccessibilityService : AccessibilityService() {
                     return
                 }
                 is InlineCommandEngine.CommandResult.Replaced -> {
-                    TransformHistory.recordChange(payload.nodeHashCode, payload.text, inlineResult.newText)
                     if (userSettings.hapticFeedbackEnabled) {
                         HapticHelper.performSuccessHaptic(this)
                     }

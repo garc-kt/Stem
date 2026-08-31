@@ -12,7 +12,8 @@ import kotlinx.coroutines.withContext
 class GeminiRuleEngine(
     private val apiKey: String,
     private val model: String,
-    private val customInstruction: String = ""
+    private val customInstruction: String = "",
+    private val temperature: Float = 0.3f
 ) : TextEngine {
 
     companion object {
@@ -68,7 +69,8 @@ class GeminiRuleEngine(
             apiKey = apiKey,
             model = model,
             prompt = original,
-            systemPrompt = systemPrompt
+            systemPrompt = systemPrompt,
+            temperature = temperature
         )
 
         result.fold(

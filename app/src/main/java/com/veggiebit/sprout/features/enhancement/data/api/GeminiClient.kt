@@ -18,10 +18,19 @@ data class GeminiPart(val text: String)
 data class GeminiContent(val parts: List<GeminiPart>, val role: String? = null)
 
 @Serializable
+data class GeminiGenerationConfig(
+    val temperature: Float? = null,
+    @SerialName("maxOutputTokens")
+    val maxOutputTokens: Int? = null
+)
+
+@Serializable
 data class GeminiRequest(
     val contents: List<GeminiContent>,
     @SerialName("system_instruction")
-    val systemInstruction: GeminiContent? = null
+    val systemInstruction: GeminiContent? = null,
+    @SerialName("generationConfig")
+    val generationConfig: GeminiGenerationConfig? = null
 )
 
 @Serializable
@@ -54,7 +63,8 @@ object GeminiClient {
         apiKey: String,
         model: String = "gemini-2.0-flash",
         prompt: String,
-        systemPrompt: String
+        systemPrompt: String,
+        temperature: Float = 0.3f
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("Gemini API key is required"))
@@ -67,7 +77,8 @@ object GeminiClient {
             contents = listOf(
                 GeminiContent(parts = listOf(GeminiPart(text = prompt)))
             ),
-            systemInstruction = GeminiContent(parts = listOf(GeminiPart(text = systemPrompt)))
+            systemInstruction = GeminiContent(parts = listOf(GeminiPart(text = systemPrompt))),
+            generationConfig = GeminiGenerationConfig(temperature = temperature, maxOutputTokens = 1024)
         )
 
         val bodyJson = json.encodeToString(GeminiRequest.serializer(), requestBodyData)

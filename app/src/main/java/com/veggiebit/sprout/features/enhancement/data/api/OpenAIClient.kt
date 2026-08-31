@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.api
+package com.veggiebit.sprout.features.enhancement.data.api
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -51,7 +51,8 @@ object OpenAIClient {
         apiKey: String,
         model: String = "gpt-4o-mini",
         prompt: String,
-        systemPrompt: String
+        systemPrompt: String,
+        temperature: Float = 0.3f
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("API key is required"))
@@ -67,7 +68,7 @@ object OpenAIClient {
                 OpenAIMessage(role = "system", content = systemPrompt),
                 OpenAIMessage(role = "user", content = prompt)
             ),
-            temperature = 0.2
+            temperature = temperature.toDouble()
         )
 
         val bodyJson = json.encodeToString(OpenAIChatRequest.serializer(), requestData)

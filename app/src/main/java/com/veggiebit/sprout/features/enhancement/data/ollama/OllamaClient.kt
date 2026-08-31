@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.ollama
+package com.veggiebit.sprout.features.enhancement.data.ollama
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -89,7 +89,8 @@ object OllamaClient {
         baseUrl: String,
         model: String,
         prompt: String,
-        systemPrompt: String? = null
+        systemPrompt: String? = null,
+        temperature: Float = 0.3f
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
             val cleanUrl = baseUrl.trim().removeSuffix("/")
@@ -103,7 +104,8 @@ object OllamaClient {
                 model = model,
                 prompt = prompt,
                 system = systemPrompt,
-                stream = false
+                stream = false,
+                options = OllamaOptions(temperature = temperature)
             )
 
             val requestBody = json.encodeToString(OllamaGenerateRequest.serializer(), requestPayload)

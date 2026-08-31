@@ -62,7 +62,8 @@ object ClaudeClient {
         apiKey: String,
         model: String = DEFAULT_MODEL,
         prompt: String,
-        systemPrompt: String
+        systemPrompt: String,
+        temperature: Float = 0.3f
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("Claude API key is required"))

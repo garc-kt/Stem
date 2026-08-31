@@ -86,6 +86,7 @@ fun SproutNavDisplay(
                 EngineScreen(
                     userSettings = userSettings,
                     onSelectEngineMode = viewModel::selectEngineMode,
+                    onSaveTemperature = viewModel::saveTemperature,
                     onSaveOllamaUrl = viewModel::saveOllamaUrl,
                     onSaveOllamaModel = viewModel::saveOllamaModel,
                     onSaveGeminiSettings = viewModel::saveGeminiSettings,

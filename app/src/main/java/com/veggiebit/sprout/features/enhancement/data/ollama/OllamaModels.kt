@@ -1,13 +1,19 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.ollama
+package com.veggiebit.sprout.features.enhancement.data.ollama
 
 import kotlinx.serialization.Serializable
+
+@Serializable
+data class OllamaOptions(
+    val temperature: Float? = null
+)
 
 @Serializable
 data class OllamaGenerateRequest(
     val model: String,
     val prompt: String,
     val system: String? = null,
-    val stream: Boolean = false
+    val stream: Boolean = false,
+    val options: OllamaOptions? = null
 )
 
 @Serializable

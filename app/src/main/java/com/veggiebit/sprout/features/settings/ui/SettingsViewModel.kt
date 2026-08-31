@@ -58,6 +58,8 @@ class SettingsViewModel : ViewModel() {
 
     fun selectLanguagePreference(preference: LanguagePreference) = viewModelScope.launch { repository.setLanguagePreference(preference) }
 
+    fun saveTemperature(temperature: Float) = viewModelScope.launch { repository.setTemperature(temperature) }
+
     fun saveCustomPromptInstruction(instruction: String) = viewModelScope.launch { repository.setCustomPromptInstruction(instruction) }
 
     fun completeOnboarding() = viewModelScope.launch { repository.setHasCompletedOnboarding(true) }

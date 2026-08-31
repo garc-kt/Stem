@@ -11,23 +11,27 @@ object TextEngineProvider {
             EngineMode.OLLAMA_AI -> OllamaRuleEngine(
                 baseUrl = settings.ollamaBaseUrl,
                 model = settings.ollamaModel,
-                customInstruction = settings.customPromptInstruction
+                customInstruction = settings.customPromptInstruction,
+                temperature = settings.temperature
             )
             EngineMode.GEMINI_AI -> GeminiRuleEngine(
                 apiKey = settings.geminiApiKey,
                 model = settings.geminiModel,
-                customInstruction = settings.customPromptInstruction
+                customInstruction = settings.customPromptInstruction,
+                temperature = settings.temperature
             )
             EngineMode.OPENAI_COMPATIBLE -> OpenAIRuleEngine(
                 baseUrl = settings.openaiBaseUrl,
                 apiKey = settings.openaiApiKey,
                 model = settings.openaiModel,
-                customInstruction = settings.customPromptInstruction
+                customInstruction = settings.customPromptInstruction,
+                temperature = settings.temperature
             )
             EngineMode.CLAUDE_AI -> ClaudeRuleEngine(
                 apiKey = settings.claudeApiKey,
                 model = settings.claudeModel,
-                customInstruction = settings.customPromptInstruction
+                customInstruction = settings.customPromptInstruction,
+                temperature = settings.temperature
             )
         }
     }
@@ -38,12 +42,13 @@ object TextEngineProvider {
      * Never includes API key material.
      */
     fun engineSignature(settings: SproutUserSettings): String {
+        val temp = String.format(java.util.Locale.US, "%.2f", settings.temperature)
         return when (settings.engineMode) {
             EngineMode.LOCAL_RULES -> "local"
-            EngineMode.OLLAMA_AI -> "ollama:${settings.ollamaBaseUrl}:${settings.ollamaModel}"
-            EngineMode.GEMINI_AI -> "gemini:${settings.geminiModel}"
-            EngineMode.OPENAI_COMPATIBLE -> "openai:${settings.openaiBaseUrl}:${settings.openaiModel}"
-            EngineMode.CLAUDE_AI -> "claude:${settings.claudeModel}"
+            EngineMode.OLLAMA_AI -> "ollama:${settings.ollamaBaseUrl}:${settings.ollamaModel}:$temp"
+            EngineMode.GEMINI_AI -> "gemini:${settings.geminiModel}:$temp"
+            EngineMode.OPENAI_COMPATIBLE -> "openai:${settings.openaiBaseUrl}:${settings.openaiModel}:$temp"
+            EngineMode.CLAUDE_AI -> "claude:${settings.claudeModel}:$temp"
         }
     }
 }

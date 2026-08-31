@@ -16,7 +16,8 @@ import kotlinx.coroutines.withContext
 class OllamaRuleEngine(
     private val baseUrl: String,
     private val model: String,
-    private val customInstruction: String = ""
+    private val customInstruction: String = "",
+    private val temperature: Float = 0.3f
 ) : TextEngine {
 
     override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.IO) {
@@ -32,7 +33,8 @@ class OllamaRuleEngine(
             baseUrl = baseUrl,
             model = model,
             prompt = original,
-            systemPrompt = systemPrompt
+            systemPrompt = systemPrompt,
+            temperature = temperature
         )
 
         result.fold(

@@ -38,10 +38,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -69,6 +72,7 @@ import kotlinx.coroutines.launch
 fun EngineScreen(
     userSettings: SproutUserSettings,
     onSelectEngineMode: (EngineMode) -> Unit,
+    onSaveTemperature: (Float) -> Unit,
     onSaveOllamaUrl: (String) -> Unit,
     onSaveOllamaModel: (String) -> Unit,
     onSaveGeminiSettings: (String, String) -> Unit,
@@ -90,6 +94,7 @@ fun EngineScreen(
     var openAiModelInput by remember(userSettings.openaiModel) { mutableStateOf(userSettings.openaiModel) }
     var claudeKeyInput by remember(userSettings.claudeApiKey) { mutableStateOf(userSettings.claudeApiKey) }
     var claudeModelInput by remember(userSettings.claudeModel) { mutableStateOf(userSettings.claudeModel) }
+    var temperatureInput by remember(userSettings.temperature) { mutableFloatStateOf(userSettings.temperature) }
     var customPromptInput by remember(userSettings.customPromptInstruction) { mutableStateOf(userSettings.customPromptInstruction) }
 
     var isPasswordVisible by remember { mutableStateOf(false) }
@@ -364,7 +369,85 @@ fun EngineScreen(
                                 EngineMode.LOCAL_RULES -> {}
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            // Temperature (Creativity / Randomness) Controls
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Temperature (Creativity)",
+                                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        val tempLabel = when {
+                                            temperatureInput <= 0.2f -> "Precise (${String.format(java.util.Locale.US, "%.2f", temperatureInput)})"
+                                            temperatureInput <= 0.6f -> "Balanced (${String.format(java.util.Locale.US, "%.2f", temperatureInput)})"
+                                            else -> "Creative (${String.format(java.util.Locale.US, "%.2f", temperatureInput)})"
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = tempLabel,
+                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Controls AI output predictability. Lower values (0.0–0.3) provide precise, deterministic corrections. Higher values (0.7–1.0) encourage creative, varied phrasing.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Slider(
+                                        value = temperatureInput,
+                                        onValueChange = {
+                                            temperatureInput = it
+                                            onSaveTemperature(it)
+                                        },
+                                        valueRange = 0.0f..1.0f,
+                                        steps = 19
+                                    )
+
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf(
+                                            0.1f to "Precise (0.1)",
+                                            0.3f to "Balanced (0.3)",
+                                            0.7f to "Creative (0.7)",
+                                            1.0f to "Max Diversity (1.0)"
+                                        ).forEach { (tVal, tName) ->
+                                            AssistChip(
+                                                onClick = {
+                                                    temperatureInput = tVal
+                                                    onSaveTemperature(tVal)
+                                                },
+                                                label = { Text(tName, style = MaterialTheme.typography.labelSmall) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(14.dp))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -397,7 +480,7 @@ fun EngineScreen(
                                                 }
                                                 EngineMode.GEMINI_AI -> {
                                                     onSaveGeminiSettings(geminiKeyInput, geminiModelInput)
-                                                    val result = GeminiClient.generate(geminiKeyInput, geminiModelInput, "Hello", "Respond with 'OK'.")
+                                                    val result = GeminiClient.generate(geminiKeyInput, geminiModelInput, "Hello", "Respond with 'OK'.", temperature = temperatureInput)
                                                     result.fold(
                                                         onSuccess = { isConnectionSuccess = true; connectionStatusMessage = "Gemini Connected ($it)" },
                                                         onFailure = { error -> isConnectionSuccess = false; connectionStatusMessage = "Failed: ${error.localizedMessage}" }
@@ -405,7 +488,7 @@ fun EngineScreen(
                                                 }
                                                 EngineMode.OPENAI_COMPATIBLE -> {
                                                     onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput)
-                                                    val result = OpenAIClient.generate(openAiUrlInput, openAiKeyInput, openAiModelInput, "Hello", "Respond with 'OK'.")
+                                                    val result = OpenAIClient.generate(openAiUrlInput, openAiKeyInput, openAiModelInput, "Hello", "Respond with 'OK'.", temperature = temperatureInput)
                                                     result.fold(
                                                         onSuccess = { isConnectionSuccess = true; connectionStatusMessage = "Connected ($it)" },
                                                         onFailure = { error -> isConnectionSuccess = false; connectionStatusMessage = "Failed: ${error.localizedMessage}" }
@@ -413,7 +496,7 @@ fun EngineScreen(
                                                 }
                                                 EngineMode.CLAUDE_AI -> {
                                                     onSaveClaudeSettings(claudeKeyInput, claudeModelInput)
-                                                    val result = ClaudeClient.generate(claudeKeyInput, claudeModelInput, "Hello", "Respond with 'OK'.")
+                                                    val result = ClaudeClient.generate(claudeKeyInput, claudeModelInput, "Hello", "Respond with 'OK'.", temperature = temperatureInput)
                                                     result.fold(
                                                         onSuccess = { isConnectionSuccess = true; connectionStatusMessage = "Claude Connected ($it)" },
                                                         onFailure = { error -> isConnectionSuccess = false; connectionStatusMessage = "Failed: ${error.localizedMessage}" }

@@ -358,7 +358,7 @@ fun SproutFloatingOverlay(
                                     .clip(RoundedCornerShape(14.dp))
                                     .background(MaterialTheme.colorScheme.surface)
                             ) {
-                                items(historyEntries.asReversed()) { entry ->
+                                items(historyEntries.asReversed(), key = { it.id }) { entry ->
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()

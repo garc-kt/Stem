@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.engine
+package com.veggiebit.sprout.features.enhancement.data.engine
 
 import com.veggiebit.sprout.features.enhancement.data.api.OpenAIClient
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
@@ -13,7 +13,8 @@ class OpenAIRuleEngine(
     private val baseUrl: String,
     private val apiKey: String,
     private val model: String,
-    private val customInstruction: String = ""
+    private val customInstruction: String = "",
+    private val temperature: Float = 0.3f
 ) : TextEngine {
 
     override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.IO) {
@@ -28,7 +29,8 @@ class OpenAIRuleEngine(
             apiKey = apiKey,
             model = model,
             prompt = original,
-            systemPrompt = systemPrompt
+            systemPrompt = systemPrompt,
+            temperature = temperature
         )
 
         result.fold(

@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 object TransformHistory {
 
     data class Snapshot(
+        val id: String = java.util.UUID.randomUUID().toString(),
         val nodeHashCode: Int,
         val originalText: String,
         val replacedText: String,
@@ -32,8 +33,14 @@ object TransformHistory {
 
     @Synchronized
     fun recordChange(nodeHashCode: Int, original: String, replaced: String) {
-        if (original == replaced) return
-        _history.value = (_history.value + Snapshot(nodeHashCode, original, replaced)).takeLast(MAX_HISTORY)
+        if (original == replaced || original.isBlank() || replaced.isBlank()) return
+        val current = _history.value
+        val last = current.lastOrNull()
+        // Prevent duplicate consecutive entries within 2 seconds
+        if (last != null && last.originalText == original && last.replacedText == replaced && (System.currentTimeMillis() - last.timestamp < 2000)) {
+            return
+        }
+        _history.value = (current + Snapshot(nodeHashCode = nodeHashCode, originalText = original, replacedText = replaced)).takeLast(MAX_HISTORY)
     }
 
     @Synchronized

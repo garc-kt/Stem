@@ -29,6 +29,7 @@ data class SproutUserSettings(
     val engineMode: EngineMode = EngineMode.LOCAL_RULES,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val languagePreference: LanguagePreference = LanguagePreference.AUTO,
+    val temperature: Float = 0.3f, // 0.0 (Precise) to 1.0 (Creative)
     val customPromptInstruction: String = "",
     val hasCompletedOnboarding: Boolean = false,
     // -1f means "not yet dragged" — the overlay falls back to cursor-anchored placement.
@@ -82,6 +83,7 @@ class PreferencesRepository(private val context: Context) {
         val ENGINE_MODE = stringPreferencesKey("engine_mode")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val LANGUAGE_PREFERENCE = stringPreferencesKey("language_preference")
+        val TEMPERATURE = floatPreferencesKey("ai_temperature")
         val CUSTOM_PROMPT_INSTRUCTION = stringPreferencesKey("custom_prompt_instruction")
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
         val PILL_ANCHOR_X = floatPreferencesKey("pill_anchor_x")
@@ -115,6 +117,7 @@ class PreferencesRepository(private val context: Context) {
             val engineModeId = preferences[PreferencesKeys.ENGINE_MODE] ?: EngineMode.LOCAL_RULES.id
             val themeModeId = preferences[PreferencesKeys.THEME_MODE] ?: ThemeMode.SYSTEM.id
             val languagePreferenceId = preferences[PreferencesKeys.LANGUAGE_PREFERENCE] ?: LanguagePreference.AUTO.id
+            val temperature = preferences[PreferencesKeys.TEMPERATURE] ?: 0.3f
             val customPromptInstruction = preferences[PreferencesKeys.CUSTOM_PROMPT_INSTRUCTION] ?: ""
             val hasCompletedOnboarding = preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] ?: false
             val pillAnchorX = preferences[PreferencesKeys.PILL_ANCHOR_X] ?: -1f
@@ -170,6 +173,7 @@ class PreferencesRepository(private val context: Context) {
                 engineMode = EngineMode.fromId(engineModeId),
                 themeMode = ThemeMode.fromId(themeModeId),
                 languagePreference = LanguagePreference.fromId(languagePreferenceId),
+                temperature = temperature,
                 customPromptInstruction = customPromptInstruction,
                 hasCompletedOnboarding = hasCompletedOnboarding,
                 pillAnchorXFraction = pillAnchorX,
@@ -227,6 +231,12 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setLanguagePreference(preference: LanguagePreference) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.LANGUAGE_PREFERENCE] = preference.id
+        }
+    }
+
+    suspend fun setTemperature(temperature: Float) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.TEMPERATURE] = temperature.coerceIn(0.0f, 1.0f)
         }
     }
 
