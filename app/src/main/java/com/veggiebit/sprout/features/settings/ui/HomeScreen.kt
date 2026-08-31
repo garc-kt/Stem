@@ -356,8 +356,8 @@ private val homeNavItems = listOf(
         "Session History",
         "Search and review recent transformations",
         Icons.Rounded.History,
-        containerColor = { MaterialTheme.colorScheme.tertiaryContainer },
-        iconColor = { MaterialTheme.colorScheme.onTertiaryContainer }
+        containerColor = { MaterialTheme.colorScheme.secondaryContainer },
+        iconColor = { MaterialTheme.colorScheme.onSecondaryContainer }
     ),
     HomeNavItem(
         Sandbox,
@@ -372,16 +372,16 @@ private val homeNavItems = listOf(
         "Per-App Rules",
         "Customize floating pill behavior per installed app",
         Icons.Rounded.Apps,
-        containerColor = { MaterialTheme.colorScheme.surfaceContainerHighest },
-        iconColor = { MaterialTheme.colorScheme.onSurface }
+        containerColor = { MaterialTheme.colorScheme.primaryContainer },
+        iconColor = { MaterialTheme.colorScheme.onPrimaryContainer }
     ),
     HomeNavItem(
         Appearance,
         "Appearance & Language",
         "Theme mode and offline rule engine dictionary",
         Icons.Rounded.Palette,
-        containerColor = { MaterialTheme.colorScheme.surfaceContainerHighest },
-        iconColor = { MaterialTheme.colorScheme.onSurface }
+        containerColor = { MaterialTheme.colorScheme.secondaryContainer },
+        iconColor = { MaterialTheme.colorScheme.onSecondaryContainer }
     )
 )
 

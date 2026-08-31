@@ -291,7 +291,7 @@ fun SnippetsScreen(
                         Icon(
                             imageVector = Icons.Rounded.TextFields,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -323,13 +323,13 @@ fun SnippetsScreen(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
                                     Text(
                                         text = "..$key",
                                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -390,7 +390,7 @@ fun SnippetsScreen(
                             },
                             enabled = newSnippetKey.isNotBlank() && newSnippetValue.isNotBlank(),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Icon(imageVector = Icons.Rounded.Add, contentDescription = "Add")
                         }
