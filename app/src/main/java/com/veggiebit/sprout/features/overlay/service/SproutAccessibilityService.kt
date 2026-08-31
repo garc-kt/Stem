@@ -94,6 +94,13 @@ class SproutAccessibilityService : AccessibilityService() {
     }
 
     private fun processEditableNode(node: AccessibilityNodeInfoCompat, isTextChanged: Boolean) {
+        // Nothing else in this class holds onto currentActiveNode beyond a field read at the
+        // point of use (injectReplacementText always reads the current value, never a stale
+        // captured copy), so the previous node is safe to recycle here on every reassignment.
+        val previousNode = currentActiveNode
+        if (previousNode != null && previousNode !== node) {
+            previousNode.recycle()
+        }
         currentActiveNode = node
         val payload = AccessibilityUtils.extractTextPayload(node)
 
@@ -145,16 +152,24 @@ class SproutAccessibilityService : AccessibilityService() {
                 }
                 is InlineCommandEngine.CommandResult.RunAIPreset -> {
                     if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.LOCAL_RULES) {
+                        // Resolved explicitly from the user's current language setting rather
+                        // than going through LocalRuleEngine's transform()/languagePreference
+                        // var — this path calls the apply* helpers directly, and those require
+                        // an explicit LanguageRules so this can't silently pick up a stale value
+                        // set by some other concurrent caller (overlay panel, sandbox, etc.).
+                        val rules = com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.resolveRules(
+                            inlineResult.body, userSettings.languagePreference
+                        )
                         val transformed = when (inlineResult.preset) {
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.FIX -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFixAndPolish(inlineResult.body)
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CONCISE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyConcise(inlineResult.body)
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.PROFESSIONAL -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyProfessional(inlineResult.body)
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.PUNCHY -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyPunchy(inlineResult.body)
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.FRIENDLY -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFriendly(inlineResult.body)
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.SUMMARIZE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applySummarize(inlineResult.body)
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.BULLETIZE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyBulletize(inlineResult.body)
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.EXPAND -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyExpand(inlineResult.body)
-                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CUSTOM -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFixAndPolish(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.FIX -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFixAndPolish(inlineResult.body, rules)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CONCISE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyConcise(inlineResult.body, rules)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.PROFESSIONAL -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyProfessional(inlineResult.body, rules)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.PUNCHY -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyPunchy(inlineResult.body, rules)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.FRIENDLY -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFriendly(inlineResult.body, rules)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.SUMMARIZE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applySummarize(inlineResult.body, rules)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.BULLETIZE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyBulletize(inlineResult.body, rules)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.EXPAND -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyExpand(inlineResult.body, rules)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CUSTOM -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFixAndPolish(inlineResult.body, rules)
                         }
                         if (userSettings.hapticFeedbackEnabled) {
                             HapticHelper.performSuccessHaptic(this)
@@ -254,9 +269,15 @@ class SproutAccessibilityService : AccessibilityService() {
         var targetNode = currentActiveNode
         val isStillValid = targetNode?.refresh() == true
         if (!isStillValid) {
-            targetNode = AccessibilityUtils.findFocusedEditableNode(
-                AccessibilityNodeInfoCompat.wrap(rootInActiveWindow ?: return)
-            )
+            val staleNode = targetNode
+            val root = rootInActiveWindow
+            if (root == null) {
+                staleNode?.recycle()
+                currentActiveNode = null
+                return
+            }
+            targetNode = AccessibilityUtils.findFocusedEditableNode(AccessibilityNodeInfoCompat.wrap(root))
+            staleNode?.recycle()
             currentActiveNode = targetNode
         }
 
@@ -277,6 +298,8 @@ class SproutAccessibilityService : AccessibilityService() {
         super.onDestroy()
         overlayManager?.destroy()
         overlayManager = null
+        currentActiveNode?.recycle()
+        currentActiveNode = null
         serviceScope.cancel()
         // Zero-persistence policy (plan.md §4.3): history lives in process memory only.
         TransformHistory.clear()

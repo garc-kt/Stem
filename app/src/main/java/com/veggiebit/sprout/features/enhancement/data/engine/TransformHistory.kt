@@ -70,10 +70,6 @@ object TransformHistory {
         }
     }
 
-    /** Re-applies a specific historical entry (from the history sheet) without removing it
-     * from history — unlike [popUndo], which consumes the entry it returns. */
-    fun reapply(snapshot: Snapshot): String = snapshot.replacedText
-
     @Synchronized
     fun clear() {
         _history.value = emptyList()

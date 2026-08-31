@@ -302,7 +302,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setGeminiSettings(apiKey: String, model: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.GEMINI_API_KEY] = CryptoBox.encrypt(apiKey.trim())
-            preferences[PreferencesKeys.GEMINI_MODEL] = model.trim().ifBlank { "gemini-2.0-flash" }
+            preferences[PreferencesKeys.GEMINI_MODEL] = model.trim().ifBlank { "gemini-3.7-flash" }
         }
     }
 
@@ -310,14 +310,14 @@ class PreferencesRepository(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.OPENAI_BASE_URL] = baseUrl.trim().ifBlank { "https://api.openai.com/v1" }
             preferences[PreferencesKeys.OPENAI_API_KEY] = CryptoBox.encrypt(apiKey.trim())
-            preferences[PreferencesKeys.OPENAI_MODEL] = model.trim().ifBlank { "gpt-4o-mini" }
+            preferences[PreferencesKeys.OPENAI_MODEL] = model.trim().ifBlank { "gpt-5-mini" }
         }
     }
 
     suspend fun setClaudeSettings(apiKey: String, model: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.CLAUDE_API_KEY] = CryptoBox.encrypt(apiKey.trim())
-            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-3-7-sonnet-20250219" }
+            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-4.5-sonnet" }
         }
     }
 

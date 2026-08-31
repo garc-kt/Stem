@@ -153,10 +153,7 @@ fun SproutFloatingOverlay(
 
                             Text(
                                 text = "Sprout Assistant",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                ),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
 
@@ -190,21 +187,14 @@ fun SproutFloatingOverlay(
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = onCollapseClick,
-                                modifier = Modifier.size(32.dp)
-                            ) {
+                            IconButton(onClick = onCollapseClick) {
                                 Icon(
                                     imageVector = Icons.Rounded.KeyboardArrowUp,
                                     contentDescription = "Collapse",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Spacer(modifier = Modifier.width(4.dp))
-                            IconButton(
-                                onClick = onDismiss,
-                                modifier = Modifier.size(32.dp)
-                            ) {
+                            IconButton(onClick = onDismiss) {
                                 Icon(
                                     imageVector = Icons.Rounded.Close,
                                     contentDescription = "Dismiss",
@@ -391,7 +381,7 @@ fun SproutFloatingOverlay(
                                                 overflow = TextOverflow.Ellipsis
                                             )
                                         }
-                                        IconButton(onClick = { onHistoryEntrySelected(entry) }, modifier = Modifier.size(28.dp)) {
+                                        IconButton(onClick = { onHistoryEntrySelected(entry) }) {
                                             Icon(
                                                 imageVector = Icons.AutoMirrored.Rounded.Undo,
                                                 contentDescription = "Restore",

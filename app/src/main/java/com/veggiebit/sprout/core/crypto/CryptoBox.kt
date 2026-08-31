@@ -40,7 +40,14 @@ object CryptoBox {
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(256)
-            .setUserAuthenticationRequired(false) // background service must encrypt/decrypt unattended
+            // Signed-off tradeoff, not an oversight: the accessibility service must encrypt/
+            // decrypt API keys unattended on every transform call, with no user present to
+            // satisfy a biometric/PIN gate. This means a device with root or ADB debug access
+            // that can coax the Keystore into releasing this key bypasses the auth gate other
+            // apps rely on — acceptable under this app's local/casual threat model (plan.md
+            // §4.3), but a real limitation if that model ever changes (e.g. handling anything
+            // more sensitive than third-party AI API keys).
+            .setUserAuthenticationRequired(false)
             .build()
         keyGenerator.init(spec)
         return keyGenerator.generateKey()

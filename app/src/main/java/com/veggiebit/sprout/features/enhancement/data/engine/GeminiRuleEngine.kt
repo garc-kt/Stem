@@ -5,8 +5,6 @@ import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 import com.veggiebit.sprout.features.enhancement.data.models.TransformResult
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 
 class GeminiRuleEngine(
@@ -145,14 +143,5 @@ class GeminiRuleEngine(
                 )
             }
         )
-    }
-
-    override suspend fun generateAllSuggestions(payload: TextPayload): Map<TransformPreset, TransformResult> = coroutineScope {
-        // Each preset issues its own network call; fan them out in parallel instead of
-        // awaiting one at a time (4x latency for no benefit — this is never on the
-        // per-keystroke overlay path, only the sandbox/multi-suggestion views).
-        TransformPreset.entries
-            .map { preset -> preset to async { transform(payload, preset) } }
-            .associate { (preset, deferred) -> preset to deferred.await() }
     }
 }

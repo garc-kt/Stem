@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.veggiebit.sprout.app.theme.SproutLargeIncreasedShape
 import com.veggiebit.sprout.app.theme.ThemeMode
 import com.veggiebit.sprout.features.enhancement.data.models.LanguagePreference
 import com.veggiebit.sprout.features.settings.ui.components.SproutSegmentedGroup
@@ -40,7 +41,7 @@ fun AppearanceScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = SproutLargeIncreasedShape,
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 28.dp)
             ) {
@@ -64,7 +65,7 @@ fun AppearanceScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = SproutLargeIncreasedShape,
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
             ) {

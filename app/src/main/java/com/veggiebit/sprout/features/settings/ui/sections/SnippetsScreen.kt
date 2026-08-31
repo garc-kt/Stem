@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.veggiebit.sprout.app.theme.SproutLargeIncreasedShape
 import com.veggiebit.sprout.features.settings.ui.components.SproutSubScreen
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -75,7 +76,7 @@ fun SnippetsScreen(
 
             // Section 1: Custom AI Inline Commands
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = SproutLargeIncreasedShape,
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -144,8 +145,7 @@ fun SnippetsScreen(
                                     )
                                 }
                                 IconButton(
-                                    onClick = { onDeleteCustomCommand(trigger) },
-                                    modifier = Modifier.size(32.dp)
+                                    onClick = { onDeleteCustomCommand(trigger) }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.DeleteOutline,
@@ -242,7 +242,7 @@ fun SnippetsScreen(
 
             // Section 2: Dynamic On-the-Fly AI Prompting
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = SproutLargeIncreasedShape,
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -275,7 +275,7 @@ fun SnippetsScreen(
 
             // Section 3: Custom Text Snippets
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = SproutLargeIncreasedShape,
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -332,7 +332,7 @@ fun SnippetsScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
-                            IconButton(onClick = { onDeleteSnippet(key) }, modifier = Modifier.size(32.dp)) {
+                            IconButton(onClick = { onDeleteSnippet(key) }) {
                                 Icon(
                                     imageVector = Icons.Rounded.DeleteOutline,
                                     contentDescription = "Delete Snippet",
@@ -388,7 +388,7 @@ fun SnippetsScreen(
 
             // Section 4: Built-in Quick Triggers Reference
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = SproutLargeIncreasedShape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 modifier = Modifier.fillMaxWidth()
             ) {

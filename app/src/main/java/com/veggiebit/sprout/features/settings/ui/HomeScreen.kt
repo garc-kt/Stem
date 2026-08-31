@@ -1,6 +1,7 @@
 package com.veggiebit.sprout.features.settings.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Apps
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Layers
@@ -27,9 +29,8 @@ import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -40,10 +41,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.veggiebit.sprout.app.theme.SproutLargeIncreasedShape
@@ -53,9 +57,6 @@ import com.veggiebit.sprout.features.enhancement.ui.components.PresetChipsRow
 import com.veggiebit.sprout.features.settings.data.SproutUserSettings
 import com.veggiebit.sprout.features.settings.ui.components.PermissionStepCard
 
-// LargeFlexibleTopAppBar (with its dedicated subtitle slot) is part of the M3 Expressive
-// surface that's internal in this project's resolved material3:1.4.0, so this uses a plain
-// stable TopAppBar with the subtitle stacked under the title instead.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -77,21 +78,28 @@ fun HomeScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
-                            modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Spa,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("Sprout", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
                             Text(
-                                "VeggieBit Studios • ${AppVersion.displayString}",
+                                text = "Sprout",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "VeggieBit Studios • ${AppVersion.displayString}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -104,65 +112,123 @@ fun HomeScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
             modifier = Modifier.padding(innerPadding)
         ) {
+            // Section 1: System Readiness & Permissions (Distilled)
             item {
-                SectionLabel("Setup & Permissions")
-                Spacer(modifier = Modifier.height(10.dp))
-                PermissionStepCard(
-                    stepNumber = 1,
-                    title = "Accessibility Service",
-                    description = "Monitors text focus & provides inline replacement across apps.",
-                    icon = Icons.Rounded.TouchApp,
-                    isGranted = hasAccessibilityPermission,
-                    onGrantClick = onRequestAccessibilityPermission
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PermissionStepCard(
-                    stepNumber = 2,
-                    title = "Display Over Other Apps",
-                    description = "Shows the floating 36dp pill & expanded suggestion capsule.",
-                    icon = Icons.Rounded.Layers,
-                    isGranted = hasOverlayPermission,
-                    onGrantClick = onRequestOverlayPermission
-                )
+                if (hasAccessibilityPermission && hasOverlayPermission) {
+                    Surface(
+                        shape = SproutLargeIncreasedShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Sprout is Active & Ambient",
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Text(
+                                    text = "Ready to enhance text via selection menu, floating pill & ?triggers.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    SectionLabel("Permissions Setup")
+                    Spacer(modifier = Modifier.height(10.dp))
+                    if (!hasAccessibilityPermission) {
+                        PermissionStepCard(
+                            stepNumber = 1,
+                            title = "Accessibility Service",
+                            description = "Enables text detection and inline ?commands across apps.",
+                            icon = Icons.Rounded.TouchApp,
+                            isGranted = false,
+                            onGrantClick = onRequestAccessibilityPermission
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                    if (!hasOverlayPermission) {
+                        PermissionStepCard(
+                            stepNumber = 2,
+                            title = "Display Over Other Apps",
+                            description = "Enables the floating pill and live thinking HUD capsule.",
+                            icon = Icons.Rounded.Layers,
+                            isGranted = false,
+                            onGrantClick = onRequestOverlayPermission
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
+            // Section 2: Interaction & Core Settings
             item {
-                SectionLabel("Interaction Mode")
+                SectionLabel("Preferences")
                 Spacer(modifier = Modifier.height(10.dp))
                 Surface(
                     shape = SproutLargeIncreasedShape,
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(18.dp)) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(
+                                    value = userSettings.overlayEnabled,
+                                    role = Role.Switch,
+                                    onValueChange = { enabled ->
+                                        if (enabled && !hasOverlayPermission) onRequestOverlayPermission()
+                                        onToggleOverlay(enabled)
+                                    }
+                                ),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Floating Pill Over Other Apps",
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                    text = "Floating Indicator",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (userSettings.overlayEnabled) "Floating 36dp pill appears over other apps when typing."
-                                    else "Quiet mode: Sprout triggers via text selection and inline commands.",
+                                    text = if (userSettings.overlayEnabled) "Floating 36dp pill appears when typing in apps."
+                                    else "Quiet mode: Triggers via text selection and ?commands.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            Spacer(modifier = Modifier.width(12.dp))
                             Switch(
                                 checked = userSettings.overlayEnabled,
-                                onCheckedChange = { enabled ->
-                                    if (enabled && !hasOverlayPermission) onRequestOverlayPermission()
-                                    onToggleOverlay(enabled)
-                                },
+                                // Toggling is handled by the Row's toggleable() above so TalkBack
+                                // announces "Floating Indicator, switch, on/off" as one unit
+                                // instead of a bare unlabeled "Switch" — null here means this
+                                // Switch is purely the visual indicator, not a second click target.
+                                onCheckedChange = null,
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
@@ -170,21 +236,38 @@ fun HomeScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 14.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
 
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(
+                                    value = userSettings.hapticFeedbackEnabled,
+                                    role = Role.Switch,
+                                    onValueChange = onToggleHaptics
+                                ),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Haptic Feedback",
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Haptic Feedback",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Vibrates gently on trigger injection and action taps.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
                             Switch(
                                 checked = userSettings.hapticFeedbackEnabled,
-                                onCheckedChange = onToggleHaptics,
+                                onCheckedChange = null,
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
@@ -192,11 +275,14 @@ fun HomeScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 14.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
 
                         Text(
-                            text = "Default Preset",
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                            text = "Default Transform Preset",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -210,77 +296,140 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
+            // Section 3: Grouped Material 3 Expressive Navigation Hub
             item {
-                SectionLabel("More")
+                SectionLabel("Features & Configuration")
                 Spacer(modifier = Modifier.height(10.dp))
-            }
-
-            items(homeNavItems) { navItem ->
-                NavCard(navItem = navItem, onClick = { onNavigate(navItem.route) })
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "🌱 Sprout ${AppVersion.displayString}",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Engineered by VeggieBit Studios • Apache 2.0 License",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Surface(
+                    shape = SproutLargeIncreasedShape,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        homeNavItems.forEachIndexed { index, navItem ->
+                            GroupedNavRow(
+                                navItem = navItem,
+                                onClick = { onNavigate(navItem.route) }
+                            )
+                            if (index < homeNavItems.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                                )
+                            }
+                        }
+                    }
                 }
-                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
 }
 
-private data class HomeNavItem(val route: SproutRoute, val title: String, val description: String, val icon: ImageVector)
+private data class HomeNavItem(
+    val route: SproutRoute,
+    val title: String,
+    val description: String,
+    val icon: ImageVector,
+    val containerColor: @Composable () -> Color,
+    val iconColor: @Composable () -> Color
+)
 
 private val homeNavItems = listOf(
-    HomeNavItem(Engine, "AI Intelligence Engine", "Choose and configure the transformation engine", Icons.Rounded.Psychology),
-    HomeNavItem(Appearance, "Appearance", "Theme mode and offline language", Icons.Rounded.Palette),
-    HomeNavItem(AppRules, "Per-App Rules", "Control which apps show the floating pill", Icons.Rounded.Apps),
-    HomeNavItem(Snippets, "Snippets & Triggers", "Inline commands and custom text expansions", Icons.Rounded.Style),
-    HomeNavItem(History, "Session History", "This session's transformations", Icons.Rounded.History),
-    HomeNavItem(Sandbox, "Test Sandbox", "Try presets and engines on sample text", Icons.Rounded.Science)
+    HomeNavItem(
+        Engine,
+        "AI Intelligence Engine",
+        "Configure Gemini 3.5+, GPT-5+, Claude 4.5+ or local AI",
+        Icons.Rounded.Psychology,
+        containerColor = { MaterialTheme.colorScheme.primaryContainer },
+        iconColor = { MaterialTheme.colorScheme.onPrimaryContainer }
+    ),
+    HomeNavItem(
+        Snippets,
+        "Commands & Snippets",
+        "Custom ?triggers, dynamic ?ai: prompts, and text expansion",
+        Icons.Rounded.Style,
+        containerColor = { MaterialTheme.colorScheme.secondaryContainer },
+        iconColor = { MaterialTheme.colorScheme.onSecondaryContainer }
+    ),
+    HomeNavItem(
+        History,
+        "Session History",
+        "Search and review recent transformations",
+        Icons.Rounded.History,
+        containerColor = { MaterialTheme.colorScheme.tertiaryContainer },
+        iconColor = { MaterialTheme.colorScheme.onTertiaryContainer }
+    ),
+    HomeNavItem(
+        Sandbox,
+        "Test Sandbox",
+        "Interactive preview and preset comparison playground",
+        Icons.Rounded.Science,
+        containerColor = { MaterialTheme.colorScheme.primaryContainer },
+        iconColor = { MaterialTheme.colorScheme.onPrimaryContainer }
+    ),
+    HomeNavItem(
+        AppRules,
+        "Per-App Rules",
+        "Customize floating pill behavior per installed app",
+        Icons.Rounded.Apps,
+        containerColor = { MaterialTheme.colorScheme.surfaceContainerHighest },
+        iconColor = { MaterialTheme.colorScheme.onSurface }
+    ),
+    HomeNavItem(
+        Appearance,
+        "Appearance & Language",
+        "Theme mode and offline rule engine dictionary",
+        Icons.Rounded.Palette,
+        containerColor = { MaterialTheme.colorScheme.surfaceContainerHighest },
+        iconColor = { MaterialTheme.colorScheme.onSurface }
+    )
 )
 
 @Composable
-private fun NavCard(navItem: HomeNavItem, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = Modifier.fillMaxWidth()
+private fun GroupedNavRow(
+    navItem: HomeNavItem,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(navItem.containerColor()),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier.size(38.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = navItem.icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(navItem.title, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                Text(navItem.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Icon(imageVector = Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                imageVector = navItem.icon,
+                contentDescription = null,
+                tint = navItem.iconColor(),
+                modifier = Modifier.size(20.dp)
+            )
         }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = navItem.title,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = navItem.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Icon(
+            imageVector = Icons.Rounded.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -288,7 +437,7 @@ private fun NavCard(navItem: HomeNavItem, onClick: () -> Unit) {
 private fun SectionLabel(text: String) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
         color = MaterialTheme.colorScheme.primary
     )
 }

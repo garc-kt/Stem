@@ -1,7 +1,6 @@
 package com.veggiebit.sprout.features.settings.ui.sections
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -55,10 +56,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.veggiebit.sprout.app.theme.SproutLargeIncreasedShape
 import com.veggiebit.sprout.features.enhancement.data.api.ClaudeClient
 import com.veggiebit.sprout.features.enhancement.data.api.GeminiClient
 import com.veggiebit.sprout.features.enhancement.data.api.OpenAIClient
@@ -112,11 +115,11 @@ fun EngineScreen(
                 .padding(20.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = SproutLargeIncreasedShape,
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp).selectableGroup()) {
                     EngineMode.entries.forEach { mode ->
                         val isSelected = userSettings.engineMode == mode
                         val icon: ImageVector = when (mode) {
@@ -134,7 +137,11 @@ fun EngineScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
-                                .clickable { onSelectEngineMode(mode) }
+                                .selectable(
+                                    selected = isSelected,
+                                    role = Role.RadioButton,
+                                    onClick = { onSelectEngineMode(mode) }
+                                )
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
@@ -169,9 +176,13 @@ fun EngineScreen(
                                     )
                                 }
                                 if (isSelected) {
+                                    // No contentDescription here — Modifier.selectable above
+                                    // already exposes selected/RadioButton state to TalkBack,
+                                    // so labeling this decorative checkmark too would announce
+                                    // "selected" twice.
                                     Icon(
                                         imageVector = Icons.Rounded.CheckCircle,
-                                        contentDescription = "Selected",
+                                        contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -237,7 +248,10 @@ fun EngineScreen(
                                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                         trailingIcon = {
                                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                                                Icon(imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility, contentDescription = null)
+                                                Icon(
+                                                    imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                                                    contentDescription = if (isPasswordVisible) "Hide API key" else "Show API key"
+                                                )
                                             }
                                         },
                                         modifier = Modifier.fillMaxWidth().onFocusChanged {
@@ -291,7 +305,10 @@ fun EngineScreen(
                                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                         trailingIcon = {
                                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                                                Icon(imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility, contentDescription = null)
+                                                Icon(
+                                                    imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                                                    contentDescription = if (isPasswordVisible) "Hide API key" else "Show API key"
+                                                )
                                             }
                                         },
                                         modifier = Modifier.fillMaxWidth().onFocusChanged {
@@ -333,7 +350,10 @@ fun EngineScreen(
                                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                         trailingIcon = {
                                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                                                Icon(imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility, contentDescription = null)
+                                                Icon(
+                                                    imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                                                    contentDescription = if (isPasswordVisible) "Hide API key" else "Show API key"
+                                                )
                                             }
                                         },
                                         modifier = Modifier.fillMaxWidth().onFocusChanged {

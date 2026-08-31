@@ -34,7 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.veggiebit.sprout.app.theme.SproutLargeIncreasedShape
 
 /**
  * High-craft Material 3 Step Card for system permissions.
@@ -58,13 +58,13 @@ fun PermissionStepCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(SproutLargeIncreasedShape)
             .border(
                 width = 1.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(20.dp)
+                shape = SproutLargeIncreasedShape
             ),
-        shape = RoundedCornerShape(20.dp),
+        shape = SproutLargeIncreasedShape,
         color = if (isGranted) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column(
@@ -111,10 +111,7 @@ fun PermissionStepCard(
                     ) {
                         Text(
                             text = "Step $stepNumber: $title",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
-                            ),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
 

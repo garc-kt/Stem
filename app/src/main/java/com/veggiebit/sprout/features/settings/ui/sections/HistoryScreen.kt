@@ -234,8 +234,7 @@ fun HistoryScreen(
                                 Text(
                                     text = snapshot.originalText,
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        textDecoration = TextDecoration.LineThrough,
-                                        fontSize = 12.5.sp
+                                        textDecoration = TextDecoration.LineThrough
                                     ),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                     maxLines = 2
@@ -245,11 +244,7 @@ fun HistoryScreen(
 
                                 Text(
                                     text = snapshot.replacedText,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 14.5.sp,
-                                        lineHeight = 20.sp
-                                    ),
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                                     color = MaterialTheme.colorScheme.onSurface,
                                     maxLines = 4
                                 )
@@ -291,8 +286,7 @@ fun HistoryScreen(
                                         onClick = {
                                             onCopy(snapshot.replacedText)
                                             recentlyCopiedId = snapshot.id
-                                        },
-                                        modifier = Modifier.size(36.dp)
+                                        }
                                     ) {
                                         Icon(
                                             imageVector = if (isCopied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,

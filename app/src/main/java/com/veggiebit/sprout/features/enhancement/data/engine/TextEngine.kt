@@ -9,5 +9,4 @@ import com.veggiebit.sprout.features.enhancement.data.models.TransformResult
  */
 interface TextEngine {
     suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult
-    suspend fun generateAllSuggestions(payload: TextPayload): Map<TransformPreset, TransformResult>
 }

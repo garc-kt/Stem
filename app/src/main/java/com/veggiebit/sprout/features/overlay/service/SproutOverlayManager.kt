@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.Toast
@@ -263,7 +264,8 @@ class SproutOverlayManager(
             view.onResume()
             isViewAttached = true
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to attach overlay window", e)
+            isViewAttached = false
         }
     }
 
@@ -353,7 +355,12 @@ class SproutOverlayManager(
         layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
         layoutParams.x = 0
         layoutParams.y = maxOf(60, (displayMetrics.heightPixels * 0.35).toInt())
-        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+        // FLAG_NOT_FOCUSABLE must stay set here too (as it is on the collapsed pill below) —
+        // without it this window can take input/IME focus away from the text field the user
+        // is actively editing in the host app underneath. Touches on the panel's own views
+        // still work fine with the flag set; only keyboard/IME focus stealing is prevented.
+        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         updateViewLayout()
     }
@@ -372,7 +379,11 @@ class SproutOverlayManager(
             try {
                 windowManager.updateViewLayout(composeView, layoutParams)
             } catch (e: Exception) {
-                e.printStackTrace()
+                // The window may have been force-detached by the system (e.g. overlay
+                // permission revoked mid-session). Mark it detached so the next show()
+                // re-attaches instead of silently doing nothing forever.
+                Log.e(TAG, "Failed to update overlay window layout", e)
+                isViewAttached = false
             }
         }
     }
@@ -381,5 +392,9 @@ class SproutOverlayManager(
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("Sprout Text", text)
         clipboard.setPrimaryClip(clip)
+    }
+
+    private companion object {
+        private const val TAG = "SproutOverlayManager"
     }
 }

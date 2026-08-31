@@ -43,18 +43,36 @@ object AccessibilityUtils {
         }
 
         val directFocus = root.findFocus(AccessibilityNodeInfoCompat.FOCUS_INPUT)
-        if (directFocus != null && isEditableNode(directFocus)) {
-            return directFocus
+        if (directFocus != null) {
+            if (isEditableNode(directFocus)) {
+                return directFocus
+            }
+            // Obtained via findFocus() but not what we need — must recycle before falling
+            // through, or it leaks (see findEditableNodeBounded's doc for why this matters).
+            directFocus.recycle()
         }
 
         return findEditableNodeBounded(root)
     }
 
+    /**
+     * Every [AccessibilityNodeInfoCompat] obtained via [AccessibilityNodeInfoCompat.getChild]
+     * must be recycled by whoever obtained it once it's no longer needed — on API < 33 these
+     * come from a small, finite per-process object pool (recycle() is a documented no-op from
+     * 33 onward, but minSdk here is 26). This walk fires on every keystroke via
+     * [AccessibilityUtils.findFocusedEditableNode], so an unbounded leak here can exhaust that
+     * pool mid-session on older API levels. [root] is caller-owned and is never recycled here.
+     */
     private fun findEditableNodeBounded(root: AccessibilityNodeInfoCompat): AccessibilityNodeInfoCompat? {
         val queue = ArrayDeque<Pair<AccessibilityNodeInfoCompat, Int>>()
+        // Keyed by identity so a node reachable via more than one path is recycled exactly
+        // once, and recycling only happens after the walk fully completes — never while a
+        // node might still be sitting unprocessed in the queue.
+        val obtainedChildren = LinkedHashMap<Int, AccessibilityNodeInfoCompat>()
         val visitedIdentities = HashSet<Int>()
         queue.add(root to 0)
         var visitedCount = 0
+        var result: AccessibilityNodeInfoCompat? = null
 
         while (queue.isNotEmpty() && visitedCount < MAX_VISITED_NODES) {
             val (node, depth) = queue.removeFirst()
@@ -64,17 +82,26 @@ object AccessibilityUtils {
             visitedCount++
 
             if (node.isFocused && isEditableNode(node)) {
-                return node
+                result = node
+                break
             }
 
-            if (depth >= MAX_SEARCH_DEPTH) continue
-
-            for (i in 0 until node.childCount) {
-                val child = node.getChild(i) ?: continue
-                queue.add(child to depth + 1)
+            if (depth < MAX_SEARCH_DEPTH) {
+                for (i in 0 until node.childCount) {
+                    val child = node.getChild(i) ?: continue
+                    queue.add(child to depth + 1)
+                    if (child !== root) {
+                        obtainedChildren[System.identityHashCode(child)] = child
+                    }
+                }
             }
         }
-        return null
+
+        val resultIdentity = result?.let { System.identityHashCode(it) }
+        for ((identity, node) in obtainedChildren) {
+            if (identity != resultIdentity) node.recycle()
+        }
+        return result
     }
 
     /**

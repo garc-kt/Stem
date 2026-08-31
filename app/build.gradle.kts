@@ -33,6 +33,20 @@ val semVerName = buildString {
     }
 }
 
+// Release signing: never committed. Populate keystore.properties locally (see
+// keystore.properties.example) or inject the same keys as env vars in CI. Falls back to
+// debug signing when absent so local `assembleRelease` still works during development —
+// a release built that way is NOT suitable for Play Store upload.
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) {
+        FileInputStream(keystorePropsFile).use { load(it) }
+    }
+}
+fun keystoreProp(key: String): String? =
+    keystoreProps.getProperty(key) ?: System.getenv(key)
+val hasReleaseSigning = keystoreProp("RELEASE_STORE_FILE") != null
+
 android {
     namespace = "com.veggiebit.sprout"
     compileSdk = 36
@@ -49,10 +63,21 @@ android {
         buildConfigField("String", "SEMVER_NAME", "\"$semVerName\"")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(keystoreProp("RELEASE_STORE_FILE")!!)
+                storePassword = keystoreProp("RELEASE_STORE_PASSWORD")
+                keyAlias = keystoreProp("RELEASE_KEY_ALIAS")
+                keyPassword = keystoreProp("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
@@ -121,7 +146,6 @@ dependencies {
 
   // Networking & Serialization (for Ollama Local AI integration)
   implementation(libs.okhttp)
-  implementation(libs.okhttp.logging)
   implementation(libs.kotlinx.serialization.json)
 
   // Navigation

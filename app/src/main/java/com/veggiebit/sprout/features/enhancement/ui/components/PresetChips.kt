@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.veggiebit.sprout.app.theme.SproutChipShape
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 
 /**
@@ -41,12 +41,12 @@ fun PresetChipsRow(
             FilterChip(
                 selected = isSelected,
                 onClick = { onPresetSelected(preset) },
+                shape = SproutChipShape,
                 label = {
                     Text(
                         text = "${preset.emoji} ${preset.title}",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            fontSize = 13.sp
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     )
                 },

@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.veggiebit.sprout.app.theme.SproutLargeIncreasedShape
 import com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
@@ -79,7 +80,7 @@ fun SandboxScreen(
                 .padding(20.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = SproutLargeIncreasedShape,
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 modifier = Modifier.fillMaxWidth()
             ) {

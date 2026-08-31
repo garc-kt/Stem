@@ -20,15 +20,20 @@ object LocalRuleEngine : TextEngine {
     /**
      * Set by [TextEngineProvider] right before each call. LocalRuleEngine is a stateless
      * singleton reused everywhere in the app, so this is the least invasive way to thread the
-     * user's language preference through without changing the [TextEngine] interface (which
-     * all five engines and the existing test suite depend on) — every caller resolves the
-     * engine and immediately calls transform()/generateAllSuggestions() within the same
-     * coroutine, so there's no real race in practice. AUTO detects per-call from the text.
+     * user's language preference into [transform] without changing the [TextEngine] interface
+     * (which all five engines and the existing test suite depend on).
+     * [transform] captures this into a local val before its `withContext` dispatch so a
+     * concurrent caller changing it on another thread can't affect an in-flight call. The
+     * per-preset `applyXxx` functions below take [LanguageRules] as a required parameter
+     * instead of reading this var, so they can never silently pick up a stale/wrong value —
+     * see [resolveRules].
      */
     var languagePreference: LanguagePreference = LanguagePreference.AUTO
 
-    private fun resolveRules(text: String): LanguageRules {
-        val effective = when (languagePreference) {
+    /** Resolves which [LanguageRules] to use for [text] given an explicit [preference],
+     * detecting from the text itself when [preference] is [LanguagePreference.AUTO]. */
+    fun resolveRules(text: String, preference: LanguagePreference): LanguageRules {
+        val effective = when (preference) {
             LanguagePreference.AUTO -> LanguageDetector.detect(text)
             LanguagePreference.ENGLISH -> DetectedLanguage.ENGLISH
             LanguagePreference.SPANISH -> DetectedLanguage.SPANISH
@@ -72,44 +77,44 @@ object LocalRuleEngine : TextEngine {
         }
     }
 
-    override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.Default) {
-        val original = payload.text
-        if (original.isBlank()) {
-            return@withContext TransformResult(original, original, preset, emptyList())
-        }
+    override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult {
+        // Captured synchronously before the withContext dispatch below, so a concurrent
+        // caller overwriting languagePreference on another thread can't change which
+        // language this already-in-flight call resolves to.
+        val preference = languagePreference
+        return withContext(Dispatchers.Default) {
+            val original = payload.text
+            if (original.isBlank()) {
+                return@withContext TransformResult(original, original, preset, emptyList())
+            }
 
-        val rules = resolveRules(original)
-        val transformed = when (preset) {
-            TransformPreset.FIX -> applyFixAndPolish(original, rules)
-            TransformPreset.CONCISE -> applyConcise(original, rules)
-            TransformPreset.PROFESSIONAL -> applyProfessional(original, rules)
-            TransformPreset.PUNCHY -> applyPunchy(original, rules)
-            TransformPreset.FRIENDLY -> applyFriendly(original, rules)
-            TransformPreset.SUMMARIZE -> applySummarize(original, rules)
-            TransformPreset.BULLETIZE -> applyBulletize(original, rules)
-            TransformPreset.EXPAND -> applyExpand(original, rules)
-            // No local model to follow an arbitrary instruction — best-effort Fix & Polish,
-            // with the summary note (below) making clear this preset needs an AI engine.
-            TransformPreset.CUSTOM -> applyFixAndPolish(original, rules)
-        }
+            val rules = resolveRules(original, preference)
+            val transformed = when (preset) {
+                TransformPreset.FIX -> applyFixAndPolish(original, rules)
+                TransformPreset.CONCISE -> applyConcise(original, rules)
+                TransformPreset.PROFESSIONAL -> applyProfessional(original, rules)
+                TransformPreset.PUNCHY -> applyPunchy(original, rules)
+                TransformPreset.FRIENDLY -> applyFriendly(original, rules)
+                TransformPreset.SUMMARIZE -> applySummarize(original, rules)
+                TransformPreset.BULLETIZE -> applyBulletize(original, rules)
+                TransformPreset.EXPAND -> applyExpand(original, rules)
+                // No local model to follow an arbitrary instruction — best-effort Fix & Polish,
+                // with the summary note (below) making clear this preset needs an AI engine.
+                TransformPreset.CUSTOM -> applyFixAndPolish(original, rules)
+            }
 
-        val diff = DiffCalculator.calculateDiff(original, transformed)
-        TransformResult(
-            originalText = original,
-            transformedText = transformed,
-            preset = preset,
-            diffTokens = diff,
-            summaryNote = buildSummaryNote(preset, original, transformed)
-        )
+            val diff = DiffCalculator.calculateDiff(original, transformed)
+            TransformResult(
+                originalText = original,
+                transformedText = transformed,
+                preset = preset,
+                diffTokens = diff,
+                summaryNote = buildSummaryNote(preset, original, transformed)
+            )
+        }
     }
 
-    override suspend fun generateAllSuggestions(payload: TextPayload): Map<TransformPreset, TransformResult> = withContext(Dispatchers.Default) {
-        TransformPreset.entries.associateWith { preset ->
-            transform(payload, preset)
-        }
-    }
-
-    fun applyFixAndPolish(input: String, rules: LanguageRules = resolveRules(input)): String {
+    fun applyFixAndPolish(input: String, rules: LanguageRules): String {
         // Emails, URLs, handles, decimals, and abbreviations must survive the punctuation and
         // capitalization rules below untouched — protect them first, restore at the end.
         val (protectedInput, savedSpans) = protectSpans(input, rules)
@@ -144,7 +149,7 @@ object LocalRuleEngine : TextEngine {
         return text.trim()
     }
 
-    fun applyConcise(input: String, rules: LanguageRules = resolveRules(input)): String {
+    fun applyConcise(input: String, rules: LanguageRules): String {
         var text = applyFixAndPolish(input, rules)
 
         for ((wordy, concise) in rules.wordyPhrases) {
@@ -163,7 +168,7 @@ object LocalRuleEngine : TextEngine {
         return text.trim()
     }
 
-    fun applyProfessional(input: String, rules: LanguageRules = resolveRules(input)): String {
+    fun applyProfessional(input: String, rules: LanguageRules): String {
         var text = applyFixAndPolish(input, rules)
 
         for ((casual, formal) in rules.formalReplacements) {
@@ -178,7 +183,7 @@ object LocalRuleEngine : TextEngine {
         return text.trim()
     }
 
-    fun applyPunchy(input: String, rules: LanguageRules = resolveRules(input)): String {
+    fun applyPunchy(input: String, rules: LanguageRules): String {
         var text = applyFixAndPolish(input, rules)
 
         for ((starter, punchy) in rules.punchyStarters) {
@@ -197,7 +202,7 @@ object LocalRuleEngine : TextEngine {
         return text.trim()
     }
 
-    fun applyFriendly(input: String, rules: LanguageRules = resolveRules(input)): String {
+    fun applyFriendly(input: String, rules: LanguageRules): String {
         var text = applyFixAndPolish(input, rules)
 
         for ((formal, casual) in rules.friendlyReplacements) {
@@ -215,7 +220,7 @@ object LocalRuleEngine : TextEngine {
     /** Approximate, offline-only summary: keeps the opening sentence plus any sentence carrying
      * a strong signal word (numbers, deadlines, action verbs). Honestly labeled as approximate
      * via [TransformPreset.isOfflineApproximate] — a real summary needs an AI engine. */
-    fun applySummarize(input: String, rules: LanguageRules = resolveRules(input)): String {
+    fun applySummarize(input: String, rules: LanguageRules): String {
         val polished = applyFixAndPolish(input, rules)
         val sentences = splitSentences(polished)
         if (sentences.size <= 2) return polished
@@ -235,7 +240,7 @@ object LocalRuleEngine : TextEngine {
 
     /** Splits terse/coordinated sentences into a bullet list — a structural rewrite, not a
      * content generator, so it stays honest at [TransformPreset.isOfflineApproximate]. */
-    fun applyBulletize(input: String, rules: LanguageRules = resolveRules(input)): String {
+    fun applyBulletize(input: String, rules: LanguageRules): String {
         val polished = applyFixAndPolish(input, rules)
         val sentences = splitSentences(polished)
         if (sentences.isEmpty()) return polished
@@ -252,7 +257,7 @@ object LocalRuleEngine : TextEngine {
     /** Offline "expand" is necessarily modest: it spells out common abbreviations/contractions
      * and adds a connective lead-in rather than inventing new content — see
      * [TransformPreset.isOfflineApproximate]. */
-    fun applyExpand(input: String, rules: LanguageRules = resolveRules(input)): String {
+    fun applyExpand(input: String, rules: LanguageRules): String {
         var text = applyFixAndPolish(input, rules)
 
         val expansions = mapOf(

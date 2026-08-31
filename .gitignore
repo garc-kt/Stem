@@ -12,3 +12,11 @@ build/
 local.properties
 .kotlin
 *.apk
+keystore.properties
+*.jks
+*.keystore
+
+# Local Claude Code tooling state (skill cache, agent scratch) - not project source
+/.claude
+/.agents
+skills-lock.json

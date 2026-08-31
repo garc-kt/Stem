@@ -9,8 +9,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +67,21 @@ fun DiffViewer(
         }
     }
 
+    // TalkBack would otherwise read added/removed text run together as one flat string with
+    // no indication of what actually changed (the strikethrough/bold/color cues are visual
+    // only) — this spells out the change explicitly for screen-reader users.
+    val accessibilitySummary = remember(diffTokens) {
+        buildString {
+            diffTokens.forEach { token ->
+                when (token.type) {
+                    DiffType.UNMODIFIED -> append(token.text)
+                    DiffType.ADDED -> append(" added: ${token.text} ")
+                    DiffType.DELETED -> append(" removed: ${token.text} ")
+                }
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -75,13 +93,11 @@ fun DiffViewer(
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(14.dp)
+            .clearAndSetSemantics { contentDescription = accessibilitySummary }
     ) {
         Text(
             text = annotatedString,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                lineHeight = 24.sp,
-                fontSize = 14.5.sp
-            ),
+            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 24.sp),
             color = MaterialTheme.colorScheme.onSurface
         )
     }

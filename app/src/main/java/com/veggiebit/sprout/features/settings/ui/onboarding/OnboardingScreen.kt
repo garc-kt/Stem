@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Spa
@@ -42,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -73,7 +75,13 @@ fun OnboardingScreen(
             .padding(24.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                // The individual bars are purely decorative (no meaningful state of their
+                // own to a screen reader) — without this the whole progress indicator is
+                // silently skipped by TalkBack, so first-run onboarding never announces
+                // "step 1 of 3" the way the visible bars imply.
+                .clearAndSetSemantics { contentDescription = "Step ${step + 1} of $totalSteps" },
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             repeat(totalSteps) { index ->
@@ -160,7 +168,7 @@ fun OnboardingScreen(
                 Text(if (step < totalSteps - 1) "Continue" else "Get Started")
                 Spacer(modifier = Modifier.width(6.dp))
                 Icon(
-                    imageVector = if (step < totalSteps - 1) Icons.Rounded.ArrowForward else Icons.Rounded.CheckCircle,
+                    imageVector = if (step < totalSteps - 1) Icons.AutoMirrored.Rounded.ArrowForward else Icons.Rounded.CheckCircle,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )

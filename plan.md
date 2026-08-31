@@ -123,9 +123,17 @@ This illustrative tree predates the actual `features/{enhancement,overlay,select
 
 ### 4.3 Zero-Telemetry Policy
 
-* No internet permissions (`android.permission.INTERNET` omitted or strictly isolated).
+* No first-party analytics, crash reporting, or usage tracking of any kind.
+* `INTERNET`/`ACCESS_NETWORK_STATE` are declared and used, but only for the cloud AI engine
+  modes (Gemini/OpenAI-compatible/Claude) the user explicitly opts into in Settings — the
+  default `LOCAL_RULES` engine and Ollama (LAN-only) never leave the device. When a cloud
+  engine is selected, the text being transformed is sent directly to that provider's API;
+  this is inherent to choosing a cloud engine, not hidden telemetry. `NetworkSecurityConfig`
+  restricts cleartext traffic to the LAN Ollama case.
 * All text buffer parsing remains in volatile memory.
-* Zero storage persistence of user-typed content.
+* Zero storage persistence of user-typed content. API keys are Keystore-encrypted
+  (`CryptoBox`) and excluded from backup/device-transfer (`backup_rules.xml`,
+  `data_extraction_rules.xml`).
 
 ---
 

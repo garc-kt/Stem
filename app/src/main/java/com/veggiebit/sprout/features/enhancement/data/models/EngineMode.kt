@@ -18,25 +18,25 @@ enum class EngineMode(
     OLLAMA_AI(
         id = "ollama_ai",
         title = "Ollama Local AI (PC / LAN)",
-        description = "Connects over Wi-Fi to Ollama on your PC (Llama 3.2, Mistral, Gemma 2).",
+        description = "Connects over Wi-Fi to Ollama on your PC (Llama 3.3, Mistral, Gemma 2).",
         isCloud = false
     ),
     GEMINI_AI(
         id = "gemini_ai",
         title = "Google Gemini",
-        description = "Ultra-fast text enhancement using Google Gemini 2.0 / 1.5 Flash API.",
+        description = "Ultra-fast text enhancement using Google Gemini 3.7 Flash and newer.",
         isCloud = true
     ),
     OPENAI_COMPATIBLE(
         id = "openai_compatible",
         title = "OpenAI / OpenRouter / DeepSeek",
-        description = "GPT-4o, DeepSeek, Groq, or any OpenAI-compatible API endpoint.",
+        description = "GPT-5, DeepSeek, Groq, or any OpenAI-compatible API endpoint.",
         isCloud = true
     ),
     CLAUDE_AI(
         id = "claude_ai",
         title = "Anthropic Claude",
-        description = "High-precision writing enhancement using Claude 3.5 Sonnet & Haiku.",
+        description = "High-precision writing enhancement using Claude 4.5 Sonnet and newer.",
         isCloud = true
     );
 
