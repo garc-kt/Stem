@@ -502,7 +502,7 @@ fun EngineScreen(
 
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "Injected into all AI transformations to elevate phrasing, style, and tone beyond standard grammar fixes.",
+                                        text = "Injected into every preset to elevate phrasing, style, and tone beyond standard grammar fixes — and becomes the full instruction when you pick the Custom preset.",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -657,32 +657,6 @@ fun EngineScreen(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Custom Prompt",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = "Used by the Custom preset — write your own instruction and any AI engine will follow it (local rules apply Fix & Polish instead, since there's no model to interpret it).",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            OutlinedTextField(
-                value = customPromptInput,
-                onValueChange = { customPromptInput = it },
-                modifier = Modifier.fillMaxWidth().onFocusChanged {
-                    if (!it.isFocused) onSaveCustomPromptInstruction(customPromptInput)
-                },
-                placeholder = { Text("e.g. \"Rewrite as a haiku\" or \"Translate to French\"") },
-                shape = RoundedCornerShape(12.dp),
-                minLines = 2
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
