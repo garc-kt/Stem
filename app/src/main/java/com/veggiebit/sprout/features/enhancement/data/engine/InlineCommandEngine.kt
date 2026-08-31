@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.engine
+package com.veggiebit.sprout.features.enhancement.data.engine
 
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 import java.text.SimpleDateFormat
@@ -9,18 +9,32 @@ object InlineCommandEngine {
 
     sealed class CommandResult {
         data class Replaced(val newText: String, val summary: String) : CommandResult()
+        data class RunAIPreset(val body: String, val preset: TransformPreset, val summary: String) : CommandResult()
+        data class RunAIPrompt(val body: String, val customPrompt: String, val summary: String) : CommandResult()
         data class SaveSnippet(val key: String, val expansion: String, val cleanedText: String) : CommandResult()
+        data class SaveCustomCommand(val trigger: String, val prompt: String, val cleanedText: String) : CommandResult()
         object None : CommandResult()
     }
 
     fun evaluate(
         text: String,
         nodeHashCode: Int,
-        snippets: Map<String, String> = emptyMap()
+        snippets: Map<String, String> = emptyMap(),
+        customCommands: Map<String, String> = emptyMap()
     ): CommandResult {
         val trimmed = text.trimEnd()
 
-        // 1. Quick Save Snippet: ..save:key:expansion or .save:key:expansion
+        // 1. Quick Save Custom Command: ..cmd:name:prompt or ..savecmd:name:prompt or ?cmd:name:prompt
+        val cmdRegex = Regex("(?:\\.\\.cmd:|\\.cmd:|\\?cmd:|\\.\\.savecmd:)([a-zA-Z0-9_-]+):(.+)$", RegexOption.IGNORE_CASE)
+        val cmdMatch = cmdRegex.find(trimmed)
+        if (cmdMatch != null) {
+            val trigger = cmdMatch.groupValues[1]
+            val prompt = cmdMatch.groupValues[2]
+            val prefix = trimmed.substring(0, cmdMatch.range.first).trimEnd()
+            return CommandResult.SaveCustomCommand(trigger, prompt, prefix)
+        }
+
+        // 2. Quick Save Snippet: ..save:key:expansion or .save:key:expansion
         val saveRegex = Regex("(?:\\.\\.save:|\\.save:)([a-zA-Z0-9_-]+):(.+)$", RegexOption.IGNORE_CASE)
         val saveMatch = saveRegex.find(trimmed)
         if (saveMatch != null) {
@@ -30,7 +44,37 @@ object InlineCommandEngine {
             return CommandResult.SaveSnippet(key, expansion, prefix)
         }
 
-        // 2. Snippet Expansions: ..key or .key
+        // 3. Dynamic On-The-Fly Custom AI Prompt: [body] ?ai: [custom prompt] or ?prompt: [custom prompt]
+        val dynamicAIRegex = Regex("(?:\\?ai:|\\?prompt:|\\?do:|\\.ai:)\\s*(.+)$", RegexOption.IGNORE_CASE)
+        val dynamicMatch = dynamicAIRegex.find(trimmed)
+        if (dynamicMatch != null) {
+            val prompt = dynamicMatch.groupValues[1].trim()
+            val body = trimmed.substring(0, dynamicMatch.range.first).trimEnd()
+            if (prompt.isNotBlank() && body.isNotBlank()) {
+                return CommandResult.RunAIPrompt(body, prompt, "AI: $prompt")
+            }
+        }
+
+        // 4. Custom User-Defined AI Commands: ?trigger or ..trigger or .trigger
+        for ((trigger, prompt) in customCommands) {
+            val qTrigger = "?$trigger"
+            val dotDotTrigger = "..$trigger"
+            val dotTrigger = ".$trigger"
+            val matchedTrigger = when {
+                trimmed.endsWith(qTrigger, ignoreCase = true) -> qTrigger
+                trimmed.endsWith(dotDotTrigger, ignoreCase = true) -> dotDotTrigger
+                trimmed.endsWith(dotTrigger, ignoreCase = true) -> dotTrigger
+                else -> null
+            }
+            if (matchedTrigger != null) {
+                val body = trimmed.substring(0, trimmed.length - matchedTrigger.length).trimEnd()
+                if (body.isNotBlank()) {
+                    return CommandResult.RunAIPrompt(body, prompt, "Applied ?$trigger")
+                }
+            }
+        }
+
+        // 5. Snippet Expansions: ..key or .key
         for ((key, expansion) in snippets) {
             val dotDotTrigger = "..$key"
             val dotTrigger = ".$key"
@@ -45,7 +89,7 @@ object InlineCommandEngine {
             }
         }
 
-        // 3. Undo trigger: ?undo or .undo
+        // 6. Undo trigger: ?undo or .undo
         if (trimmed.endsWith("?undo", ignoreCase = true) || trimmed.endsWith(".undo", ignoreCase = true)) {
             val previous = TransformHistory.popUndo(nodeHashCode) ?: TransformHistory.popUndo()
             if (previous != null) {
@@ -53,7 +97,7 @@ object InlineCommandEngine {
             }
         }
 
-        // 4. Date/Time triggers: ?now, ?date, .now, .date
+        // 7. Date/Time triggers: ?now, ?date, .now, .date
         if (trimmed.endsWith("?now", ignoreCase = true) || trimmed.endsWith(".now", ignoreCase = true)) {
             val formatted = SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()).format(Date())
             val prefix = trimmed.removeSuffix("?now").removeSuffix("?Now").removeSuffix(".now").removeSuffix(".Now").trimEnd()
@@ -68,7 +112,7 @@ object InlineCommandEngine {
             return CommandResult.Replaced(newText, "Inserted date")
         }
 
-        // 5. Calculator triggers: ?calc: 25 * 4 + 10 or .c: 25 * 4 + 10
+        // 8. Calculator triggers: ?calc: 25 * 4 + 10 or .c: 25 * 4 + 10
         val calcRegex = Regex("(?:\\?calc:|\\.c:)\\s*([0-9+\\-*/().^%\\s]+)$", RegexOption.IGNORE_CASE)
         val calcMatch = calcRegex.find(trimmed)
         if (calcMatch != null) {
@@ -82,7 +126,7 @@ object InlineCommandEngine {
             }
         }
 
-        // 6. Preset triggers: ?fix, ?concise, ?shorten, ?formal, ?punchy
+        // 9. Standard Preset triggers: ?fix, ?concise, ?shorten, ?formal, ?punchy, etc.
         val triggerMap = listOf(
             Regex("(?:\\?fix|\\.fix)$", RegexOption.IGNORE_CASE) to TransformPreset.FIX,
             Regex("(?:\\?concise|\\.concise|\\?shorten|\\.shorten)$", RegexOption.IGNORE_CASE) to TransformPreset.CONCISE,
@@ -99,18 +143,7 @@ object InlineCommandEngine {
             if (match != null) {
                 val body = trimmed.substring(0, match.range.first).trimEnd()
                 if (body.isNotBlank()) {
-                    val transformed = when (preset) {
-                        TransformPreset.FIX -> LocalRuleEngine.applyFixAndPolish(body)
-                        TransformPreset.CONCISE -> LocalRuleEngine.applyConcise(body)
-                        TransformPreset.PROFESSIONAL -> LocalRuleEngine.applyProfessional(body)
-                        TransformPreset.PUNCHY -> LocalRuleEngine.applyPunchy(body)
-                        TransformPreset.FRIENDLY -> LocalRuleEngine.applyFriendly(body)
-                        TransformPreset.SUMMARIZE -> LocalRuleEngine.applySummarize(body)
-                        TransformPreset.BULLETIZE -> LocalRuleEngine.applyBulletize(body)
-                        TransformPreset.EXPAND -> LocalRuleEngine.applyExpand(body)
-                        TransformPreset.CUSTOM -> LocalRuleEngine.applyFixAndPolish(body)
-                    }
-                    return CommandResult.Replaced(transformed, "Applied ${preset.title}")
+                    return CommandResult.RunAIPreset(body, preset, "Applied ${preset.title}")
                 }
             }
         }

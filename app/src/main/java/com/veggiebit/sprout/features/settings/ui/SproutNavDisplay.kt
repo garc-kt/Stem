@@ -115,8 +115,11 @@ fun SproutNavDisplay(
             entry<Snippets> {
                 SnippetsScreen(
                     snippets = userSettings.snippets,
+                    customCommands = userSettings.customCommands,
                     onSaveSnippet = viewModel::saveSnippet,
                     onDeleteSnippet = viewModel::deleteSnippet,
+                    onSaveCustomCommand = viewModel::saveCustomCommand,
+                    onDeleteCustomCommand = viewModel::deleteCustomCommand,
                     onBack = { backStack.removeLastOrNull() }
                 )
             }

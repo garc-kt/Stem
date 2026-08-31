@@ -108,4 +108,13 @@ class AIEnginesTest {
         val engineClaude = TextEngineProvider.getEngine(settingsClaude)
         assertTrue(engineClaude is ClaudeRuleEngine)
     }
+
+    @Test
+    fun testMasterEnhancementDirectiveInSystemPrompt() {
+        val promptWithout = GeminiRuleEngine.getSystemPrompt(TransformPreset.FIX, "")
+        assertTrue(promptWithout.contains("master writing editor"))
+
+        val promptWith = GeminiRuleEngine.getSystemPrompt(TransformPreset.FIX, "Always write in British English")
+        assertTrue(promptWith.contains("ADDITIONAL MASTER DIRECTIVE: Always write in British English"))
+    }
 }

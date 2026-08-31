@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement
+package com.veggiebit.sprout.features.enhancement
 
 import com.veggiebit.sprout.features.enhancement.data.engine.InlineCommandEngine
 import com.veggiebit.sprout.features.enhancement.data.engine.TransformHistory
@@ -19,9 +19,10 @@ class InlineCommandEngineTest {
         val input = "i think teh meeting is tommorow ?fix"
         val result = InlineCommandEngine.evaluate(input, 123)
 
-        assertTrue(result is InlineCommandEngine.CommandResult.Replaced)
-        val replaced = (result as InlineCommandEngine.CommandResult.Replaced).newText
-        assertTrue(replaced.contains("I think the meeting is tomorrow"))
+        assertTrue(result is InlineCommandEngine.CommandResult.RunAIPreset)
+        val aiResult = result as InlineCommandEngine.CommandResult.RunAIPreset
+        assertEquals("i think teh meeting is tommorow", aiResult.body)
+        assertEquals(com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.FIX, aiResult.preset)
     }
 
     @Test
@@ -29,20 +30,49 @@ class InlineCommandEngineTest {
         val input = "hey can u send me that file ?formal"
         val result = InlineCommandEngine.evaluate(input, 123)
 
-        assertTrue(result is InlineCommandEngine.CommandResult.Replaced)
-        val replaced = (result as InlineCommandEngine.CommandResult.Replaced).newText
-        assertTrue(replaced.contains("Hello"))
-        assertTrue(replaced.contains("provide") || replaced.contains("send"))
+        assertTrue(result is InlineCommandEngine.CommandResult.RunAIPreset)
+        val aiResult = result as InlineCommandEngine.CommandResult.RunAIPreset
+        assertEquals("hey can u send me that file", aiResult.body)
+        assertEquals(com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.PROFESSIONAL, aiResult.preset)
     }
 
     @Test
-    fun testPunchyTrigger() {
-        val input = "i was thinking that maybe we could launch ?punchy"
+    fun testCustomCommandTrigger() {
+        val customCommands = mapOf("roast" to "Rewrite this in a witty roast tone")
+        val input = "That meeting was boring ?roast"
+        val result = InlineCommandEngine.evaluate(
+            text = input,
+            nodeHashCode = 123,
+            customCommands = customCommands
+        )
+
+        assertTrue(result is InlineCommandEngine.CommandResult.RunAIPrompt)
+        val promptResult = result as InlineCommandEngine.CommandResult.RunAIPrompt
+        assertEquals("That meeting was boring", promptResult.body)
+        assertEquals("Rewrite this in a witty roast tone", promptResult.customPrompt)
+    }
+
+    @Test
+    fun testDynamicAIPromptTrigger() {
+        val input = "We launch next Tuesday ?ai: make this sound like an exciting movie trailer"
         val result = InlineCommandEngine.evaluate(input, 123)
 
-        assertTrue(result is InlineCommandEngine.CommandResult.Replaced)
-        val replaced = (result as InlineCommandEngine.CommandResult.Replaced).newText
-        assertTrue(replaced.contains("Let's"))
+        assertTrue(result is InlineCommandEngine.CommandResult.RunAIPrompt)
+        val promptResult = result as InlineCommandEngine.CommandResult.RunAIPrompt
+        assertEquals("We launch next Tuesday", promptResult.body)
+        assertEquals("make this sound like an exciting movie trailer", promptResult.customPrompt)
+    }
+
+    @Test
+    fun testSaveCustomCommandTrigger() {
+        val input = "Notes ..cmd:pirate:Rewrite this in full pirate talk with ahoy"
+        val result = InlineCommandEngine.evaluate(input, 123)
+
+        assertTrue(result is InlineCommandEngine.CommandResult.SaveCustomCommand)
+        val saveResult = result as InlineCommandEngine.CommandResult.SaveCustomCommand
+        assertEquals("pirate", saveResult.trigger)
+        assertEquals("Rewrite this in full pirate talk with ahoy", saveResult.prompt)
+        assertEquals("Notes", saveResult.cleanedText)
     }
 
     @Test

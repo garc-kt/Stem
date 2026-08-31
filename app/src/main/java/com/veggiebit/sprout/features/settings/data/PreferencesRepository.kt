@@ -49,7 +49,8 @@ data class SproutUserSettings(
     val claudeApiKey: String = "",
     val claudeModel: String = "claude-3-7-sonnet-20250219",
     val appRules: Map<String, AppRuleMode> = emptyMap(),
-    val snippets: Map<String, String> = defaultSnippets
+    val snippets: Map<String, String> = defaultSnippets,
+    val customCommands: Map<String, String> = defaultCustomCommands
 ) {
     /** Derived from [appRules] so the accessibility service's existing per-package hide check
      * keeps working unmodified — packages set to NEVER behave exactly like the old blacklist. */
@@ -69,6 +70,14 @@ data class SproutUserSettings(
             "shrug" to "¯\\_(ツ)_/¯",
             "lenny" to "( ͡° ͜ʖ ͡°)",
             "brb" to "Be right back!"
+        )
+
+        val defaultCustomCommands = mapOf(
+            "roast" to "Rewrite this in a witty, humorous roast tone while keeping it funny.",
+            "translate" to "Translate this text into fluent, natural Spanish.",
+            "reply" to "Draft a polite, helpful, and articulate reply to this message.",
+            "poetic" to "Rewrite this in a beautiful, poetic, and eloquent style.",
+            "tldr" to "Give a single punchy TL;DR takeaway sentence for this text."
         )
     }
 }
@@ -100,6 +109,7 @@ class PreferencesRepository(private val context: Context) {
         val BLACKLISTED_PACKAGES = stringPreferencesKey("blacklisted_packages") // legacy, migrated
         val APP_RULES_DATA = stringPreferencesKey("app_rules_data")
         val SNIPPETS_DATA = stringPreferencesKey("snippets_data")
+        val CUSTOM_COMMANDS_DATA = stringPreferencesKey("custom_commands_data")
     }
 
     val settingsFlow: Flow<SproutUserSettings> = context.dataStore.data
@@ -164,6 +174,13 @@ class PreferencesRepository(private val context: Context) {
                 deserializePairs(rawSnippets)
             }
 
+            val rawCustomCommands = preferences[PreferencesKeys.CUSTOM_COMMANDS_DATA]
+            val customCommands = if (rawCustomCommands.isNullOrBlank()) {
+                SproutUserSettings.defaultCustomCommands
+            } else {
+                deserializePairs(rawCustomCommands)
+            }
+
             SproutUserSettings(
                 overlayEnabled = overlayEnabled,
                 defaultPreset = TransformPreset.fromId(defaultPresetId),
@@ -187,7 +204,8 @@ class PreferencesRepository(private val context: Context) {
                 claudeApiKey = claudeApiKey,
                 claudeModel = claudeModel,
                 appRules = appRules,
-                snippets = snippets
+                snippets = snippets,
+                customCommands = customCommands
             )
         }
 
@@ -339,6 +357,34 @@ class PreferencesRepository(private val context: Context) {
             }
             current.remove(key.trim().removePrefix("..").removePrefix("."))
             preferences[PreferencesKeys.SNIPPETS_DATA] = serializePairs(current)
+        }
+    }
+
+    suspend fun saveCustomCommand(trigger: String, prompt: String) {
+        context.dataStore.edit { preferences ->
+            val raw = preferences[PreferencesKeys.CUSTOM_COMMANDS_DATA]
+            val current = if (raw.isNullOrBlank()) {
+                SproutUserSettings.defaultCustomCommands.toMutableMap()
+            } else {
+                deserializePairs(raw).toMutableMap()
+            }
+            val cleanKey = trigger.trim().removePrefix("?").removePrefix("..").removePrefix(".")
+            current[cleanKey] = prompt.trim()
+            preferences[PreferencesKeys.CUSTOM_COMMANDS_DATA] = serializePairs(current)
+        }
+    }
+
+    suspend fun deleteCustomCommand(trigger: String) {
+        context.dataStore.edit { preferences ->
+            val raw = preferences[PreferencesKeys.CUSTOM_COMMANDS_DATA]
+            val current = if (raw.isNullOrBlank()) {
+                SproutUserSettings.defaultCustomCommands.toMutableMap()
+            } else {
+                deserializePairs(raw).toMutableMap()
+            }
+            val cleanKey = trigger.trim().removePrefix("?").removePrefix("..").removePrefix(".")
+            current.remove(cleanKey)
+            preferences[PreferencesKeys.CUSTOM_COMMANDS_DATA] = serializePairs(current)
         }
     }
 

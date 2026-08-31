@@ -103,8 +103,25 @@ class SproutAccessibilityService : AccessibilityService() {
         }
 
         if (isTextChanged) {
-            val inlineResult = InlineCommandEngine.evaluate(payload.text, payload.nodeHashCode, userSettings.snippets)
+            val inlineResult = InlineCommandEngine.evaluate(
+                text = payload.text,
+                nodeHashCode = payload.nodeHashCode,
+                snippets = userSettings.snippets,
+                customCommands = userSettings.customCommands
+            )
             when (inlineResult) {
+                is InlineCommandEngine.CommandResult.SaveCustomCommand -> {
+                    serviceScope.launch {
+                        SproutApplication.instance.preferencesRepository.saveCustomCommand(inlineResult.trigger, inlineResult.prompt)
+                    }
+                    if (userSettings.hapticFeedbackEnabled) {
+                        HapticHelper.performSuccessHaptic(this)
+                    }
+                    injectReplacementText(inlineResult.cleanedText)
+                    Toast.makeText(this, "Sprout: Saved command '?${inlineResult.trigger}'", Toast.LENGTH_SHORT).show()
+                    overlayManager?.hide()
+                    return
+                }
                 is InlineCommandEngine.CommandResult.SaveSnippet -> {
                     serviceScope.launch {
                         SproutApplication.instance.preferencesRepository.saveSnippet(inlineResult.key, inlineResult.expansion)
@@ -124,6 +141,68 @@ class SproutAccessibilityService : AccessibilityService() {
                     injectReplacementText(inlineResult.newText)
                     Toast.makeText(this, "Sprout: ${inlineResult.summary}", Toast.LENGTH_SHORT).show()
                     overlayManager?.hide()
+                    return
+                }
+                is InlineCommandEngine.CommandResult.RunAIPreset -> {
+                    if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.LOCAL_RULES) {
+                        val transformed = when (inlineResult.preset) {
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.FIX -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFixAndPolish(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CONCISE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyConcise(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.PROFESSIONAL -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyProfessional(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.PUNCHY -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyPunchy(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.FRIENDLY -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFriendly(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.SUMMARIZE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applySummarize(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.BULLETIZE -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyBulletize(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.EXPAND -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyExpand(inlineResult.body)
+                            com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CUSTOM -> com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine.applyFixAndPolish(inlineResult.body)
+                        }
+                        if (userSettings.hapticFeedbackEnabled) {
+                            HapticHelper.performSuccessHaptic(this)
+                        }
+                        injectReplacementText(transformed)
+                        Toast.makeText(this, "Sprout: ${inlineResult.summary}", Toast.LENGTH_SHORT).show()
+                        overlayManager?.hide()
+                        return
+                    }
+
+                    if (userSettings.hapticFeedbackEnabled) {
+                        HapticHelper.performClickHaptic(this)
+                    }
+                    Toast.makeText(this, "Sprout: Thinking (${userSettings.engineMode.title})...", Toast.LENGTH_SHORT).show()
+                    overlayManager?.hide()
+
+                    serviceScope.launch {
+                        val engine = com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider.getEngine(userSettings)
+                        val result = engine.transform(com.veggiebit.sprout.features.enhancement.data.models.TextPayload(inlineResult.body), inlineResult.preset)
+                        if (result.transformedText.isNotBlank() && result.transformedText != inlineResult.body) {
+                            if (userSettings.hapticFeedbackEnabled) {
+                                HapticHelper.performSuccessHaptic(this@SproutAccessibilityService)
+                            }
+                            injectReplacementText(result.transformedText)
+                            Toast.makeText(this@SproutAccessibilityService, "Sprout: ${result.summaryNote ?: inlineResult.summary}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    return
+                }
+                is InlineCommandEngine.CommandResult.RunAIPrompt -> {
+                    if (userSettings.hapticFeedbackEnabled) {
+                        HapticHelper.performClickHaptic(this)
+                    }
+                    Toast.makeText(this, "Sprout: Thinking (${userSettings.engineMode.title})...", Toast.LENGTH_SHORT).show()
+                    overlayManager?.hide()
+
+                    serviceScope.launch {
+                        val customSettings = userSettings.copy(customPromptInstruction = inlineResult.customPrompt)
+                        val engine = com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider.getEngine(customSettings)
+                        val result = engine.transform(com.veggiebit.sprout.features.enhancement.data.models.TextPayload(inlineResult.body), com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CUSTOM)
+                        if (result.transformedText.isNotBlank() && result.transformedText != inlineResult.body) {
+                            if (userSettings.hapticFeedbackEnabled) {
+                                HapticHelper.performSuccessHaptic(this@SproutAccessibilityService)
+                            }
+                            injectReplacementText(result.transformedText)
+                            Toast.makeText(this@SproutAccessibilityService, "Sprout: ${result.summaryNote ?: inlineResult.summary}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                     return
                 }
                 is InlineCommandEngine.CommandResult.None -> {

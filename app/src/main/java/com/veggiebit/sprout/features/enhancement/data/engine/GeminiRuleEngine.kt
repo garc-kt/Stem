@@ -18,43 +18,49 @@ class GeminiRuleEngine(
 
     companion object {
         /**
-         * Shared by Gemini, OpenAI-compatible, and Claude — all three follow the same prompt
-         * shapes. [customInstruction] is only consulted for [TransformPreset.CUSTOM]; it comes
-         * from the user's own "Custom Prompt" settings field.
+         * Shared by Gemini, OpenAI-compatible, Claude, and Ollama — all four follow the same prompt
+         * shapes. [customInstruction] provides a master directive that elevates and refines all AI
+         * transformations, or acts as the primary instruction for [TransformPreset.CUSTOM].
          */
         fun getSystemPrompt(preset: TransformPreset, customInstruction: String = ""): String {
-            return when (preset) {
+            val masterDirective = if (customInstruction.isNotBlank() && preset != TransformPreset.CUSTOM) {
+                "\nADDITIONAL MASTER DIRECTIVE: ${customInstruction.trim()}. Ensure the transformed text strictly satisfies this directive."
+            } else ""
+
+            val basePrompt = when (preset) {
                 TransformPreset.FIX ->
-                    "You are an expert text proofreader. Correct all spelling mistakes, grammar errors, casing, and punctuation. Return ONLY the polished text without any quotes or explanations."
+                    "You are a master writing editor and proofreader. Actively elevate and polish the text: fix all grammar, spelling, typos, awkward phrasing, and punctuation while enhancing vocabulary, rhythm, and clarity. Maintain the original core meaning and voice. Return ONLY the enhanced text without quotes, preambles, or explanations."
 
                 TransformPreset.CONCISE ->
-                    "You are a concise editor. Rewrite the text to be clear and concise by eliminating unnecessary words while preserving full meaning. Return ONLY the rewritten text without quotes."
+                    "You are an expert concise editor. Aggressively streamline the text to be sharp, crystal-clear, and concise: eliminate fluff, redundancy, and passive constructions while maximizing clarity and punch. Return ONLY the rewritten text without quotes."
 
                 TransformPreset.PROFESSIONAL ->
-                    "You are an executive communications assistant. Rewrite the text into polite, articulate, professional business language. Return ONLY the rewritten text without quotes."
+                    "You are an executive communications strategist. Transform the text into articulate, polished, high-status, professional business language with confident authority and diplomatic courtesy. Return ONLY the rewritten text without quotes."
 
                 TransformPreset.PUNCHY ->
-                    "You are a high-impact copywriter. Rewrite the text to be active, punchy, energetic, and engaging. Return ONLY the rewritten text without quotes."
+                    "You are a high-impact copywriter. Rewrite the text to be active, energetic, punchy, and compelling with strong action verbs and crisp cadence. Return ONLY the rewritten text without quotes."
 
                 TransformPreset.FRIENDLY ->
-                    "You are a warm, approachable communications assistant. Rewrite the text in a friendly, conversational tone while keeping it clear and readable. Return ONLY the rewritten text without quotes."
+                    "You are a warm, charismatic communicator. Rewrite the text in a delightful, warm, empathetic, and conversational tone while ensuring effortless readability. Return ONLY the rewritten text without quotes."
 
                 TransformPreset.SUMMARIZE ->
-                    "You are a precise summarizer. Reduce the text to its essential point(s) in as few sentences as possible without losing critical meaning. Return ONLY the summary without quotes."
+                    "You are a precision summarizer. Distill the text to its critical insights in as few sentences as possible without losing key meaning. Return ONLY the summary without quotes."
 
                 TransformPreset.BULLETIZE ->
-                    "You are an editor turning prose into a scannable bullet list. Rewrite the text as concise bullet points (one idea per line, prefixed with \"• \"). Return ONLY the bullet list without quotes or preamble."
+                    "You are an expert information designer. Transform the prose into a crisp, scannable bullet point list (one distinct thought per line, prefixed with \"• \"). Return ONLY the bullet points without quotes or introductory text."
 
                 TransformPreset.EXPAND ->
-                    "You are a thoughtful writer expanding on brief notes. Add clarifying detail and context to the text while keeping the same intent and tone. Return ONLY the expanded text without quotes."
+                    "You are an eloquent writer. Elaborate and flesh out the ideas with rich supporting context, vivid phrasing, and smooth transitions while preserving intent. Return ONLY the expanded text without quotes."
 
                 TransformPreset.CUSTOM -> {
                     val instruction = customInstruction.trim().ifBlank {
-                        "Lightly polish the text for grammar and clarity."
+                        "Actively enhance the text with polished grammar, superior vocabulary, and natural flow."
                     }
-                    "You are a writing assistant. Follow this instruction exactly: $instruction. Return ONLY the rewritten text without quotes or explanations."
+                    "You are an expert AI writing assistant. Follow this instruction exactly: $instruction. Return ONLY the rewritten text without quotes or explanations."
                 }
             }
+
+            return basePrompt + masterDirective
         }
     }
 

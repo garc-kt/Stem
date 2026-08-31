@@ -80,6 +80,10 @@ class SettingsViewModel : ViewModel() {
 
     fun deleteSnippet(key: String) = viewModelScope.launch { repository.deleteSnippet(key) }
 
+    fun saveCustomCommand(trigger: String, prompt: String) = viewModelScope.launch { repository.saveCustomCommand(trigger, prompt) }
+
+    fun deleteCustomCommand(trigger: String) = viewModelScope.launch { repository.deleteCustomCommand(trigger) }
+
     fun setAppRule(packageName: String, mode: AppRuleMode) = viewModelScope.launch { repository.setAppRule(packageName, mode) }
 
     fun clearHistory() = TransformHistory.clear()

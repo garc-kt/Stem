@@ -43,12 +43,13 @@ object TextEngineProvider {
      */
     fun engineSignature(settings: SproutUserSettings): String {
         val temp = String.format(java.util.Locale.US, "%.2f", settings.temperature)
+        val pHash = settings.customPromptInstruction.hashCode()
         return when (settings.engineMode) {
             EngineMode.LOCAL_RULES -> "local"
-            EngineMode.OLLAMA_AI -> "ollama:${settings.ollamaBaseUrl}:${settings.ollamaModel}:$temp"
-            EngineMode.GEMINI_AI -> "gemini:${settings.geminiModel}:$temp"
-            EngineMode.OPENAI_COMPATIBLE -> "openai:${settings.openaiBaseUrl}:${settings.openaiModel}:$temp"
-            EngineMode.CLAUDE_AI -> "claude:${settings.claudeModel}:$temp"
+            EngineMode.OLLAMA_AI -> "ollama:${settings.ollamaBaseUrl}:${settings.ollamaModel}:$temp:$pHash"
+            EngineMode.GEMINI_AI -> "gemini:${settings.geminiModel}:$temp:$pHash"
+            EngineMode.OPENAI_COMPATIBLE -> "openai:${settings.openaiBaseUrl}:${settings.openaiModel}:$temp:$pHash"
+            EngineMode.CLAUDE_AI -> "claude:${settings.claudeModel}:$temp:$pHash"
         }
     }
 }

@@ -39,7 +39,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -441,6 +442,98 @@ fun EngineScreen(
                                                     onSaveTemperature(tVal)
                                                 },
                                                 label = { Text(tName, style = MaterialTheme.typography.labelSmall) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            // Master Enhancement Directive Card
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "Master Enhancing Directive",
+                                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (customPromptInput.isNotBlank()) {
+                                            TextButton(
+                                                onClick = {
+                                                    customPromptInput = ""
+                                                    onSaveCustomPromptInstruction("")
+                                                },
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                            ) {
+                                                Text("Reset", style = MaterialTheme.typography.labelSmall)
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Injected into all AI transformations to elevate phrasing, style, and tone beyond standard grammar fixes.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    OutlinedTextField(
+                                        value = customPromptInput,
+                                        onValueChange = {
+                                            customPromptInput = it
+                                            onSaveCustomPromptInstruction(it)
+                                        },
+                                        placeholder = {
+                                            Text(
+                                                "e.g. Elevate vocabulary, refine flow, and ensure confident, engaging tone",
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        minLines = 2,
+                                        maxLines = 4
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Quick Enhancement Styles:",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf(
+                                            "Elevate vocabulary, flow, and sentence rhythm with high elegance" to "✨ Deep Polish",
+                                            "Be crystal clear, direct, and eliminate all passive filler" to "🎯 Clear & Direct",
+                                            "Write with charismatic, persuasive, and engaging energy" to "🔥 Persuasive",
+                                            "Ensure native, natural phrasing with polished phrasing" to "🌍 Native Phrasing",
+                                            "Speak with executive authority, diplomatic tact, and status" to "💼 Executive"
+                                        ).forEach { (instruction, label) ->
+                                            AssistChip(
+                                                onClick = {
+                                                    customPromptInput = instruction
+                                                    onSaveCustomPromptInstruction(instruction)
+                                                },
+                                                label = { Text(label, style = MaterialTheme.typography.labelSmall) }
                                             )
                                         }
                                     }
