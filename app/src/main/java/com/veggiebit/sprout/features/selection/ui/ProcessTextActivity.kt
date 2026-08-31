@@ -163,20 +163,10 @@ class ProcessTextActivity : ComponentActivity() {
 
                             // Loading state / Diff View
                             if (isLoading) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(100.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(MaterialTheme.colorScheme.surface),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(28.dp),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        strokeWidth = 3.dp
-                                    )
-                                }
+                                com.veggiebit.sprout.features.enhancement.ui.components.SproutThinkingCard(
+                                    engineTitle = userSettings.engineMode.title,
+                                    subtitle = "Applying ${activePreset.shortName} refinement..."
+                                )
                             } else {
                                 result?.let { res ->
                                     if (res.diffTokens.isNotEmpty()) {

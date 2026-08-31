@@ -59,6 +59,7 @@ import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 fun SproutPill(
     activePreset: TransformPreset,
     hasSuggestions: Boolean,
+    isTransforming: Boolean = false,
     onExpandClick: () -> Unit,
     onDrag: (dx: Float, dy: Float) -> Unit = { _, _ -> },
     onDragEnd: () -> Unit = {},
@@ -96,7 +97,9 @@ fun SproutPill(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            if (hasSuggestions) {
+            if (isTransforming) {
+                com.veggiebit.sprout.features.enhancement.ui.components.SproutThinkingBadge()
+            } else if (hasSuggestions) {
                 PulsingBadge()
             } else {
                 Box(
@@ -126,7 +129,25 @@ fun SproutPill(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            if (hasSuggestions) {
+            if (isTransforming) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                        .padding(horizontal = 7.dp, vertical = 2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Thinking...",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.5.sp,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    )
+                }
+            } else if (hasSuggestions) {
                 Spacer(modifier = Modifier.width(6.dp))
 
                 Box(

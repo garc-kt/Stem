@@ -101,6 +101,7 @@ fun SproutFloatingOverlay(
             SproutPill(
                 activePreset = selectedPreset,
                 hasSuggestions = transformResult?.hasChanges == true,
+                isTransforming = isTransforming,
                 onExpandClick = onExpandClick,
                 onDrag = onPillDrag,
                 onDragEnd = onPillDragEnd,
@@ -224,8 +225,13 @@ fun SproutFloatingOverlay(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Diff / Comparison Area
-                    if (transformResult != null) {
+                    // Diff / Comparison Area or Thinking State
+                    if (isTransforming) {
+                        com.veggiebit.sprout.features.enhancement.ui.components.SproutThinkingCard(
+                            engineTitle = selectedPreset.title,
+                            subtitle = "Generating ${selectedPreset.shortName} refinement..."
+                        )
+                    } else if (transformResult != null) {
                         if (transformResult.diffTokens.isNotEmpty()) {
                             DiffViewer(diffTokens = transformResult.diffTokens)
                         } else {

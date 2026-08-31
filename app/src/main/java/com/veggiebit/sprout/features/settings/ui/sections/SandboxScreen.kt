@@ -115,11 +115,18 @@ fun SandboxScreen(
                         Text("Enhance with ${userSettings.engineMode.title}")
                     }
 
-                    sandboxResult?.let { res ->
+                    if (isLoading) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        if (res.diffTokens.isNotEmpty()) {
-                            DiffViewer(diffTokens = res.diffTokens)
-                        } else {
+                        com.veggiebit.sprout.features.enhancement.ui.components.SproutThinkingCard(
+                            engineTitle = userSettings.engineMode.title,
+                            subtitle = "Testing ${sandboxPreset.shortName} preset..."
+                        )
+                    } else {
+                        sandboxResult?.let { res ->
+                            Spacer(modifier = Modifier.height(12.dp))
+                            if (res.diffTokens.isNotEmpty()) {
+                                DiffViewer(diffTokens = res.diffTokens)
+                            } else {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -166,6 +173,7 @@ fun SandboxScreen(
                             }
                         }
                     }
+                }
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
