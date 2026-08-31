@@ -24,17 +24,17 @@ data class SproutUserSettings(
     val engineMode: EngineMode = EngineMode.LOCAL_RULES,
     // Ollama LAN
     val ollamaBaseUrl: String = "http://10.0.2.2:11434",
-    val ollamaModel: String = "llama3.2",
+    val ollamaModel: String = "llama3.3",
     // Gemini
     val geminiApiKey: String = "",
-    val geminiModel: String = "gemini-1.5-flash",
+    val geminiModel: String = "gemini-2.0-flash",
     // OpenAI / Compatible
     val openaiBaseUrl: String = "https://api.openai.com/v1",
     val openaiApiKey: String = "",
     val openaiModel: String = "gpt-4o-mini",
     // Claude
     val claudeApiKey: String = "",
-    val claudeModel: String = "claude-3-5-haiku-20241022",
+    val claudeModel: String = "claude-3-7-sonnet-20250219",
     val blacklistedPackages: Set<String> = emptySet(),
     val snippets: Map<String, String> = defaultSnippets
 ) {
@@ -82,14 +82,14 @@ class PreferencesRepository(private val context: Context) {
             val hapticFeedback = preferences[PreferencesKeys.HAPTIC_FEEDBACK] ?: true
             val engineModeId = preferences[PreferencesKeys.ENGINE_MODE] ?: EngineMode.LOCAL_RULES.id
             val ollamaBaseUrl = preferences[PreferencesKeys.OLLAMA_BASE_URL] ?: "http://10.0.2.2:11434"
-            val ollamaModel = preferences[PreferencesKeys.OLLAMA_MODEL] ?: "llama3.2"
+            val ollamaModel = preferences[PreferencesKeys.OLLAMA_MODEL] ?: "llama3.3"
             val geminiApiKey = preferences[PreferencesKeys.GEMINI_API_KEY] ?: ""
-            val geminiModel = preferences[PreferencesKeys.GEMINI_MODEL] ?: "gemini-1.5-flash"
+            val geminiModel = preferences[PreferencesKeys.GEMINI_MODEL] ?: "gemini-2.0-flash"
             val openaiBaseUrl = preferences[PreferencesKeys.OPENAI_BASE_URL] ?: "https://api.openai.com/v1"
             val openaiApiKey = preferences[PreferencesKeys.OPENAI_API_KEY] ?: ""
             val openaiModel = preferences[PreferencesKeys.OPENAI_MODEL] ?: "gpt-4o-mini"
             val claudeApiKey = preferences[PreferencesKeys.CLAUDE_API_KEY] ?: ""
-            val claudeModel = preferences[PreferencesKeys.CLAUDE_MODEL] ?: "claude-3-5-haiku-20241022"
+            val claudeModel = preferences[PreferencesKeys.CLAUDE_MODEL] ?: "claude-3-7-sonnet-20250219"
 
             val blacklisted = preferences[PreferencesKeys.BLACKLISTED_PACKAGES]
                 ?.split(",")
@@ -161,7 +161,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setGeminiSettings(apiKey: String, model: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.GEMINI_API_KEY] = apiKey.trim()
-            preferences[PreferencesKeys.GEMINI_MODEL] = model.trim().ifBlank { "gemini-1.5-flash" }
+            preferences[PreferencesKeys.GEMINI_MODEL] = model.trim().ifBlank { "gemini-2.0-flash" }
         }
     }
 
@@ -176,7 +176,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setClaudeSettings(apiKey: String, model: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.CLAUDE_API_KEY] = apiKey.trim()
-            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-3-5-haiku-20241022" }
+            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-3-7-sonnet-20250219" }
         }
     }
 

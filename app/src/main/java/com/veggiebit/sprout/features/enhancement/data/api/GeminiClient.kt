@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.api
+package com.veggiebit.sprout.features.enhancement.data.api
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,7 +52,7 @@ object GeminiClient {
 
     suspend fun generate(
         apiKey: String,
-        model: String = "gemini-1.5-flash",
+        model: String = "gemini-2.0-flash",
         prompt: String,
         systemPrompt: String
     ): Result<String> = withContext(Dispatchers.IO) {
@@ -60,7 +60,7 @@ object GeminiClient {
             return@withContext Result.failure(IllegalArgumentException("Gemini API key is required"))
         }
 
-        val cleanModel = model.ifBlank { "gemini-1.5-flash" }
+        val cleanModel = model.ifBlank { "gemini-2.0-flash" }
         val url = "https://generativelanguage.googleapis.com/v1beta/models/$cleanModel:generateContent?key=$apiKey"
 
         val requestBodyData = GeminiRequest(

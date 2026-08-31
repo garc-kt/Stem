@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -369,11 +370,27 @@ fun SettingsScreen(
                                             onSaveOllamaModel(it)
                                         },
                                         label = { Text("Model Name") },
-                                        placeholder = { Text("llama3.2, mistral, gemma2") },
+                                        placeholder = { Text("llama3.3, llama3.2, qwen2.5") },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(12.dp),
                                         singleLine = true
                                     )
+
+                                    // Quick Model Suggestion Chips
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf("llama3.3", "llama3.2", "qwen2.5", "deepseek-r1:8b").forEach { suggestion ->
+                                            AssistChip(
+                                                onClick = {
+                                                    ollamaModelInput = suggestion
+                                                    onSaveOllamaModel(suggestion)
+                                                },
+                                                label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }
+                                            )
+                                        }
+                                    }
                                 }
 
                                 EngineMode.GEMINI_AI -> {
@@ -407,11 +424,27 @@ fun SettingsScreen(
                                             onSaveGeminiSettings(geminiKeyInput, it)
                                         },
                                         label = { Text("Model") },
-                                        placeholder = { Text("gemini-1.5-flash, gemini-2.0-flash") },
+                                        placeholder = { Text("gemini-2.0-flash, gemini-2.5-flash") },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(12.dp),
                                         singleLine = true
                                     )
+
+                                    // Quick Model Suggestion Chips
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf("gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro").forEach { suggestion ->
+                                            AssistChip(
+                                                onClick = {
+                                                    geminiModelInput = suggestion
+                                                    onSaveGeminiSettings(geminiKeyInput, suggestion)
+                                                },
+                                                label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }
+                                            )
+                                        }
+                                    }
                                 }
 
                                 EngineMode.OPENAI_COMPATIBLE -> {
@@ -460,11 +493,27 @@ fun SettingsScreen(
                                             onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, it)
                                         },
                                         label = { Text("Model") },
-                                        placeholder = { Text("gpt-4o-mini, deepseek-chat") },
+                                        placeholder = { Text("gpt-4o-mini, deepseek-chat, gpt-4o") },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(12.dp),
                                         singleLine = true
                                     )
+
+                                    // Quick Model Suggestion Chips
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf("gpt-4o-mini", "gpt-4o", "deepseek-chat", "deepseek-reasoner").forEach { suggestion ->
+                                            AssistChip(
+                                                onClick = {
+                                                    openAiModelInput = suggestion
+                                                    onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, suggestion)
+                                                },
+                                                label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }
+                                            )
+                                        }
+                                    }
                                 }
 
                                 EngineMode.CLAUDE_AI -> {
@@ -498,14 +547,28 @@ fun SettingsScreen(
                                             onSaveClaudeSettings(claudeKeyInput, it)
                                         },
                                         label = { Text("Model") },
-                                        placeholder = { Text("claude-3-5-haiku-20241022") },
+                                        placeholder = { Text("claude-3-7-sonnet-20250219") },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(12.dp),
                                         singleLine = true
                                     )
-                                }
 
-                                else -> {}
+                                    // Quick Model Suggestion Chips
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        listOf("claude-3-7-sonnet-20250219", "claude-3-5-haiku-20241022", "claude-3-5-sonnet-20241022").forEach { suggestion ->
+                                            AssistChip(
+                                                onClick = {
+                                                    claudeModelInput = suggestion
+                                                    onSaveClaudeSettings(claudeKeyInput, suggestion)
+                                                },
+                                                label = { Text(suggestion, style = MaterialTheme.typography.labelSmall) }
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
@@ -596,7 +659,7 @@ fun SettingsScreen(
                                                         }
                                                     )
                                                 }
-                                                else -> {}
+                                                EngineMode.LOCAL_RULES -> {}
                                             }
                                             isTestingConnection = false
                                         }

@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.api
+package com.veggiebit.sprout.features.enhancement.data.api
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -51,7 +51,7 @@ object ClaudeClient {
 
     suspend fun generate(
         apiKey: String,
-        model: String = "claude-3-5-haiku-20241022",
+        model: String = "claude-3-7-sonnet-20250219",
         prompt: String,
         systemPrompt: String
     ): Result<String> = withContext(Dispatchers.IO) {
@@ -59,7 +59,7 @@ object ClaudeClient {
             return@withContext Result.failure(IllegalArgumentException("Claude API key is required"))
         }
 
-        val cleanModel = model.ifBlank { "claude-3-5-haiku-20241022" }
+        val cleanModel = model.ifBlank { "claude-3-7-sonnet-20250219" }
         val url = "https://api.anthropic.com/v1/messages"
 
         val requestData = ClaudeRequest(
