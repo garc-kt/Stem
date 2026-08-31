@@ -14,7 +14,7 @@
   <a href="https://developer.android.com/jetpack/compose"><img src="https://img.shields.io/badge/Jetpack_Compose-2026.03.01-1A73E8.svg?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" /></a>
   <a href="https://ollama.com"><img src="https://img.shields.io/badge/Local_AI-Ollama_LAN-000000.svg?style=for-the-badge&logo=ollama&logoColor=white" alt="Ollama Local AI" /></a>
   <a href="https://m3.material.io"><img src="https://img.shields.io/badge/Design-Material_3_Expressive-7B1FA2.svg?style=for-the-badge&logo=materialdesign&logoColor=white" alt="Material 3 Expressive" /></a>
-  <a href="https://github.com/Garc2004/Sprout/releases"><img src="https://img.shields.io/badge/Release-v1.0.0-00838F.svg?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.0" /></a>
+  <a href="https://github.com/Garc2004/Sprout/releases"><img src="https://img.shields.io/badge/Release-v1.1.0-00838F.svg?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.0.0" /></a>
 </p>
 
 ---
