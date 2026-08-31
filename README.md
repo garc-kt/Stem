@@ -13,20 +13,20 @@
   <a href="https://developer.android.com"><img src="https://img.shields.io/badge/Target%20SDK-36-2E7D32.svg?style=for-the-badge&logo=android&logoColor=white" alt="Target SDK 36" /></a>
   <a href="https://developer.android.com/jetpack/compose"><img src="https://img.shields.io/badge/Jetpack_Compose-2026.03.01-1A73E8.svg?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" /></a>
   <a href="https://ollama.com"><img src="https://img.shields.io/badge/Local_AI-Ollama_LAN-000000.svg?style=for-the-badge&logo=ollama&logoColor=white" alt="Ollama Local AI" /></a>
-  <a href="https://github.com/Garc2004/Sprout/releases"><img src="https://img.shields.io/badge/Release-v1.2.0-00838F.svg?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.2.0" /></a>
+  <a href="https://github.com/Garc2004/Sprout/releases"><img src="https://img.shields.io/badge/Release-v1.4.0-00838F.svg?style=for-the-badge&logo=github&logoColor=white" alt="Release v1.4.0" /></a>
 </p>
 
 ---
 
-**Sprout** (`com.veggiebit.sprout`) is an ambient, frictionless text enhancement engine that lives right inside your existing Android keyboard and text selection workflow. It operates silently with zero popups via the **Native Android Text Selection Menu** (`ACTION_PROCESS_TEXT`), **Inline Trigger Commands**, or an optional floating pill.
+**Sprout** (`com.veggiebit.sprout`) is an ambient, frictionless text enhancement engine that lives right inside your existing Android keyboard and text selection workflow. It operates silently with zero popups via the **Native Android Text Selection Menu** (`ACTION_PROCESS_TEXT`), **Custom Inline Trigger Commands**, **Dynamic `?ai:` Prompts**, or an optional floating pill.
 
 ---
 
 ## 📦 Direct APK Downloads
 
 <p align="center">
-  <a href="https://github.com/Garc2004/Sprout/releases/download/v1.2.0/app-release.apk">
-    <img src="https://img.shields.io/badge/Download-Release_APK_(v1.2.0)-2E7D32?style=for-the-badge&logo=android&logoColor=white" alt="Download Release APK" />
+  <a href="https://github.com/Garc2004/Sprout/releases/download/v1.4.0/Sprout-v1.4.0.apk">
+    <img src="https://img.shields.io/badge/Download-Release_APK_(v1.4.0)-2E7D32?style=for-the-badge&logo=android&logoColor=white" alt="Download Release APK" />
   </a>
 </p>
 
