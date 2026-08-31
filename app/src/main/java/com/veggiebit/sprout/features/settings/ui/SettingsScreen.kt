@@ -23,16 +23,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Computer
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Layers
-import androidx.compose.material.icons.rounded.Memory
+import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Spa
 import androidx.compose.material.icons.rounded.TouchApp
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -63,12 +67,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.veggiebit.sprout.core.version.AppVersion
-import com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine
-import com.veggiebit.sprout.features.enhancement.data.engine.OllamaRuleEngine
+import com.veggiebit.sprout.features.enhancement.data.api.ClaudeClient
+import com.veggiebit.sprout.features.enhancement.data.api.GeminiClient
+import com.veggiebit.sprout.features.enhancement.data.api.OpenAIClient
+import com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider
 import com.veggiebit.sprout.features.enhancement.data.models.EngineMode
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
@@ -94,6 +103,9 @@ fun SettingsScreen(
     onSelectEngineMode: (EngineMode) -> Unit,
     onSaveOllamaUrl: (String) -> Unit,
     onSaveOllamaModel: (String) -> Unit,
+    onSaveGeminiSettings: (String, String) -> Unit,
+    onSaveOpenAISettings: (String, String, String) -> Unit,
+    onSaveClaudeSettings: (String, String) -> Unit,
     onSaveSnippet: (String, String) -> Unit,
     onDeleteSnippet: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -102,13 +114,24 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
 
     // Test Sandbox State
-    var sandboxText by remember { mutableStateOf("teh meeting is tommorow in order to make a decision") }
+    var sandboxText by remember { mutableStateOf("I has an idea for the meting tomorow. It will be realy great.") }
     var sandboxPreset by remember { mutableStateOf(TransformPreset.FIX) }
     var sandboxResult by remember { mutableStateOf<TransformResult?>(null) }
+    var isSandboxLoading by remember { mutableStateOf(false) }
 
     // Ollama Local State
     var ollamaUrlInput by remember(userSettings.ollamaBaseUrl) { mutableStateOf(userSettings.ollamaBaseUrl) }
     var ollamaModelInput by remember(userSettings.ollamaModel) { mutableStateOf(userSettings.ollamaModel) }
+    var geminiKeyInput by remember(userSettings.geminiApiKey) { mutableStateOf(userSettings.geminiApiKey) }
+    var geminiModelInput by remember(userSettings.geminiModel) { mutableStateOf(userSettings.geminiModel) }
+    var openAiUrlInput by remember(userSettings.openaiBaseUrl) { mutableStateOf(userSettings.openaiBaseUrl) }
+    var openAiKeyInput by remember(userSettings.openaiApiKey) { mutableStateOf(userSettings.openaiApiKey) }
+    var openAiModelInput by remember(userSettings.openaiModel) { mutableStateOf(userSettings.openaiModel) }
+    var claudeKeyInput by remember(userSettings.claudeApiKey) { mutableStateOf(userSettings.claudeApiKey) }
+    var claudeModelInput by remember(userSettings.claudeModel) { mutableStateOf(userSettings.claudeModel) }
+
+    var isPasswordVisible by remember { mutableStateOf(false) }
+
     var isTestingConnection by remember { mutableStateOf(false) }
     var connectionStatusMessage by remember { mutableStateOf<String?>(null) }
     var isConnectionSuccess by remember { mutableStateOf(false) }
@@ -118,13 +141,9 @@ fun SettingsScreen(
     var newSnippetKey by remember { mutableStateOf("") }
     var newSnippetValue by remember { mutableStateOf("") }
 
-    LaunchedEffect(sandboxText, sandboxPreset, userSettings.engineMode, userSettings.ollamaBaseUrl, userSettings.ollamaModel) {
+    LaunchedEffect(sandboxText, sandboxPreset, userSettings) {
         val payload = TextPayload(text = sandboxText)
-        val engine = if (userSettings.engineMode == EngineMode.OLLAMA_AI) {
-            OllamaRuleEngine(userSettings.ollamaBaseUrl, userSettings.ollamaModel)
-        } else {
-            LocalRuleEngine
-        }
+        val engine = TextEngineProvider.getEngine(userSettings)
         sandboxResult = engine.transform(payload, sandboxPreset)
     }
 
@@ -157,9 +176,9 @@ fun SettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Ambient Writing Assistant • ${AppVersion.displayString}",
+                                text = "VeggieBit Studios • ${AppVersion.displayString}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -245,6 +264,14 @@ fun SettingsScreen(
                     // Engine Mode Choice Cards
                     EngineMode.entries.forEach { mode ->
                         val isSelected = userSettings.engineMode == mode
+                        val icon: ImageVector = when (mode) {
+                            EngineMode.LOCAL_RULES -> Icons.Rounded.Spa
+                            EngineMode.OLLAMA_AI -> Icons.Rounded.Computer
+                            EngineMode.GEMINI_AI -> Icons.Rounded.AutoAwesome
+                            EngineMode.OPENAI_COMPATIBLE -> Icons.Rounded.Code
+                            EngineMode.CLAUDE_AI -> Icons.Rounded.Psychology
+                        }
+
                         Surface(
                             shape = RoundedCornerShape(14.dp),
                             color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
@@ -268,7 +295,7 @@ fun SettingsScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = if (mode == EngineMode.LOCAL_RULES) Icons.Rounded.Memory else Icons.Rounded.Computer,
+                                        imageVector = icon,
                                         contentDescription = null,
                                         tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(18.dp)
@@ -292,55 +319,194 @@ fun SettingsScreen(
                                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.CheckCircle,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
 
-                    // Expandable Ollama Config when Ollama is active
-                    AnimatedVisibility(visible = userSettings.engineMode == EngineMode.OLLAMA_AI) {
+                    // Expandable Config for Non-Local Engines
+                    if (userSettings.engineMode != EngineMode.LOCAL_RULES) {
                         Column(modifier = Modifier.padding(top = 14.dp)) {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                             Text(
-                                text = "PC Ollama Server Settings",
+                                text = "${userSettings.engineMode.title} Configuration",
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "Ensure Ollama is running on your PC with OLLAMA_HOST=0.0.0.0 set.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            OutlinedTextField(
-                                value = ollamaUrlInput,
-                                onValueChange = {
-                                    ollamaUrlInput = it
-                                    onSaveOllamaUrl(it)
-                                },
-                                label = { Text("Ollama Host URL") },
-                                placeholder = { Text("http://192.168.1.X:11434") },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                singleLine = true
-                            )
+                            when (userSettings.engineMode) {
+                                EngineMode.OLLAMA_AI -> {
+                                    OutlinedTextField(
+                                        value = ollamaUrlInput,
+                                        onValueChange = {
+                                            ollamaUrlInput = it
+                                            onSaveOllamaUrl(it)
+                                        },
+                                        label = { Text("Ollama Host URL") },
+                                        placeholder = { Text("http://192.168.1.X:11434") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
 
-                            OutlinedTextField(
-                                value = ollamaModelInput,
-                                onValueChange = {
-                                    ollamaModelInput = it
-                                    onSaveOllamaModel(it)
-                                },
-                                label = { Text("Model Name") },
-                                placeholder = { Text("llama3.2, mistral, gemma2") },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                singleLine = true
-                            )
+                                    OutlinedTextField(
+                                        value = ollamaModelInput,
+                                        onValueChange = {
+                                            ollamaModelInput = it
+                                            onSaveOllamaModel(it)
+                                        },
+                                        label = { Text("Model Name") },
+                                        placeholder = { Text("llama3.2, mistral, gemma2") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
+                                }
+
+                                EngineMode.GEMINI_AI -> {
+                                    OutlinedTextField(
+                                        value = geminiKeyInput,
+                                        onValueChange = {
+                                            geminiKeyInput = it
+                                            onSaveGeminiSettings(it, geminiModelInput)
+                                        },
+                                        label = { Text("Google Gemini API Key") },
+                                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                        trailingIcon = {
+                                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                                Icon(
+                                                    imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    OutlinedTextField(
+                                        value = geminiModelInput,
+                                        onValueChange = {
+                                            geminiModelInput = it
+                                            onSaveGeminiSettings(geminiKeyInput, it)
+                                        },
+                                        label = { Text("Model") },
+                                        placeholder = { Text("gemini-1.5-flash, gemini-2.0-flash") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
+                                }
+
+                                EngineMode.OPENAI_COMPATIBLE -> {
+                                    OutlinedTextField(
+                                        value = openAiUrlInput,
+                                        onValueChange = {
+                                            openAiUrlInput = it
+                                            onSaveOpenAISettings(it, openAiKeyInput, openAiModelInput)
+                                        },
+                                        label = { Text("Base URL") },
+                                        placeholder = { Text("https://api.openai.com/v1") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    OutlinedTextField(
+                                        value = openAiKeyInput,
+                                        onValueChange = {
+                                            openAiKeyInput = it
+                                            onSaveOpenAISettings(openAiUrlInput, it, openAiModelInput)
+                                        },
+                                        label = { Text("API Key") },
+                                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                        trailingIcon = {
+                                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                                Icon(
+                                                    imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    OutlinedTextField(
+                                        value = openAiModelInput,
+                                        onValueChange = {
+                                            openAiModelInput = it
+                                            onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, it)
+                                        },
+                                        label = { Text("Model") },
+                                        placeholder = { Text("gpt-4o-mini, deepseek-chat") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
+                                }
+
+                                EngineMode.CLAUDE_AI -> {
+                                    OutlinedTextField(
+                                        value = claudeKeyInput,
+                                        onValueChange = {
+                                            claudeKeyInput = it
+                                            onSaveClaudeSettings(it, claudeModelInput)
+                                        },
+                                        label = { Text("Anthropic API Key") },
+                                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                        trailingIcon = {
+                                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                                Icon(
+                                                    imageVector = if (isPasswordVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    OutlinedTextField(
+                                        value = claudeModelInput,
+                                        onValueChange = {
+                                            claudeModelInput = it
+                                            onSaveClaudeSettings(claudeKeyInput, it)
+                                        },
+                                        label = { Text("Model") },
+                                        placeholder = { Text("claude-3-5-haiku-20241022") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        singleLine = true
+                                    )
+                                }
+
+                                else -> {}
+                            }
 
                             Spacer(modifier = Modifier.height(10.dp))
 
@@ -355,24 +521,84 @@ fun SettingsScreen(
                                         isTestingConnection = true
                                         connectionStatusMessage = null
                                         scope.launch {
-                                            val result = OllamaClient.fetchAvailableModels(ollamaUrlInput)
-                                            isTestingConnection = false
-                                            result.fold(
-                                                onSuccess = { models ->
-                                                    isConnectionSuccess = true
-                                                    discoveredModels = models
-                                                    connectionStatusMessage = "Connected (${models.size} models)"
-                                                    if (models.isNotEmpty() && !models.contains(ollamaModelInput)) {
-                                                        ollamaModelInput = models.first()
-                                                        onSaveOllamaModel(models.first())
-                                                    }
-                                                },
-                                                onFailure = { error ->
-                                                    isConnectionSuccess = false
-                                                    discoveredModels = emptyList()
-                                                    connectionStatusMessage = "Failed: ${error.localizedMessage}"
+                                            when (userSettings.engineMode) {
+                                                EngineMode.OLLAMA_AI -> {
+                                                    val result = OllamaClient.fetchAvailableModels(ollamaUrlInput)
+                                                    result.fold(
+                                                        onSuccess = { models ->
+                                                            isConnectionSuccess = true
+                                                            discoveredModels = models
+                                                            connectionStatusMessage = "Connected (${models.size} models)"
+                                                            if (models.isNotEmpty() && !models.contains(ollamaModelInput)) {
+                                                                ollamaModelInput = models.first()
+                                                                onSaveOllamaModel(models.first())
+                                                            }
+                                                        },
+                                                        onFailure = { error ->
+                                                            isConnectionSuccess = false
+                                                            discoveredModels = emptyList()
+                                                            connectionStatusMessage = "Failed: ${error.localizedMessage}"
+                                                        }
+                                                    )
                                                 }
-                                            )
+                                                EngineMode.GEMINI_AI -> {
+                                                    val result = GeminiClient.generate(
+                                                        apiKey = geminiKeyInput,
+                                                        model = geminiModelInput,
+                                                        prompt = "Hello",
+                                                        systemPrompt = "Respond with 'OK'."
+                                                    )
+                                                    result.fold(
+                                                        onSuccess = {
+                                                            isConnectionSuccess = true
+                                                            connectionStatusMessage = "Gemini Connected ($it)"
+                                                        },
+                                                        onFailure = { error ->
+                                                            isConnectionSuccess = false
+                                                            connectionStatusMessage = "Failed: ${error.localizedMessage}"
+                                                        }
+                                                    )
+                                                }
+                                                EngineMode.OPENAI_COMPATIBLE -> {
+                                                    val result = OpenAIClient.generate(
+                                                        baseUrl = openAiUrlInput,
+                                                        apiKey = openAiKeyInput,
+                                                        model = openAiModelInput,
+                                                        prompt = "Hello",
+                                                        systemPrompt = "Respond with 'OK'."
+                                                    )
+                                                    result.fold(
+                                                        onSuccess = {
+                                                            isConnectionSuccess = true
+                                                            connectionStatusMessage = "Connected ($it)"
+                                                        },
+                                                        onFailure = { error ->
+                                                            isConnectionSuccess = false
+                                                            connectionStatusMessage = "Failed: ${error.localizedMessage}"
+                                                        }
+                                                    )
+                                                }
+                                                EngineMode.CLAUDE_AI -> {
+                                                    val result = ClaudeClient.generate(
+                                                        apiKey = claudeKeyInput,
+                                                        model = claudeModelInput,
+                                                        prompt = "Hello",
+                                                        systemPrompt = "Respond with 'OK'."
+                                                    )
+                                                    result.fold(
+                                                        onSuccess = {
+                                                            isConnectionSuccess = true
+                                                            connectionStatusMessage = "Claude Connected ($it)"
+                                                        },
+                                                        onFailure = { error ->
+                                                            isConnectionSuccess = false
+                                                            connectionStatusMessage = "Failed: ${error.localizedMessage}"
+                                                        }
+                                                    )
+                                                }
+                                                else -> {}
+                                            }
+                                            isTestingConnection = false
                                         }
                                     },
                                     enabled = !isTestingConnection,
@@ -418,50 +644,6 @@ fun SettingsScreen(
                                     }
                                 }
                             }
-
-                            // Discovered Models Quick Selection Chips
-                            if (discoveredModels.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(
-                                    text = "Installed PC Models (tap to select):",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    discoveredModels.forEach { modelName ->
-                                        val isCurrent = modelName == ollamaModelInput
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(
-                                                    if (isCurrent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
-                                                )
-                                                .border(
-                                                    width = if (isCurrent) 1.dp else 0.dp,
-                                                    color = if (isCurrent) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                                    shape = RoundedCornerShape(8.dp)
-                                                )
-                                                .clickable {
-                                                    ollamaModelInput = modelName
-                                                    onSaveOllamaModel(modelName)
-                                                }
-                                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                                        ) {
-                                            Text(
-                                                text = modelName,
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -469,7 +651,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 3. Zero-Cloud Local Privacy Guarantee Card
+            // 3. Privacy & Security Assurance
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -500,13 +682,17 @@ fun SettingsScreen(
 
                     Column {
                         Text(
-                            text = "Zero-Cloud & 100% Local Privacy",
+                            text = "Zero Telemetry & Private Processing",
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Sprout communicates strictly with your local device or your private Ollama PC over Wi-Fi. No third-party clouds or analytics servers are ever contacted.",
+                            text = if (userSettings.engineMode == EngineMode.LOCAL_RULES) {
+                                "100% on-device processing. No network permissions are used and zero data leaves your phone."
+                            } else {
+                                "Your API keys and text queries are sent directly and securely from your device to your selected provider without any intermediary servers."
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -516,9 +702,9 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 4. Preferences Section
+            // 4. Interaction Mode Preferences
             Text(
-                text = "Preferences",
+                text = "Interaction Mode",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.primary
             )
@@ -539,19 +725,28 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Floating Suggestion Pill",
+                                text = "Floating Pill Over Other Apps",
                                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Automatically attaches near active text fields",
+                                text = if (userSettings.overlayEnabled) {
+                                    "Floating 36dp pill appears over other apps when typing."
+                                } else {
+                                    "Quiet mode (SwiftSlate style): Sprout triggers purely via text selection menu (Process Text) and inline commands."
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Switch(
                             checked = userSettings.overlayEnabled,
-                            onCheckedChange = onToggleOverlay,
+                            onCheckedChange = { enabled ->
+                                if (enabled && !hasOverlayPermission) {
+                                    onRequestOverlayPermission()
+                                }
+                                onToggleOverlay(enabled)
+                            },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                                 checkedTrackColor = MaterialTheme.colorScheme.primary
@@ -569,12 +764,12 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Haptic Vibration",
+                                text = "Haptic Tactile Feedback",
                                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Vibrates on text injection and commands",
+                                text = "Vibrate lightly upon text replacements and triggers.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -599,7 +794,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Preferred tone when opening overlay",
+                            text = "Preferred tone when opening selection assistant",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -616,7 +811,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Snippets / Text Expander Section
+            // 5. Snippets / Text Expander Section
             Text(
                 text = "Text Snippets & Expander",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -632,12 +827,26 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Type ..shortcut in any app to expand into full text instantly:",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = "Instant Inline Triggers (Type in any app):",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "• ?fix — Corrects grammar & spelling immediately\n• ?concise — Trims text to core meaning\n• ?formal — Makes text executive & professional\n• ?punchy — Makes text energetic & active\n• ?calc: 25 * 4 + 10 — Evaluates math inline\n• ?now or ?date — Injects current timestamp\n• ?undo — Reverts last transformation",
+                        style = MaterialTheme.typography.bodySmall.copy(lineHeight = 20.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = "Custom Text Snippets (Type ..key in any app):",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     userSettings.snippets.forEach { (key, value) ->
                         Row(
@@ -692,7 +901,7 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = newSnippetKey,
                             onValueChange = { newSnippetKey = it },
-                            placeholder = { Text("key (e.g. addr)") },
+                            placeholder = { Text("key (e.g. email)") },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true
@@ -700,7 +909,7 @@ fun SettingsScreen(
                         OutlinedTextField(
                             value = newSnippetValue,
                             onValueChange = { newSnippetValue = it },
-                            placeholder = { Text("expansion") },
+                            placeholder = { Text("expansion text") },
                             modifier = Modifier.weight(1.5f),
                             shape = RoundedCornerShape(12.dp),
                             singleLine = true
@@ -727,7 +936,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Interactive Test Sandbox
+            // 6. Interactive Test Sandbox
             Text(
                 text = "Interactive Test Sandbox",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -743,7 +952,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Try typing test sentences or commands (?fix, ?formal, ?calc: 20*5, ..email) below:",
+                        text = "Test your active engine (${userSettings.engineMode.title}) and presets live below:",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -767,9 +976,53 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    Button(
+                        onClick = {
+                            isSandboxLoading = true
+                            scope.launch {
+                                val engine = TextEngineProvider.getEngine(userSettings)
+                                sandboxResult = engine.transform(TextPayload(text = sandboxText), sandboxPreset)
+                                isSandboxLoading = false
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isSandboxLoading,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        if (isSandboxLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                        Text("Enhance with ${userSettings.engineMode.title}")
+                    }
+
                     sandboxResult?.let { res ->
+                        Spacer(modifier = Modifier.height(12.dp))
                         if (res.diffTokens.isNotEmpty()) {
                             DiffViewer(diffTokens = res.diffTokens)
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = res.transformedText.ifBlank { "No changes needed." },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -782,7 +1035,8 @@ fun SettingsScreen(
                             Text(
                                 text = res.summaryNote ?: "",
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
                                 )
                             )
 
@@ -807,7 +1061,26 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Footer
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "🌱 Sprout ${AppVersion.displayString}",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Engineered by VeggieBit Studios • Apache 2.0 License",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

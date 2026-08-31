@@ -1,0 +1,64 @@
+﻿package com.veggiebit.sprout.features.enhancement.data.engine
+
+import com.veggiebit.sprout.features.enhancement.data.api.OpenAIClient
+import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
+import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
+import com.veggiebit.sprout.features.enhancement.data.models.TransformResult
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+class OpenAIRuleEngine(
+    private val baseUrl: String,
+    private val apiKey: String,
+    private val model: String
+) : TextEngine {
+
+    override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.IO) {
+        val original = payload.text
+        if (original.isBlank()) {
+            return@withContext TransformResult(original, original, preset, emptyList())
+        }
+
+        val systemPrompt = GeminiRuleEngine.getSystemPrompt(preset)
+        val result = OpenAIClient.generate(
+            baseUrl = baseUrl,
+            apiKey = apiKey,
+            model = model,
+            prompt = original,
+            systemPrompt = systemPrompt
+        )
+
+        result.fold(
+            onSuccess = { rawOutput ->
+                var cleaned = rawOutput.trim()
+                if (cleaned.startsWith("\"") && cleaned.endsWith("\"") && cleaned.length > 1) {
+                    cleaned = cleaned.substring(1, cleaned.length - 1).trim()
+                }
+                if (cleaned.startsWith("```") && cleaned.endsWith("```")) {
+                    cleaned = cleaned.removeSurrounding("```").trim()
+                }
+
+                val diff = DiffCalculator.calculateDiff(original, cleaned)
+                TransformResult(
+                    originalText = original,
+                    transformedText = cleaned,
+                    preset = preset,
+                    diffTokens = diff,
+                    summaryNote = "AI ($model) • ${preset.title}"
+                )
+            },
+            onFailure = { _ ->
+                val fallback = LocalRuleEngine.transform(payload, preset)
+                fallback.copy(
+                    summaryNote = "${fallback.summaryNote ?: "Polished"} (Local fallback)"
+                )
+            }
+        )
+    }
+
+    override suspend fun generateAllSuggestions(payload: TextPayload): Map<TransformPreset, TransformResult> = withContext(Dispatchers.IO) {
+        TransformPreset.entries.associateWith { preset ->
+            transform(payload, preset)
+        }
+    }
+}

@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.settings.data
+package com.veggiebit.sprout.features.settings.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -18,12 +18,23 @@ import java.io.IOException
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "sprout_settings")
 
 data class SproutUserSettings(
-    val overlayEnabled: Boolean = true,
+    val overlayEnabled: Boolean = false, // Unobtrusive by default like SwiftSlate
     val defaultPreset: TransformPreset = TransformPreset.FIX,
     val hapticFeedbackEnabled: Boolean = true,
     val engineMode: EngineMode = EngineMode.LOCAL_RULES,
+    // Ollama LAN
     val ollamaBaseUrl: String = "http://10.0.2.2:11434",
     val ollamaModel: String = "llama3.2",
+    // Gemini
+    val geminiApiKey: String = "",
+    val geminiModel: String = "gemini-1.5-flash",
+    // OpenAI / Compatible
+    val openaiBaseUrl: String = "https://api.openai.com/v1",
+    val openaiApiKey: String = "",
+    val openaiModel: String = "gpt-4o-mini",
+    // Claude
+    val claudeApiKey: String = "",
+    val claudeModel: String = "claude-3-5-haiku-20241022",
     val blacklistedPackages: Set<String> = emptySet(),
     val snippets: Map<String, String> = defaultSnippets
 ) {
@@ -46,6 +57,13 @@ class PreferencesRepository(private val context: Context) {
         val ENGINE_MODE = stringPreferencesKey("engine_mode")
         val OLLAMA_BASE_URL = stringPreferencesKey("ollama_base_url")
         val OLLAMA_MODEL = stringPreferencesKey("ollama_model")
+        val GEMINI_API_KEY = stringPreferencesKey("gemini_api_key")
+        val GEMINI_MODEL = stringPreferencesKey("gemini_model")
+        val OPENAI_BASE_URL = stringPreferencesKey("openai_base_url")
+        val OPENAI_API_KEY = stringPreferencesKey("openai_api_key")
+        val OPENAI_MODEL = stringPreferencesKey("openai_model")
+        val CLAUDE_API_KEY = stringPreferencesKey("claude_api_key")
+        val CLAUDE_MODEL = stringPreferencesKey("claude_model")
         val BLACKLISTED_PACKAGES = stringPreferencesKey("blacklisted_packages")
         val SNIPPETS_DATA = stringPreferencesKey("snippets_data")
     }
@@ -59,12 +77,19 @@ class PreferencesRepository(private val context: Context) {
             }
         }
         .map { preferences ->
-            val overlayEnabled = preferences[PreferencesKeys.OVERLAY_ENABLED] ?: true
+            val overlayEnabled = preferences[PreferencesKeys.OVERLAY_ENABLED] ?: false
             val defaultPresetId = preferences[PreferencesKeys.DEFAULT_PRESET] ?: TransformPreset.FIX.id
             val hapticFeedback = preferences[PreferencesKeys.HAPTIC_FEEDBACK] ?: true
             val engineModeId = preferences[PreferencesKeys.ENGINE_MODE] ?: EngineMode.LOCAL_RULES.id
             val ollamaBaseUrl = preferences[PreferencesKeys.OLLAMA_BASE_URL] ?: "http://10.0.2.2:11434"
             val ollamaModel = preferences[PreferencesKeys.OLLAMA_MODEL] ?: "llama3.2"
+            val geminiApiKey = preferences[PreferencesKeys.GEMINI_API_KEY] ?: ""
+            val geminiModel = preferences[PreferencesKeys.GEMINI_MODEL] ?: "gemini-1.5-flash"
+            val openaiBaseUrl = preferences[PreferencesKeys.OPENAI_BASE_URL] ?: "https://api.openai.com/v1"
+            val openaiApiKey = preferences[PreferencesKeys.OPENAI_API_KEY] ?: ""
+            val openaiModel = preferences[PreferencesKeys.OPENAI_MODEL] ?: "gpt-4o-mini"
+            val claudeApiKey = preferences[PreferencesKeys.CLAUDE_API_KEY] ?: ""
+            val claudeModel = preferences[PreferencesKeys.CLAUDE_MODEL] ?: "claude-3-5-haiku-20241022"
 
             val blacklisted = preferences[PreferencesKeys.BLACKLISTED_PACKAGES]
                 ?.split(",")
@@ -85,6 +110,13 @@ class PreferencesRepository(private val context: Context) {
                 engineMode = EngineMode.fromId(engineModeId),
                 ollamaBaseUrl = ollamaBaseUrl,
                 ollamaModel = ollamaModel,
+                geminiApiKey = geminiApiKey,
+                geminiModel = geminiModel,
+                openaiBaseUrl = openaiBaseUrl,
+                openaiApiKey = openaiApiKey,
+                openaiModel = openaiModel,
+                claudeApiKey = claudeApiKey,
+                claudeModel = claudeModel,
                 blacklistedPackages = blacklisted,
                 snippets = snippets
             )
@@ -123,6 +155,28 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setOllamaModel(model: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.OLLAMA_MODEL] = model
+        }
+    }
+
+    suspend fun setGeminiSettings(apiKey: String, model: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.GEMINI_API_KEY] = apiKey.trim()
+            preferences[PreferencesKeys.GEMINI_MODEL] = model.trim().ifBlank { "gemini-1.5-flash" }
+        }
+    }
+
+    suspend fun setOpenAISettings(baseUrl: String, apiKey: String, model: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.OPENAI_BASE_URL] = baseUrl.trim().ifBlank { "https://api.openai.com/v1" }
+            preferences[PreferencesKeys.OPENAI_API_KEY] = apiKey.trim()
+            preferences[PreferencesKeys.OPENAI_MODEL] = model.trim().ifBlank { "gpt-4o-mini" }
+        }
+    }
+
+    suspend fun setClaudeSettings(apiKey: String, model: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.CLAUDE_API_KEY] = apiKey.trim()
+            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-3-5-haiku-20241022" }
         }
     }
 

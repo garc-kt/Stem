@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.overlay.service
+package com.veggiebit.sprout.features.overlay.service
 
 import android.accessibilityservice.AccessibilityService
 import android.os.Handler
@@ -56,8 +56,6 @@ class SproutAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (!userSettings.overlayEnabled) return
-        if (!PermissionHelper.hasOverlayPermission(this)) return
 
         val pkgName = event.packageName?.toString() ?: ""
         if (userSettings.blacklistedPackages.contains(pkgName)) {
@@ -138,8 +136,11 @@ class SproutAccessibilityService : AccessibilityService() {
         }
 
         lastObservedPayload = payload
-        if (overlayManager != null) {
+        // Only show floating UI over apps if explicitly enabled by user
+        if (userSettings.overlayEnabled && PermissionHelper.hasOverlayPermission(this)) {
             overlayManager?.show(payload, userSettings.defaultPreset)
+        } else {
+            overlayManager?.hide()
         }
     }
 

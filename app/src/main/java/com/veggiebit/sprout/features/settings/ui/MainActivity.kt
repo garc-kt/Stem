@@ -61,6 +61,15 @@ class MainActivity : ComponentActivity() {
                     onSaveOllamaModel = { model ->
                         scope.launch { preferencesRepo.setOllamaModel(model) }
                     },
+                    onSaveGeminiSettings = { apiKey, model ->
+                        scope.launch { preferencesRepo.setGeminiSettings(apiKey, model) }
+                    },
+                    onSaveOpenAISettings = { baseUrl, apiKey, model ->
+                        scope.launch { preferencesRepo.setOpenAISettings(baseUrl, apiKey, model) }
+                    },
+                    onSaveClaudeSettings = { apiKey, model ->
+                        scope.launch { preferencesRepo.setClaudeSettings(apiKey, model) }
+                    },
                     onSaveSnippet = { key, expansion ->
                         scope.launch { preferencesRepo.saveSnippet(key, expansion) }
                     },

@@ -1,38 +1,39 @@
-﻿package com.veggiebit.sprout.app.theme
+package com.veggiebit.sprout.app.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Citrus / Amber Brand Seed Palette (Strictly Light Mode Expressive)
-val SproutAmberPrimary = Color(0xFFE65100)
-val SproutAmberOnPrimary = Color(0xFFFFFFFF)
-val SproutAmberPrimaryContainer = Color(0xFFFFE0B2)
-val SproutAmberOnPrimaryContainer = Color(0xFF4E2600)
+// Google Pixel / Material 3 Monet Palette (Clean Light Mode)
+val GoogleMonetPrimary = Color(0xFF0B57D0) // Google Blue
+val GoogleMonetOnPrimary = Color(0xFFFFFFFF)
+val GoogleMonetPrimaryContainer = Color(0xFFD3E3FD)
+val GoogleMonetOnPrimaryContainer = Color(0xFF041E49)
 
-val SproutSecondary = Color(0xFF755B3F)
-val SproutOnSecondary = Color(0xFFFFFFFF)
-val SproutSecondaryContainer = Color(0xFFFFDDB8)
-val SproutOnSecondaryContainer = Color(0xFF2A1700)
+val GoogleMonetSecondary = Color(0xFF00639B)
+val GoogleMonetOnSecondary = Color(0xFFFFFFFF)
+val GoogleMonetSecondaryContainer = Color(0xFFC2E7FF)
+val GoogleMonetOnSecondaryContainer = Color(0xFF001D32)
 
-val SproutTertiary = Color(0xFF2E7D32) // Fresh sprout green accent
-val SproutOnTertiary = Color(0xFFFFFFFF)
-val SproutTertiaryContainer = Color(0xFFC8E6C9)
-val SproutOnTertiaryContainer = Color(0xFF003300)
+val GoogleMonetTertiary = Color(0xFF1E8E3E) // Google Green
+val GoogleMonetOnTertiary = Color(0xFFFFFFFF)
+val GoogleMonetTertiaryContainer = Color(0xFFC4EED0)
+val GoogleMonetOnTertiaryContainer = Color(0xFF00210B)
 
-val SproutBackground = Color(0xFFFFFBF7)
-val SproutOnBackground = Color(0xFF221A14)
-val SproutSurface = Color(0xFFFFFBF7)
-val SproutOnSurface = Color(0xFF221A14)
+val GoogleMonetBackground = Color(0xFFFCFCFF)
+val GoogleMonetOnBackground = Color(0xFF1A1C1E)
+val GoogleMonetSurface = Color(0xFFFCFCFF)
+val GoogleMonetOnSurface = Color(0xFF1A1C1E)
 
-val SproutSurfaceContainerLow = Color(0xFFF9F2EB)
-val SproutSurfaceContainer = Color(0xFFF3ECE4)
-val SproutSurfaceContainerHigh = Color(0xFFEDE6DE)
-val SproutSurfaceContainerHighest = Color(0xFFE7E0D8)
+val GoogleMonetSurfaceContainerLow = Color(0xFFF6F8FC)
+val GoogleMonetSurfaceContainer = Color(0xFFEEF2F6)
+val GoogleMonetSurfaceContainerHigh = Color(0xFFE7ECF0)
+val GoogleMonetSurfaceContainerHighest = Color(0xFFDFE4E8)
 
-val SproutOutline = Color(0xFF837467)
-val SproutOutlineVariant = Color(0xFFD6C3B4)
+val GoogleMonetOutline = Color(0xFF72777F)
+val GoogleMonetOutlineVariant = Color(0xFFC2C7CE)
 
 // Diff Visual Highlighting Colors
-val DiffAddedGreen = Color(0xFF2E7D32)
-val DiffAddedGreenBackground = Color(0xFFE8F5E9)
-val DiffDeletedRed = Color(0xFFC62828)
-val DiffDeletedRedBackground = Color(0xFFFFEBEE)
+val DiffAddedGreen = Color(0xFF1E8E3E)
+val DiffAddedGreenBackground = Color(0xFFE6F4EA)
+val DiffDeletedRed = Color(0xFFD93025)
+val DiffDeletedRedBackground = Color(0xFFFCE8E6)
+

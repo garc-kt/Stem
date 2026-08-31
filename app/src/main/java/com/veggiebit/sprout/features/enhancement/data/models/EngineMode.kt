@@ -1,4 +1,4 @@
-﻿package com.veggiebit.sprout.features.enhancement.data.models
+package com.veggiebit.sprout.features.enhancement.data.models
 
 /**
  * AI / Rule engine selection mode.
@@ -6,17 +6,38 @@
 enum class EngineMode(
     val id: String,
     val title: String,
-    val description: String
+    val description: String,
+    val isCloud: Boolean
 ) {
     LOCAL_RULES(
         id = "local_rules",
         title = "On-Device Rules (Instant)",
-        description = "100% offline, zero latency, dictionary & grammar rules in local RAM."
+        description = "100% offline, 0ms latency in local RAM. Zero network.",
+        isCloud = false
     ),
     OLLAMA_AI(
         id = "ollama_ai",
         title = "Ollama Local AI (PC / LAN)",
-        description = "Connects over Wi-Fi/LAN to Ollama running on your PC (Llama 3.2, Mistral, Gemma 2, etc.)."
+        description = "Connects over Wi-Fi to Ollama on your PC (Llama 3.2, Mistral, Gemma 2).",
+        isCloud = false
+    ),
+    GEMINI_AI(
+        id = "gemini_ai",
+        title = "Google Gemini",
+        description = "Ultra-fast text enhancement using Google Gemini 2.0 / 1.5 Flash API.",
+        isCloud = true
+    ),
+    OPENAI_COMPATIBLE(
+        id = "openai_compatible",
+        title = "OpenAI / OpenRouter / DeepSeek",
+        description = "GPT-4o, DeepSeek, Groq, or any OpenAI-compatible API endpoint.",
+        isCloud = true
+    ),
+    CLAUDE_AI(
+        id = "claude_ai",
+        title = "Anthropic Claude",
+        description = "High-precision writing enhancement using Claude 3.5 Sonnet & Haiku.",
+        isCloud = true
     );
 
     companion object {
@@ -25,3 +46,4 @@ enum class EngineMode(
         }
     }
 }
+
