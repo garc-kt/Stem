@@ -48,7 +48,25 @@ object EnglishRules : LanguageRules {
         "havent" to "haven't",
         "hasnt" to "hasn't",
         "arent" to "aren't",
-        "werent" to "weren't"
+        "werent" to "weren't",
+        "u" to "you",
+        "ur" to "your",
+        "pls" to "please",
+        "plz" to "please",
+        "rn" to "right now",
+        "tbh" to "honestly",
+        "idk" to "I don't know",
+        "imo" to "in my opinion",
+        "cuz" to "because",
+        "cos" to "because",
+        "bcoz" to "because",
+        "prolly" to "probably",
+        "lemme" to "let me",
+        "gimme" to "give me",
+        "tryna" to "trying to",
+        "would of" to "would have",
+        "could of" to "could have",
+        "should of" to "should have"
     )
 
     override val wordyPhrases = mapOf(

@@ -23,10 +23,11 @@ class ClaudeRuleEngine(
         }
 
         val systemPrompt = GeminiRuleEngine.getSystemPrompt(preset, customInstruction)
+        val formattedPrompt = GeminiRuleEngine.formatUserPrompt(original, preset, customInstruction)
         val result = ClaudeClient.generate(
             apiKey = apiKey,
             model = model,
-            prompt = original,
+            prompt = formattedPrompt,
             systemPrompt = systemPrompt,
             temperature = temperature
         )

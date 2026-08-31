@@ -27,7 +27,9 @@ object TransformCache {
 
     @Synchronized
     fun put(text: String, preset: TransformPreset, engineSignature: String, result: TransformResult) {
-        cache[CacheKey(text, preset.id, engineSignature)] = result
+        if (result.transformedText.isNotBlank() && result.transformedText != result.originalText) {
+            cache[CacheKey(text, preset.id, engineSignature)] = result
+        }
     }
 
     @Synchronized

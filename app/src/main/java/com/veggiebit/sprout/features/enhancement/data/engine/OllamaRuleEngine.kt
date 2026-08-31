@@ -29,10 +29,11 @@ class OllamaRuleEngine(
         // Reuses GeminiRuleEngine's prompt set (previously duplicated here near-verbatim) so
         // all four AI engines stay in sync as presets are added.
         val systemPrompt = GeminiRuleEngine.getSystemPrompt(preset, customInstruction)
+        val formattedPrompt = GeminiRuleEngine.formatUserPrompt(original, preset, customInstruction)
         val result = OllamaClient.generate(
             baseUrl = baseUrl,
             model = model,
-            prompt = original,
+            prompt = formattedPrompt,
             systemPrompt = systemPrompt,
             temperature = temperature
         )

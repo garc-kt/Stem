@@ -62,6 +62,45 @@ class GeminiRuleEngine(
 
             return basePrompt + masterDirective
         }
+
+        /**
+         * Explicitly frames the user's text with unambiguous transformation instructions.
+         * Prevents models from echoing the text unchanged or mistaking it for conversation.
+         */
+        fun formatUserPrompt(original: String, preset: TransformPreset, customInstruction: String = ""): String {
+            val action = when (preset) {
+                TransformPreset.FIX ->
+                    "Actively polish, improve, and elevate the text below. Fix all grammar, typos, awkward phrasing, and rhythm while enriching vocabulary. Make sure the output is enhanced and not left identical."
+
+                TransformPreset.CONCISE ->
+                    "Rewrite the text below to be significantly more concise, direct, and clear. Eliminate all wordiness, filler, and redundancy while preserving full meaning."
+
+                TransformPreset.PROFESSIONAL ->
+                    "Transform the text below into articulate, polished, high-status executive business phrasing with confidence and diplomatic authority."
+
+                TransformPreset.PUNCHY ->
+                    "Rewrite the text below with high energy, active verbs, compelling rhythm, and strong cadence."
+
+                TransformPreset.FRIENDLY ->
+                    "Rewrite the text below in a delightful, warm, empathetic, and approachable conversational tone with natural flow."
+
+                TransformPreset.SUMMARIZE ->
+                    "Distill the text below into a clear, high-impact summary capturing the core takeaways in as few words as possible."
+
+                TransformPreset.BULLETIZE ->
+                    "Convert the text below into a scannable bullet point list (one key point per line with • prefix)."
+
+                TransformPreset.EXPAND ->
+                    "Elaborate and enrich the text below with vivid detail, smooth transitions, and depth while preserving intent."
+
+                TransformPreset.CUSTOM -> {
+                    val inst = customInstruction.trim().ifBlank { "Actively enhance, polish, and elevate the text" }
+                    "Apply this instruction to the text: $inst"
+                }
+            }
+
+            return "$action\n\nOriginal text:\n\"\"\"\n$original\n\"\"\"\n\nEnhanced rewritten version (output ONLY the enhanced text, with no quotes, markdown backticks, or preamble):"
+        }
     }
 
     override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.IO) {
@@ -71,10 +110,11 @@ class GeminiRuleEngine(
         }
 
         val systemPrompt = getSystemPrompt(preset, customInstruction)
+        val formattedPrompt = formatUserPrompt(original, preset, customInstruction)
         val result = GeminiClient.generate(
             apiKey = apiKey,
             model = model,
-            prompt = original,
+            prompt = formattedPrompt,
             systemPrompt = systemPrompt,
             temperature = temperature
         )

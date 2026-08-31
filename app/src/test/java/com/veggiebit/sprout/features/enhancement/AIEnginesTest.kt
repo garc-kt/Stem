@@ -117,4 +117,12 @@ class AIEnginesTest {
         val promptWith = GeminiRuleEngine.getSystemPrompt(TransformPreset.FIX, "Always write in British English")
         assertTrue(promptWith.contains("ADDITIONAL MASTER DIRECTIVE: Always write in British English"))
     }
+
+    @Test
+    fun testFormatUserPromptFramesTextExplicitly() {
+        val formatted = GeminiRuleEngine.formatUserPrompt("meeting tomorrow", TransformPreset.FIX)
+        assertTrue(formatted.contains("Original text:"))
+        assertTrue(formatted.contains("meeting tomorrow"))
+        assertTrue(formatted.contains("Actively polish, improve, and elevate"))
+    }
 }

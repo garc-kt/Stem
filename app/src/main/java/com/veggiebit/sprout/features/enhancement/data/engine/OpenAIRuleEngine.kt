@@ -24,11 +24,12 @@ class OpenAIRuleEngine(
         }
 
         val systemPrompt = GeminiRuleEngine.getSystemPrompt(preset, customInstruction)
+        val formattedPrompt = GeminiRuleEngine.formatUserPrompt(original, preset, customInstruction)
         val result = OpenAIClient.generate(
             baseUrl = baseUrl,
             apiKey = apiKey,
             model = model,
-            prompt = original,
+            prompt = formattedPrompt,
             systemPrompt = systemPrompt,
             temperature = temperature
         )

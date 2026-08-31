@@ -174,7 +174,7 @@ class SproutAccessibilityService : AccessibilityService() {
                     serviceScope.launch {
                         val engine = com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider.getEngine(userSettings)
                         val result = engine.transform(com.veggiebit.sprout.features.enhancement.data.models.TextPayload(inlineResult.body), inlineResult.preset)
-                        if (result.transformedText.isNotBlank() && result.transformedText != inlineResult.body) {
+                        if (result.transformedText.isNotBlank()) {
                             if (userSettings.hapticFeedbackEnabled) {
                                 HapticHelper.performSuccessHaptic(this@SproutAccessibilityService)
                             }
@@ -195,7 +195,7 @@ class SproutAccessibilityService : AccessibilityService() {
                         val customSettings = userSettings.copy(customPromptInstruction = inlineResult.customPrompt)
                         val engine = com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider.getEngine(customSettings)
                         val result = engine.transform(com.veggiebit.sprout.features.enhancement.data.models.TextPayload(inlineResult.body), com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CUSTOM)
-                        if (result.transformedText.isNotBlank() && result.transformedText != inlineResult.body) {
+                        if (result.transformedText.isNotBlank()) {
                             if (userSettings.hapticFeedbackEnabled) {
                                 HapticHelper.performSuccessHaptic(this@SproutAccessibilityService)
                             }
