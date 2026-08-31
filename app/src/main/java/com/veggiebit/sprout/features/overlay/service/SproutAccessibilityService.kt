@@ -165,15 +165,28 @@ class SproutAccessibilityService : AccessibilityService() {
                         return
                     }
 
+                    // Check missing API credentials
+                    if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.GEMINI_AI && userSettings.geminiApiKey.isBlank()) {
+                        Toast.makeText(this, "Sprout: Add your Gemini API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.CLAUDE_AI && userSettings.claudeApiKey.isBlank()) {
+                        Toast.makeText(this, "Sprout: Add your Claude API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.OPENAI_COMPATIBLE && userSettings.openaiApiKey.isBlank()) {
+                        Toast.makeText(this, "Sprout: Add your OpenAI API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    }
+
                     if (userSettings.hapticFeedbackEnabled) {
                         HapticHelper.performClickHaptic(this)
                     }
-                    Toast.makeText(this, "Sprout: Thinking (${userSettings.engineMode.title})...", Toast.LENGTH_SHORT).show()
-                    overlayManager?.hide()
+
+                    // Show live thinking indicator on screen
+                    if (PermissionHelper.hasOverlayPermission(this)) {
+                        overlayManager?.showInlineThinking(payload.boundsInScreen)
+                    }
 
                     serviceScope.launch {
                         val engine = com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider.getEngine(userSettings)
                         val result = engine.transform(com.veggiebit.sprout.features.enhancement.data.models.TextPayload(inlineResult.body), inlineResult.preset)
+                        overlayManager?.hide()
                         if (result.transformedText.isNotBlank()) {
                             if (userSettings.hapticFeedbackEnabled) {
                                 HapticHelper.performSuccessHaptic(this@SproutAccessibilityService)
@@ -185,16 +198,30 @@ class SproutAccessibilityService : AccessibilityService() {
                     return
                 }
                 is InlineCommandEngine.CommandResult.RunAIPrompt -> {
+                    if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.LOCAL_RULES) {
+                        Toast.makeText(this, "Sprout: Select Gemini, Claude, or OpenAI in Settings to use custom AI prompts", Toast.LENGTH_LONG).show()
+                    } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.GEMINI_AI && userSettings.geminiApiKey.isBlank()) {
+                        Toast.makeText(this, "Sprout: Add your Gemini API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.CLAUDE_AI && userSettings.claudeApiKey.isBlank()) {
+                        Toast.makeText(this, "Sprout: Add your Claude API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.OPENAI_COMPATIBLE && userSettings.openaiApiKey.isBlank()) {
+                        Toast.makeText(this, "Sprout: Add your OpenAI API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    }
+
                     if (userSettings.hapticFeedbackEnabled) {
                         HapticHelper.performClickHaptic(this)
                     }
-                    Toast.makeText(this, "Sprout: Thinking (${userSettings.engineMode.title})...", Toast.LENGTH_SHORT).show()
-                    overlayManager?.hide()
+
+                    // Show live thinking indicator on screen
+                    if (PermissionHelper.hasOverlayPermission(this)) {
+                        overlayManager?.showInlineThinking(payload.boundsInScreen)
+                    }
 
                     serviceScope.launch {
                         val customSettings = userSettings.copy(customPromptInstruction = inlineResult.customPrompt)
                         val engine = com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider.getEngine(customSettings)
                         val result = engine.transform(com.veggiebit.sprout.features.enhancement.data.models.TextPayload(inlineResult.body), com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CUSTOM)
+                        overlayManager?.hide()
                         if (result.transformedText.isNotBlank()) {
                             if (userSettings.hapticFeedbackEnabled) {
                                 HapticHelper.performSuccessHaptic(this@SproutAccessibilityService)

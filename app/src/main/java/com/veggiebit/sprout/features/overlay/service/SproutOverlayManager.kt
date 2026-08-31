@@ -104,6 +104,21 @@ class SproutOverlayManager(
         }
     }
 
+    fun showInlineThinking(bounds: android.graphics.Rect?) {
+        transformJob?.cancel()
+        isTransforming = true
+        isExpanded = false
+        currentTransformResult = null
+        if (bounds != null) {
+            calculateInitialPosition(bounds)
+        }
+        if (!isViewAttached) {
+            attachView()
+        } else {
+            updateViewLayout()
+        }
+    }
+
     fun updateSettings(settings: SproutUserSettings) {
         userSettings = settings
     }
