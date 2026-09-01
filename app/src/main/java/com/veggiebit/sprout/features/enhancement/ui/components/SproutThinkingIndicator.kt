@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -119,7 +120,7 @@ fun SproutThinkingCard(
                     Icon(
                         imageVector = Icons.Rounded.AutoAwesome,
                         contentDescription = "Thinking",
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier
                             .size(20.dp)
                             .rotate(rotation)
@@ -139,61 +140,53 @@ fun SproutThinkingCard(
                     )
                     Text(
                         text = "$engineTitle • $subtitle",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp
-                        ),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Shimmering Progress Bar
+            // Shimmer progress track
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(5.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(shimmerBrush)
-            )
+                    .height(6.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(shimmerBrush)
+                )
+            }
         }
     }
 }
 
 /**
- * Compact animated pulsing sparkle badge for the floating pill or inline indicator.
+ * Compact Rotating Google AI Sparkles Badge for the collapsed floating pill.
  */
 @Composable
 fun SproutThinkingBadge(
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pillThinking")
-
+    val infiniteTransition = rememberInfiniteTransition(label = "badgeThinking")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
+            animation = tween(2200, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "badgeRotation"
     )
 
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.94f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "badgeScale"
-    )
-
     Box(
         modifier = modifier
             .size(24.dp)
-            .scale(scale)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center
@@ -201,7 +194,7 @@ fun SproutThinkingBadge(
         Icon(
             imageVector = Icons.Rounded.AutoAwesome,
             contentDescription = "Thinking",
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier
                 .size(15.dp)
                 .rotate(rotation)

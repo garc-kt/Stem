@@ -176,14 +176,10 @@ fun EngineScreen(
                                     )
                                 }
                                 if (isSelected) {
-                                    // No contentDescription here — Modifier.selectable above
-                                    // already exposes selected/RadioButton state to TalkBack,
-                                    // so labeling this decorative checkmark too would announce
-                                    // "selected" twice.
                                     Icon(
                                         imageVector = Icons.Rounded.CheckCircle,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
