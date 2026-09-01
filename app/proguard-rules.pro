@@ -1,8 +1,8 @@
-﻿# Add project specific ProGuard rules here.
+# Add project specific ProGuard rules here.
 
--keep class com.veggiebit.sprout.features.overlay.service.** { *; }
--keep class com.veggiebit.sprout.features.selection.ui.** { *; }
--keep class com.veggiebit.sprout.app.** { *; }
+-keep class com.stem.service.** { *; }
+-keep class com.stem.ui.** { *; }
+-keep class com.stem.app.** { *; }
 
 # Kotlin Serialization & Coroutines
 -keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod

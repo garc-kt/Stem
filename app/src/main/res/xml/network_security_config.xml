@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Sprout's Ollama LAN engine is the only feature that ever speaks cleartext HTTP — to a
+  Stem's Ollama LAN engine is the only feature that ever speaks cleartext HTTP — to a
   server on the user's own local network, at whatever private IP their router assigned it
   (192.168.x.x, 10.x.x.x, a .local mDNS name, etc). Android's NetworkSecurityConfig only
   matches exact hostnames/IP literals, not CIDR ranges, so it cannot express "cleartext

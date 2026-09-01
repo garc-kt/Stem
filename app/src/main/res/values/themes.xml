@@ -9,5 +9,5 @@
          way instead, via this values/ (day) theme plus the values-night/ override below,
          both based on DeviceDefault, which is the OEM's own dynamically (Monet) themed
          platform look on Android 12+. -->
-    <style name="Theme.Sprout" parent="android:Theme.DeviceDefault.Light.NoActionBar" />
+    <style name="Theme.Stem" parent="android:Theme.DeviceDefault.Light.NoActionBar" />
 </resources>

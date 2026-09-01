@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   API < 31 backup rules (device-to-device restore and legacy Auto Backup).
-  The Sprout preferences DataStore file holds API credentials for the cloud text engines —
+  The Stem preferences DataStore file holds API credentials for the cloud text engines —
   even Keystore-encrypted, those keys are hardware-bound and would restore as undecryptable
   ciphertext on a new device, so it is excluded outright rather than shipped broken.
 -->
 <full-backup-content>
-    <exclude domain="file" path="datastore/sprout_settings.preferences_pb" />
+    <exclude domain="file" path="datastore/stem_settings.preferences_pb" />
 </full-backup-content>

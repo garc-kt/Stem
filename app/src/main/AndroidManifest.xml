@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Android 11+ package visibility: the per-app rules screen needs to enumerate
-         launchable apps to let the user allow/deny Sprout per app. -->
+         launchable apps to let the user allow/deny Stem per app. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -16,7 +15,7 @@
     </queries>
 
     <application
-        android:name=".app.SproutApplication"
+        android:name=".app.StemApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -26,10 +25,10 @@
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:windowSoftInputMode="adjustResize"
-        android:theme="@style/Theme.Sprout">
+        android:theme="@style/Theme.Stem">
         
         <activity
-            android:name=".features.settings.ui.MainActivity"
+            android:name=".ui.navigation.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,8 +37,8 @@
         </activity>
 
         <activity
-            android:name=".features.selection.ui.ProcessTextActivity"
-            android:label="Sprout Assistant"
+            android:name=".ui.navigation.ProcessTextActivity"
+            android:label="Stem Assistant"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:exported="true">
             <intent-filter>
@@ -50,7 +49,7 @@
         </activity>
 
         <service
-            android:name=".features.overlay.service.SproutAccessibilityService"
+            android:name=".service.StemAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:label="@string/accessibility_service_label"
             android:exported="true">
@@ -63,9 +62,9 @@
         </service>
 
         <service
-            android:name=".features.overlay.service.SproutTileService"
-            android:icon="@drawable/ic_tile_sprout"
-            android:label="Sprout Assistant"
+            android:name=".service.StemTileService"
+            android:icon="@drawable/ic_tile_stem"
+            android:label="Stem Assistant"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
