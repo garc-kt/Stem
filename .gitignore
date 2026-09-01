@@ -17,7 +17,7 @@ keystore.properties.example
 *.jks
 *.keystore
 
-# Local Claude Code tooling state (skill cache, agent scratch) - not project source
+# Local tooling state (skill cache, agent scratch)
 /.claude
 /.agents
 skills-lock.json
