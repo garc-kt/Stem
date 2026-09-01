@@ -43,7 +43,6 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = structuredVersionCode
-        versionName = "$versionMajor.$versionMinor.$versionPatch"
 
         buildConfigField("int", "VERSION_MAJOR", versionMajor.toString())
         buildConfigField("int", "VERSION_MINOR", versionMinor.toString())
