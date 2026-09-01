@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,20 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Layers
-import androidx.compose.material.icons.rounded.Spa
-import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -41,18 +31,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.veggiebit.sprout.features.settings.ui.components.PermissionStepCard
+import androidx.compose.ui.unit.sp
+import com.veggiebit.sprout.app.theme.LocalStemColors
+import com.veggiebit.sprout.app.theme.StemCardShape
+import com.veggiebit.sprout.app.theme.StemGeometricIcon
+import com.veggiebit.sprout.app.theme.StemIconType
+import com.veggiebit.sprout.app.theme.StemIndicatorShape
+import com.veggiebit.sprout.app.theme.StemLogoMark
+import com.veggiebit.sprout.app.theme.StemMonoBadge
+import com.veggiebit.sprout.app.theme.StemMonoCode
+import com.veggiebit.sprout.app.theme.StemSharpShape
+import com.veggiebit.sprout.features.enhancement.data.models.DiffToken
+import com.veggiebit.sprout.features.enhancement.data.models.DiffType
+import com.veggiebit.sprout.features.enhancement.ui.components.DiffViewer
 
 /**
- * First-run onboarding: welcome -> accessibility permission -> overlay permission -> done.
- * plan.md Phase 1 calls for a step-by-step permission flow; previously the two permission
- * cards were just sitting in the settings list with no guided first-run path.
+ * Stem 4-Step Onboarding Flow:
+ * Step 0: Welcome & Features
+ * Step 1: Accessibility Service Permission
+ * Step 2: Overlay Permission
+ * Step 3: Done & Try It Demo
+ * Matches Stem.dc.html design specification.
  */
 @Composable
 fun OnboardingScreen(
@@ -64,191 +68,436 @@ fun OnboardingScreen(
     modifier: Modifier = Modifier
 ) {
     var step by remember { mutableIntStateOf(0) }
-    val totalSteps = 3
+    val totalSteps = 4
+    val stemTheme = LocalStemColors.current
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(stemTheme.bg)
             .systemBarsPadding()
             .imePadding()
             .padding(24.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                // The individual bars are purely decorative (no meaningful state of their
-                // own to a screen reader) — without this the whole progress indicator is
-                // silently skipped by TalkBack, so first-run onboarding never announces
-                // "step 1 of 3" the way the visible bars imply.
-                .clearAndSetSemantics { contentDescription = "Step ${step + 1} of $totalSteps" },
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            repeat(totalSteps) { index ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(
-                            if (index <= step) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.surfaceContainerHighest
-                        )
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Box(modifier = Modifier.weight(1f)) {
-            AnimatedContent(
-                targetState = step,
-                transitionSpec = {
-                    (fadeIn(animationSpec = tween(260))).togetherWith(fadeOut(animationSpec = tween(180)))
-                },
-                label = "onboardingStep"
-            ) { currentStep ->
-                when (currentStep) {
-                    0 -> WelcomeStep()
-                    1 -> PermissionStep(
-                        icon = Icons.Rounded.TouchApp,
-                        title = "Accessibility Service",
-                        description = "Sprout uses Android's Accessibility Service to detect focused text fields and offer inline replacements — it never reads content outside text you're actively editing.",
-                        stepCard = {
-                            PermissionStepCard(
-                                stepNumber = 1,
-                                title = "Accessibility Service",
-                                description = "Monitors text focus & provides inline replacement across apps.",
-                                icon = Icons.Rounded.TouchApp,
-                                isGranted = hasAccessibilityPermission,
-                                onGrantClick = onRequestAccessibilityPermission
-                            )
-                        }
-                    )
-                    else -> PermissionStep(
-                        icon = Icons.Rounded.Layers,
-                        title = "Display Over Other Apps",
-                        description = "This lets the floating pill and suggestion panel appear above whatever you're typing in. You can turn it off any time and use text-selection triggering instead.",
-                        stepCard = {
-                            PermissionStepCard(
-                                stepNumber = 2,
-                                title = "Display Over Other Apps",
-                                description = "Shows the floating 36dp pill & expanded suggestion capsule.",
-                                icon = Icons.Rounded.Layers,
-                                isGranted = hasOverlayPermission,
-                                onGrantClick = onRequestOverlayPermission
-                            )
-                        }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
+        // Top Bar: 4-Segment Progress Indicator & Skip Button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = onFinish) {
-                Text("Skip for now")
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 16.dp)
+                    .clearAndSetSemantics { contentDescription = "Step ${step + 1} of $totalSteps" },
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                repeat(totalSteps) { index ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(2.dp)
+                            .clip(StemIndicatorShape)
+                            .background(
+                                if (index <= step) stemTheme.ink
+                                else stemTheme.surface3
+                            )
+                    )
+                }
             }
 
-            Button(
-                onClick = {
-                    if (step < totalSteps - 1) step++ else onFinish()
-                },
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+            if (step < totalSteps - 1) {
+                Text(
+                    text = "SKIP",
+                    style = StemMonoBadge,
+                    color = stemTheme.inkMuted,
+                    modifier = Modifier
+                        .clickable(role = Role.Button, onClick = onFinish)
+                        .padding(4.dp)
                 )
-            ) {
-                Text(if (step < totalSteps - 1) "Continue" else "Get Started")
-                Spacer(modifier = Modifier.width(6.dp))
-                Icon(
-                    imageVector = if (step < totalSteps - 1) Icons.AutoMirrored.Rounded.ArrowForward else Icons.Rounded.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
+            } else {
+                Spacer(modifier = Modifier.width(36.dp))
             }
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // Content Area
+        Box(modifier = Modifier.weight(1f)) {
+            AnimatedContent(
+                targetState = step,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(240)).togetherWith(fadeOut(animationSpec = tween(160)))
+                },
+                label = "onboardingStep"
+            ) { currentStep ->
+                when (currentStep) {
+                    0 -> WelcomeStep()
+                    1 -> AccessibilityStep(
+                        isGranted = hasAccessibilityPermission,
+                        onGrant = onRequestAccessibilityPermission
+                    )
+                    2 -> OverlayStep(
+                        isGranted = hasOverlayPermission,
+                        onGrant = onRequestOverlayPermission
+                    )
+                    else -> DoneStep()
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Bottom CTA Button
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(StemSharpShape)
+                .background(stemTheme.ink)
+                .clickable(
+                    role = Role.Button,
+                    onClick = {
+                        if (step < totalSteps - 1) step++ else onFinish()
+                    }
+                )
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = when (step) {
+                    0 -> "Get started"
+                    1 -> if (hasAccessibilityPermission) "Continue" else "Next"
+                    2 -> if (hasOverlayPermission) "Continue" else "Next"
+                    else -> "Open Stem"
+                },
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = stemTheme.onInk
+            )
         }
     }
 }
 
 @Composable
 private fun WelcomeStep() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+    val stemTheme = LocalStemColors.current
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        StemLogoMark(
+            size = 40.dp,
+            tint = stemTheme.ink
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Stem",
+            style = MaterialTheme.typography.displayMedium,
+            color = stemTheme.ink
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "Ambient writing help, wherever you type.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = stemTheme.inkMuted
+        )
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        // Feature Card
         Box(
             modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .clip(StemCardShape)
+                .background(stemTheme.surface)
+                .border(1.dp, stemTheme.border, StemCardShape)
+                .padding(16.dp)
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Spa,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(44.dp)
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                FeatureRow(
+                    iconType = StemIconType.SQUARE_OUTLINE,
+                    title = "Fix typos & grammar in real time"
+                )
+                FeatureRow(
+                    iconType = StemIconType.TRIANGLE,
+                    title = "Transform tone: punchy, formal, friendly"
+                )
+                FeatureRow(
+                    iconType = StemIconType.CIRCLE_OUTLINE,
+                    title = "Never leaves your device (unless you ask)"
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Welcome to Sprout",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
+    }
+}
+
+@Composable
+private fun FeatureRow(
+    iconType: StemIconType,
+    title: String
+) {
+    val stemTheme = LocalStemColors.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        StemGeometricIcon(
+            iconType = iconType,
+            tint = stemTheme.inkMuted,
+            size = 12.dp
         )
-        Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "A floating writing assistant that fixes, polishes, and transforms text right where you're typing — in any app.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Two permissions get it running. Both are explained on the next screens.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center
+            text = title,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+            color = stemTheme.ink
         )
     }
 }
 
 @Composable
-private fun PermissionStep(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    stepCard: @Composable () -> Unit
+private fun AccessibilityStep(
+    isGranted: Boolean,
+    onGrant: () -> Unit
 ) {
+    val stemTheme = LocalStemColors.current
+
     Column(modifier = Modifier.fillMaxSize()) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(40.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSurface
+            text = "STEP 1 OF 2",
+            style = StemMonoBadge,
+            color = stemTheme.inkFaint
         )
-        Spacer(modifier = Modifier.height(10.dp))
+
+        Spacer(modifier = Modifier.height(6.dp))
+
         Text(
-            text = description,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "Read & replace text",
+            style = MaterialTheme.typography.headlineMedium,
+            color = stemTheme.ink
         )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = "Stem needs Accessibility permission to detect when you're typing and offer instant inline rewrites.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = stemTheme.inkMuted
+        )
+
         Spacer(modifier = Modifier.height(24.dp))
-        stepCard()
+
+        // Permission Card
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(StemCardShape)
+                .background(stemTheme.surface)
+                .border(1.dp, stemTheme.border, StemCardShape)
+                .padding(16.dp)
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Android Accessibility Service",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = stemTheme.ink
+                    )
+                    if (isGranted) {
+                        Text(
+                            text = "Granted ✓",
+                            style = StemMonoBadge,
+                            color = stemTheme.add
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Only reads the active input field. Never sends keystrokes off-device.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = stemTheme.inkMuted
+                )
+
+                if (!isGranted) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(StemSharpShape)
+                            .background(stemTheme.surface2)
+                            .border(1.dp, stemTheme.border, StemSharpShape)
+                            .clickable(role = Role.Button, onClick = onGrant)
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Enable in Settings",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = stemTheme.ink
+                        )
+                    }
+                }
+            }
+        }
     }
 }
+
+@Composable
+private fun OverlayStep(
+    isGranted: Boolean,
+    onGrant: () -> Unit
+) {
+    val stemTheme = LocalStemColors.current
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            text = "STEP 2 OF 2",
+            style = StemMonoBadge,
+            color = stemTheme.inkFaint
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = "Float near your cursor",
+            style = MaterialTheme.typography.headlineMedium,
+            color = stemTheme.ink
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = "The overlay permission lets Stem show a tiny 40px helper next to any text field.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = stemTheme.inkMuted
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Permission Card
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(StemCardShape)
+                .background(stemTheme.surface)
+                .border(1.dp, stemTheme.border, StemCardShape)
+                .padding(16.dp)
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Display over other apps",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = stemTheme.ink
+                    )
+                    if (isGranted) {
+                        Text(
+                            text = "Granted ✓",
+                            style = StemMonoBadge,
+                            color = stemTheme.add
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Allows the floating stem icon and quick-transform menu.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = stemTheme.inkMuted
+                )
+
+                if (!isGranted) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(StemSharpShape)
+                            .background(stemTheme.surface2)
+                            .border(1.dp, stemTheme.border, StemSharpShape)
+                            .clickable(role = Role.Button, onClick = onGrant)
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Allow overlay",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = stemTheme.ink
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DoneStep() {
+    val stemTheme = LocalStemColors.current
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            text = "READY",
+            style = StemMonoBadge,
+            color = stemTheme.add
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = "You're all set.",
+            style = MaterialTheme.typography.headlineMedium,
+            color = stemTheme.ink
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = "Type anywhere — a stem icon will appear near your cursor. Tap it or use text selection to rewrite.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = stemTheme.inkMuted
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Simulation Demo Box
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(StemCardShape)
+                .background(stemTheme.surface)
+                .border(1.dp, stemTheme.border, StemCardShape)
+                .padding(16.dp)
+        ) {
+            Column {
+                Text(
+                    text = "TRY IT OUT",
+                    style = StemMonoBadge,
+                    color = stemTheme.inkFaint
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                DiffViewer(
+                    diffTokens = listOf(
+                        DiffToken("Fix: ", DiffType.UNMODIFIED),
+                        DiffToken("thier", DiffType.DELETED),
+                        DiffToken("there", DiffType.ADDED),
+                        DiffToken(" was no problem with the presentation", DiffType.UNMODIFIED)
+                    )
+                )
+            }
+        }
+    }
+}
+

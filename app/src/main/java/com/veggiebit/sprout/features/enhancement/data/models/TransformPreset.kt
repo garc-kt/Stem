@@ -1,11 +1,9 @@
 package com.veggiebit.sprout.features.enhancement.data.models
 
+import com.veggiebit.sprout.app.theme.StemIconType
+
 /**
- * Transformation modes supported by Sprout. [isOfflineApproximate] marks presets whose
- * [LocalRuleEngine][com.veggiebit.sprout.features.enhancement.data.engine.LocalRuleEngine]
- * implementation is a rule-based approximation of what an AI engine would produce (e.g.
- * SUMMARIZE offline is "first sentence + key clauses", not a real summary) — the UI uses this
- * to label the result honestly rather than implying AI-quality output from local rules.
+ * Transformation modes supported by Stem / Sprout.
  */
 enum class TransformPreset(
     val id: String,
@@ -13,6 +11,8 @@ enum class TransformPreset(
     val shortName: String,
     val description: String,
     val emoji: String,
+    val iconType: StemIconType,
+    val useDiff: Boolean = true,
     val isOfflineApproximate: Boolean = false
 ) {
     FIX(
@@ -20,50 +20,64 @@ enum class TransformPreset(
         title = "Fix & Polish",
         shortName = "Fix",
         description = "Corrects typos, casing, grammar, and punctuation.",
-        emoji = "✨"
+        emoji = "✨",
+        iconType = StemIconType.SQUARE_OUTLINE,
+        useDiff = true
     ),
     CONCISE(
         id = "concise",
         title = "Concise",
         shortName = "Concise",
         description = "Trims filler words and sharpens direct meaning.",
-        emoji = "⚡"
+        emoji = "⚡",
+        iconType = StemIconType.BAR,
+        useDiff = true
     ),
     PROFESSIONAL(
         id = "professional",
         title = "Professional",
         shortName = "Formal",
         description = "Elevates tone with courteous, polished vocabulary.",
-        emoji = "👔"
+        emoji = "👔",
+        iconType = StemIconType.SQUARE_FILLED,
+        useDiff = true
     ),
     PUNCHY(
         id = "punchy",
         title = "Punchy",
         shortName = "Punchy",
         description = "High-energy, engaging, and memorable phrasing.",
-        emoji = "🔥"
+        emoji = "🔥",
+        iconType = StemIconType.TRIANGLE,
+        useDiff = true
     ),
     FRIENDLY(
         id = "friendly",
         title = "Friendly",
         shortName = "Friendly",
         description = "Warmer, more approachable everyday tone.",
-        emoji = "😊"
+        emoji = "😊",
+        iconType = StemIconType.CIRCLE_OUTLINE,
+        useDiff = true
     ),
     SUMMARIZE(
         id = "summarize",
         title = "Summarize",
-        shortName = "Summary",
+        shortName = "Summarize",
         description = "Reduces text to its core point.",
         emoji = "📝",
+        iconType = StemIconType.LINES,
+        useDiff = false,
         isOfflineApproximate = true
     ),
     BULLETIZE(
         id = "bulletize",
         title = "Bulletize",
-        shortName = "Bullets",
+        shortName = "Bulletize",
         description = "Restructures text into scannable bullet points.",
         emoji = "•",
+        iconType = StemIconType.DOTS,
+        useDiff = false,
         isOfflineApproximate = true
     ),
     EXPAND(
@@ -72,6 +86,8 @@ enum class TransformPreset(
         shortName = "Expand",
         description = "Adds detail and clarifying context.",
         emoji = "🔎",
+        iconType = StemIconType.DIAMOND,
+        useDiff = false,
         isOfflineApproximate = true
     ),
     CUSTOM(
@@ -79,7 +95,9 @@ enum class TransformPreset(
         title = "Custom",
         shortName = "Custom",
         description = "Your own instruction, applied by the active AI engine.",
-        emoji = "🎛️"
+        emoji = "🎛️",
+        iconType = StemIconType.PLUS,
+        useDiff = true
     );
 
     companion object {
@@ -90,3 +108,4 @@ enum class TransformPreset(
         }
     }
 }
+

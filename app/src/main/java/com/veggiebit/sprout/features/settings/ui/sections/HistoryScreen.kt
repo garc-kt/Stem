@@ -1,8 +1,13 @@
-package com.veggiebit.sprout.features.settings.ui.sections
+﻿package com.veggiebit.sprout.features.settings.ui.sections
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,26 +22,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material.icons.rounded.ContentCopy
-import androidx.compose.material.icons.rounded.DeleteSweep
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,256 +32,184 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.veggiebit.sprout.app.theme.LocalStemColors
+import com.veggiebit.sprout.app.theme.StemCardShape
+import com.veggiebit.sprout.app.theme.StemMonoBadge
+import com.veggiebit.sprout.app.theme.StemSharpShape
 import com.veggiebit.sprout.features.enhancement.data.engine.TransformHistory
-import com.veggiebit.sprout.features.settings.ui.components.SproutSubScreen
+import com.veggiebit.sprout.features.enhancement.ui.components.BeforeAfterDiffBlock
 
 /**
- * Session history — TransformHistory keeps up to 20 snapshots per session.
- * Lists all transformations with search, real-time filtering, one-tap copy,
- * and clear history confirmation.
+ * Stem History Screen:
+ * - Subtitle & expandable history snapshot cards
+ * - Inline diff display with before/after blocks
+ * - Copy and clear actions
+ * Matches Stem.dc.html design specification.
  */
 @Composable
 fun HistoryScreen(
     history: List<TransformHistory.Snapshot>,
-    onCopy: (String) -> Unit,
-    onClearHistory: () -> Unit,
-    onBack: () -> Unit,
+    onCopy: (String) -> Unit = {},
+    onClearHistory: () -> Unit = {},
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-    var showClearDialog by remember { mutableStateOf(false) }
-    var recentlyCopiedId by remember { mutableStateOf<String?>(null) }
+    val stemTheme = LocalStemColors.current
+    val context = LocalContext.current
+    var expandedId by remember { mutableStateOf<String?>(null) }
 
-    val filteredHistory = remember(history, searchQuery) {
-        if (searchQuery.isBlank()) {
-            history.asReversed()
-        } else {
-            val q = searchQuery.trim().lowercase()
-            history.asReversed().filter {
-                it.originalText.lowercase().contains(q) || it.replacedText.lowercase().contains(q)
-            }
-        }
-    }
-
-    if (showClearDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Rounded.DeleteSweep,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
-                )
-            },
-            title = { Text("Clear Session History?") },
-            text = { Text("All recent transformation snapshots from this active session will be removed.") },
-            confirmButton = {
-                FilledTonalButton(
-                    onClick = {
-                        onClearHistory()
-                        showClearDialog = false
-                    },
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                ) {
-                    Text("Clear All")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    SproutSubScreen(
-        title = "Session History",
-        onBack = onBack,
-        modifier = modifier,
-        actions = {
-            if (history.isNotEmpty()) {
-                TextButton(onClick = { showClearDialog = true }) {
-                    Text("Clear", color = MaterialTheme.colorScheme.error)
-                }
-            }
-        }
-    ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            // Header Info & Search
-            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .background(stemTheme.bg)
+    ) {
+        // Subtitle
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
-                    text = "Transformations from this session • Cleared automatically when service stops",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Transformations from the last 7 days.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = stemTheme.inkMuted
                 )
 
                 if (history.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Search history...", style = MaterialTheme.typography.bodyMedium) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Search,
-                                contentDescription = "Search",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Clear,
-                                        contentDescription = "Clear search",
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        },
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                        )
+                    Text(
+                        text = "CLEAR",
+                        style = StemMonoBadge,
+                        color = stemTheme.remove,
+                        modifier = Modifier
+                            .clickable(role = Role.Button, onClick = onClearHistory)
+                            .padding(4.dp)
                     )
                 }
             }
+        }
 
-            if (history.isEmpty()) {
+        if (history.isEmpty()) {
+            item {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(32.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(StemCardShape)
+                        .background(stemTheme.surface)
+                        .border(1.dp, stemTheme.border, StemCardShape)
+                        .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.size(64.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Rounded.History,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(14.dp))
                         Text(
-                            text = "No transformations yet",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
+                            text = "No transformation history yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = stemTheme.inkMuted
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Enhance text anywhere across Android to build history",
+                            text = "Rewrites applied via Stem will appear here.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = stemTheme.inkFaint
                         )
                     }
                 }
-            } else if (filteredHistory.isEmpty()) {
+            }
+        } else {
+            items(history.asReversed(), key = { it.id }) { item ->
+                val isExpanded = expandedId == item.id
+
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(32.dp),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(StemCardShape)
+                        .background(stemTheme.surface)
+                        .border(1.dp, stemTheme.border, StemCardShape)
+                        .clickable { expandedId = if (isExpanded) null else item.id }
+                        .padding(14.dp)
                 ) {
-                    Text(
-                        text = "No matching transformations found.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(filteredHistory, key = { it.id }) { snapshot ->
-                        val isCopied = recentlyCopiedId == snapshot.id
-
-                        Surface(
-                            shape = RoundedCornerShape(18.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            tonalElevation = 1.dp,
-                            modifier = Modifier.fillMaxWidth()
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = snapshot.originalText,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        textDecoration = TextDecoration.LineThrough
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                    maxLines = 2
-                                )
+                            Text(
+                                text = item.presetName.uppercase(),
+                                style = StemMonoBadge,
+                                color = stemTheme.ink
+                            )
 
-                                Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = formatTimeAgo(item.timestamp),
+                                style = StemMonoBadge,
+                                color = stemTheme.inkFaint
+                            )
+                        }
 
-                                Text(
-                                    text = snapshot.replacedText,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 4
-                                )
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                                Spacer(modifier = Modifier.height(10.dp))
+                        if (!isExpanded) {
+                            Text(
+                                text = item.originalText,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = stemTheme.remove,
+                                    textDecoration = TextDecoration.LineThrough
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = item.replacedText,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = stemTheme.add,
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        } else {
+                            BeforeAfterDiffBlock(
+                                beforeText = item.originalText,
+                                afterText = item.replacedText
+                            )
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    AnimatedVisibility(
-                                        visible = isCopied,
-                                        enter = fadeIn(),
-                                        exit = fadeOut()
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.padding(end = 8.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Check,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = "Copied",
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = MaterialTheme.colorScheme.primary
-                                                )
-                                            )
-                                        }
-                                    }
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                                    IconButton(
-                                        onClick = {
-                                            onCopy(snapshot.replacedText)
-                                            recentlyCopiedId = snapshot.id
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isCopied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
-                                            contentDescription = "Copy transformed text",
-                                            tint = if (isCopied) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(18.dp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(StemSharpShape)
+                                        .background(stemTheme.surface2)
+                                        .border(1.dp, stemTheme.border, StemSharpShape)
+                                        .clickable(
+                                            role = Role.Button,
+                                            onClick = {
+                                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                clipboard.setPrimaryClip(ClipData.newPlainText("Stem", item.replacedText))
+                                                Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                            }
                                         )
-                                    }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Copy",
+                                        style = StemMonoBadge,
+                                        color = stemTheme.ink
+                                    )
                                 }
                             }
                         }
@@ -302,5 +217,16 @@ fun HistoryScreen(
                 }
             }
         }
+    }
+}
+
+private fun formatTimeAgo(timestamp: Long): String {
+    val deltaMs = System.currentTimeMillis() - timestamp
+    val deltaMins = deltaMs / (1000 * 60)
+    return when {
+        deltaMins < 1 -> "just now"
+        deltaMins < 60 -> "m ago"
+        deltaMins < 1440 -> "h ago"
+        else -> "d ago"
     }
 }

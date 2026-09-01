@@ -1,6 +1,7 @@
 package com.veggiebit.sprout.features.settings.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,313 +9,267 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Apps
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Layers
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Psychology
-import androidx.compose.material.icons.rounded.Science
-import androidx.compose.material.icons.rounded.Spa
-import androidx.compose.material.icons.rounded.Style
-import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.veggiebit.sprout.app.theme.SproutLargeIncreasedShape
-import com.veggiebit.sprout.core.version.AppVersion
+import androidx.compose.ui.unit.sp
+import com.veggiebit.sprout.app.theme.LocalStemColors
+import com.veggiebit.sprout.app.theme.StemCardShape
+import com.veggiebit.sprout.app.theme.StemGeometricIcon
+import com.veggiebit.sprout.app.theme.StemMonoBadge
+import com.veggiebit.sprout.app.theme.StemSharpShape
+import com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider
+import com.veggiebit.sprout.features.enhancement.data.engine.TransformHistory
+import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
+import com.veggiebit.sprout.features.enhancement.data.models.TransformResult
+import com.veggiebit.sprout.features.enhancement.ui.components.BeforeAfterDiffBlock
+import com.veggiebit.sprout.features.enhancement.ui.components.DiffViewer
 import com.veggiebit.sprout.features.enhancement.ui.components.PresetChipsRow
 import com.veggiebit.sprout.features.settings.data.SproutUserSettings
-import com.veggiebit.sprout.features.settings.ui.components.PermissionStepCard
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Stem Home Screen:
+ * - Stem is active card with switch & status indicator
+ * - Quick Presets horizontal row
+ * - "Try it" live interactive transformation sandbox
+ * - Recent Transformations list
+ * Matches Stem.dc.html design specification.
+ */
 @Composable
 fun HomeScreen(
     userSettings: SproutUserSettings,
     hasOverlayPermission: Boolean,
     hasAccessibilityPermission: Boolean,
+    recentHistory: List<TransformHistory.Snapshot> = emptyList(),
     onRequestOverlayPermission: () -> Unit,
     onRequestAccessibilityPermission: () -> Unit,
     onToggleOverlay: (Boolean) -> Unit,
     onSelectDefaultPreset: (TransformPreset) -> Unit,
-    onToggleHaptics: (Boolean) -> Unit,
-    onNavigate: (SproutRoute) -> Unit,
+    onNavigateToHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Spa,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Sprout",
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "VeggieBit Studios • ${AppVersion.displayString}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            // Section 1: System Readiness & Permissions (Distilled)
-            item {
-                if (hasAccessibilityPermission && hasOverlayPermission) {
-                    Surface(
-                        shape = SproutLargeIncreasedShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.fillMaxWidth()
+    val stemTheme = LocalStemColors.current
+    val isFullyEnabled = userSettings.overlayEnabled && hasOverlayPermission && hasAccessibilityPermission
+
+    var sandboxText by remember { mutableStateOf("the team are meeting at 3pm to disscuss the quarterly resuts") }
+    var sandboxPreset by remember { mutableStateOf(TransformPreset.FIX) }
+    var sandboxResult by remember { mutableStateOf<TransformResult?>(null) }
+
+    LaunchedEffect(sandboxText, sandboxPreset, userSettings.engineMode) {
+        val payload = TextPayload(text = sandboxText)
+        val engine = TextEngineProvider.getEngine(userSettings)
+        sandboxResult = engine.transform(payload, sandboxPreset)
+    }
+
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .background(stemTheme.bg)
+    ) {
+        // 1. Stem Active / Paused Card
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(StemCardShape)
+                    .background(stemTheme.surface)
+                    .border(1.dp, stemTheme.border, StemCardShape)
+                    .padding(16.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.CheckCircle,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Sprout is Active & Ambient",
-                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                Text(
-                                    text = "Ready to enhance text via selection menu, floating pill & ?triggers.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
+                                    .background(if (isFullyEnabled) stemTheme.add else stemTheme.remove)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isFullyEnabled) "Stem is active" else "Stem is paused",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = stemTheme.ink
+                            )
                         }
+
+                        Switch(
+                            checked = userSettings.overlayEnabled,
+                            onCheckedChange = { enabled ->
+                                if (enabled && !hasOverlayPermission) onRequestOverlayPermission()
+                                if (enabled && !hasAccessibilityPermission) onRequestAccessibilityPermission()
+                                onToggleOverlay(enabled)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = stemTheme.onInk,
+                                checkedTrackColor = stemTheme.ink,
+                                uncheckedThumbColor = stemTheme.inkMuted,
+                                uncheckedTrackColor = stemTheme.surface2
+                            )
+                        )
                     }
-                } else {
-                    SectionLabel("Permissions Setup")
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = if (isFullyEnabled) "Floating helper enabled · auto-replace ready"
+                        else "Enable permissions to activate floating helper",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = stemTheme.inkMuted
+                    )
+
                     Spacer(modifier = Modifier.height(10.dp))
-                    if (!hasAccessibilityPermission) {
-                        PermissionStepCard(
-                            stepNumber = 1,
-                            title = "Accessibility Service",
-                            description = "Enables text detection and inline ?commands across apps.",
-                            icon = Icons.Rounded.TouchApp,
-                            isGranted = false,
-                            onGrantClick = onRequestAccessibilityPermission
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
-                    if (!hasOverlayPermission) {
-                        PermissionStepCard(
-                            stepNumber = 2,
-                            title = "Display Over Other Apps",
-                            description = "Enables the floating pill and live thinking HUD capsule.",
-                            icon = Icons.Rounded.Layers,
-                            isGranted = false,
-                            onGrantClick = onRequestOverlayPermission
-                        )
+
+                    Text(
+                        text = "Tap the 40px icon that floats near any active text field to rewrite instantly.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = stemTheme.inkMuted
+                    )
+
+                    if (!hasAccessibilityPermission || !hasOverlayPermission) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (!hasAccessibilityPermission) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(StemSharpShape)
+                                        .background(stemTheme.surface2)
+                                        .border(1.dp, stemTheme.border, StemSharpShape)
+                                        .clickable(role = Role.Button, onClick = onRequestAccessibilityPermission)
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Enable Accessibility",
+                                        style = StemMonoBadge,
+                                        color = stemTheme.ink
+                                    )
+                                }
+                            }
+                            if (!hasOverlayPermission) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(StemSharpShape)
+                                        .background(stemTheme.surface2)
+                                        .border(1.dp, stemTheme.border, StemSharpShape)
+                                        .clickable(role = Role.Button, onClick = onRequestOverlayPermission)
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Allow Overlay",
+                                        style = StemMonoBadge,
+                                        color = stemTheme.ink
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(20.dp))
             }
+        }
 
-            // Section 2: Interaction & Core Settings
-            item {
-                SectionLabel("Preferences")
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    shape = SproutLargeIncreasedShape,
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(
-                                    value = userSettings.overlayEnabled,
-                                    role = Role.Switch,
-                                    onValueChange = { enabled ->
-                                        if (enabled && !hasOverlayPermission) onRequestOverlayPermission()
-                                        onToggleOverlay(enabled)
-                                    }
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Floating Indicator",
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = if (userSettings.overlayEnabled) "Floating 36dp pill appears when typing in apps."
-                                    else "Quiet mode: Triggers via text selection and ?commands.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Switch(
-                                checked = userSettings.overlayEnabled,
-                                // Toggling is handled by the Row's toggleable() above so TalkBack
-                                // announces "Floating Indicator, switch, on/off" as one unit
-                                // instead of a bare unlabeled "Switch" — null here means this
-                                // Switch is purely the visual indicator, not a second click target.
-                                onCheckedChange = null,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary
-                                )
-                            )
-                        }
+        // 2. Quick Presets Row
+        item {
+            Column {
+                Text(
+                    text = "QUICK PRESETS",
+                    style = StemMonoBadge,
+                    color = stemTheme.inkFaint
+                )
 
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 14.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                        )
+                Spacer(modifier = Modifier.height(8.dp))
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .toggleable(
-                                    value = userSettings.hapticFeedbackEnabled,
-                                    role = Role.Switch,
-                                    onValueChange = onToggleHaptics
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Haptic Feedback",
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Vibrates gently on trigger injection and action taps.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Switch(
-                                checked = userSettings.hapticFeedbackEnabled,
-                                onCheckedChange = null,
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary
-                                )
-                            )
-                        }
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 14.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                        )
-
-                        Text(
-                            text = "Default Transform Preset",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        PresetChipsRow(
-                            selectedPreset = userSettings.defaultPreset,
-                            onPresetSelected = onSelectDefaultPreset,
-                            presets = userSettings.orderedPresets
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(20.dp))
+                PresetChipsRow(
+                    selectedPreset = userSettings.defaultPreset,
+                    onPresetSelected = onSelectDefaultPreset,
+                    presets = TransformPreset.entries
+                )
             }
+        }
 
-            // Section 3: Grouped Material 3 Expressive Navigation Hub
-            item {
-                SectionLabel("Features & Configuration")
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    shape = SproutLargeIncreasedShape,
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    modifier = Modifier.fillMaxWidth()
+        // 3. Try It Sandbox Card
+        item {
+            Column {
+                Text(
+                    text = "TRY IT",
+                    style = StemMonoBadge,
+                    color = stemTheme.inkFaint
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(StemCardShape)
+                        .background(stemTheme.surface)
+                        .border(1.dp, stemTheme.border, StemCardShape)
+                        .padding(16.dp)
                 ) {
                     Column {
-                        homeNavItems.forEachIndexed { index, navItem ->
-                            GroupedNavRow(
-                                navItem = navItem,
-                                onClick = { onNavigate(navItem.route) }
+                        OutlinedTextField(
+                            value = sandboxText,
+                            onValueChange = { sandboxText = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(color = stemTheme.ink),
+                            shape = StemSharpShape,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = stemTheme.bg,
+                                unfocusedContainerColor = stemTheme.bg,
+                                focusedBorderColor = stemTheme.ink,
+                                unfocusedBorderColor = stemTheme.border,
+                                cursorColor = stemTheme.ink
                             )
-                            if (index < homeNavItems.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        PresetChipsRow(
+                            selectedPreset = sandboxPreset,
+                            onPresetSelected = { sandboxPreset = it },
+                            compact = true
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        sandboxResult?.let { res ->
+                            if (sandboxPreset.useDiff && res.diffTokens.isNotEmpty()) {
+                                DiffViewer(diffTokens = res.diffTokens)
+                            } else {
+                                BeforeAfterDiffBlock(
+                                    beforeText = res.originalText,
+                                    afterText = res.transformedText
                                 )
                             }
                         }
@@ -322,122 +277,95 @@ fun HomeScreen(
                 }
             }
         }
+
+        // 4. Recent Transformations Section
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "RECENT",
+                    style = StemMonoBadge,
+                    color = stemTheme.inkFaint
+                )
+
+                Text(
+                    text = "See all →",
+                    style = StemMonoBadge,
+                    color = stemTheme.inkMuted,
+                    modifier = Modifier
+                        .clickable(role = Role.Button, onClick = onNavigateToHistory)
+                        .padding(4.dp)
+                )
+            }
+        }
+
+        if (recentHistory.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(StemCardShape)
+                        .background(stemTheme.surface)
+                        .border(1.dp, stemTheme.border, StemCardShape)
+                        .padding(14.dp)
+                ) {
+                    Text(
+                        text = "No recent transformations yet. Type in any app to see results here.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = stemTheme.inkMuted
+                    )
+                }
+            }
+        } else {
+            items(recentHistory.take(3), key = { it.id }) { entry ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(StemCardShape)
+                        .background(stemTheme.surface)
+                        .border(1.dp, stemTheme.border, StemCardShape)
+                        .padding(14.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = entry.presetName.uppercase(),
+                                style = StemMonoBadge,
+                                color = stemTheme.inkMuted
+                            )
+                            Text(
+                                text = "recent",
+                                style = StemMonoBadge,
+                                color = stemTheme.inkFaint
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = entry.originalText,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = stemTheme.remove,
+                                textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = entry.replacedText,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = stemTheme.add,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
-private data class HomeNavItem(
-    val route: SproutRoute,
-    val title: String,
-    val description: String,
-    val icon: ImageVector,
-    val containerColor: @Composable () -> Color,
-    val iconColor: @Composable () -> Color
-)
-
-private val homeNavItems = listOf(
-    HomeNavItem(
-        Engine,
-        "AI Intelligence Engine",
-        "Configure Gemini 3.5+, GPT-5+, Claude 4.5+ or local AI",
-        Icons.Rounded.Psychology,
-        containerColor = { MaterialTheme.colorScheme.primaryContainer },
-        iconColor = { MaterialTheme.colorScheme.onPrimaryContainer }
-    ),
-    HomeNavItem(
-        Snippets,
-        "Commands & Snippets",
-        "Custom ?triggers, dynamic ?ai: prompts, and text expansion",
-        Icons.Rounded.Style,
-        containerColor = { MaterialTheme.colorScheme.secondaryContainer },
-        iconColor = { MaterialTheme.colorScheme.onSecondaryContainer }
-    ),
-    HomeNavItem(
-        History,
-        "Session History",
-        "Search and review recent transformations",
-        Icons.Rounded.History,
-        containerColor = { MaterialTheme.colorScheme.secondaryContainer },
-        iconColor = { MaterialTheme.colorScheme.onSecondaryContainer }
-    ),
-    HomeNavItem(
-        Sandbox,
-        "Test Sandbox",
-        "Interactive preview and preset comparison playground",
-        Icons.Rounded.Science,
-        containerColor = { MaterialTheme.colorScheme.primaryContainer },
-        iconColor = { MaterialTheme.colorScheme.onPrimaryContainer }
-    ),
-    HomeNavItem(
-        AppRules,
-        "Per-App Rules",
-        "Customize floating pill behavior per installed app",
-        Icons.Rounded.Apps,
-        containerColor = { MaterialTheme.colorScheme.primaryContainer },
-        iconColor = { MaterialTheme.colorScheme.onPrimaryContainer }
-    ),
-    HomeNavItem(
-        Appearance,
-        "Appearance & Language",
-        "Theme mode and offline rule engine dictionary",
-        Icons.Rounded.Palette,
-        containerColor = { MaterialTheme.colorScheme.secondaryContainer },
-        iconColor = { MaterialTheme.colorScheme.onSecondaryContainer }
-    )
-)
-
-@Composable
-private fun GroupedNavRow(
-    navItem: HomeNavItem,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(navItem.containerColor()),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = navItem.icon,
-                contentDescription = null,
-                tint = navItem.iconColor(),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = navItem.title,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = navItem.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Icon(
-            imageVector = Icons.Rounded.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
-
-@Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-        color = MaterialTheme.colorScheme.primary
-    )
-}

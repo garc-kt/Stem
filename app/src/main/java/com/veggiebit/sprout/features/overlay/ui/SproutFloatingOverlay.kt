@@ -2,6 +2,7 @@ package com.veggiebit.sprout.features.overlay.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -9,6 +10,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,24 +23,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Undo
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.KeyboardArrowUp
-import androidx.compose.material.icons.rounded.Spa
-import androidx.compose.animation.core.tween
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,16 +42,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.veggiebit.sprout.app.theme.SproutCapsuleShape
+import com.veggiebit.sprout.app.theme.LocalStemColors
+import com.veggiebit.sprout.app.theme.StemMonoBadge
+import com.veggiebit.sprout.app.theme.StemOverlayShape
+import com.veggiebit.sprout.app.theme.StemSharpShape
 import com.veggiebit.sprout.features.enhancement.data.engine.TransformHistory
 import com.veggiebit.sprout.features.enhancement.data.models.TextPayload
 import com.veggiebit.sprout.features.enhancement.data.models.TransformPreset
 import com.veggiebit.sprout.features.enhancement.data.models.TransformResult
+import com.veggiebit.sprout.features.enhancement.ui.components.BeforeAfterDiffBlock
 import com.veggiebit.sprout.features.enhancement.ui.components.DiffViewer
 import com.veggiebit.sprout.features.enhancement.ui.components.PresetChipsRow
 import com.veggiebit.sprout.features.overlay.ui.components.SproutPill
@@ -86,9 +83,8 @@ fun SproutFloatingOverlay(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // MaterialTheme.motionScheme is internal in this project's resolved material3:1.4.0 (part
-    // of the Expressive surface that isn't publicly accessible here), so this uses explicit
-    // tween specs rather than the theme-driven motion spec.
+    val stemTheme = LocalStemColors.current
+
     AnimatedContent(
         targetState = isExpanded,
         transitionSpec = {
@@ -114,15 +110,15 @@ fun SproutFloatingOverlay(
                 modifier = modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 6.dp)
-                    .shadow(elevation = 16.dp, shape = SproutCapsuleShape)
-                    .clip(SproutCapsuleShape)
+                    .shadow(elevation = 16.dp, shape = StemOverlayShape)
+                    .clip(StemOverlayShape)
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f),
-                        shape = SproutCapsuleShape
+                        color = stemTheme.border,
+                        shape = StemOverlayShape
                     ),
-                shape = SproutCapsuleShape,
-                color = MaterialTheme.colorScheme.surfaceContainer
+                shape = StemOverlayShape,
+                color = stemTheme.surface
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
@@ -134,35 +130,18 @@ fun SproutFloatingOverlay(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Spa,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(17.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
                             Text(
-                                text = "Sprout Assistant",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface
+                                text = "STEM",
+                                style = StemMonoBadge,
+                                color = stemTheme.inkMuted
                             )
 
                             if (isTransforming) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
+                                    modifier = Modifier.size(14.dp),
                                     strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = stemTheme.ink
                                 )
                             }
 
@@ -171,14 +150,15 @@ fun SproutFloatingOverlay(
                                 val appLabel = payload.packageName.substringAfterLast('.')
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                        .clip(StemSharpShape)
+                                        .background(stemTheme.surface2)
+                                        .border(1.dp, stemTheme.border, StemSharpShape)
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
                                         text = appLabel,
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = StemMonoBadge,
+                                        color = stemTheme.inkMuted,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -187,18 +167,35 @@ fun SproutFloatingOverlay(
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = onCollapseClick) {
-                                Icon(
-                                    imageVector = Icons.Rounded.KeyboardArrowUp,
-                                    contentDescription = "Collapse",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            if (canUndo) {
+                                IconButton(onClick = onUndoClick, modifier = Modifier.size(32.dp)) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.Undo,
+                                        contentDescription = "Undo",
+                                        tint = stemTheme.inkMuted,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
-                            IconButton(onClick = onDismiss) {
+                            if (historyEntries.size > 1) {
+                                IconButton(onClick = { showHistory = !showHistory }, modifier = Modifier.size(32.dp)) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.History,
+                                        contentDescription = "History",
+                                        tint = stemTheme.inkMuted,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = { transformResult?.let { onCopyText(it.transformedText) } },
+                                modifier = Modifier.size(32.dp)
+                            ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Close,
-                                    contentDescription = "Dismiss",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    imageVector = Icons.Rounded.ContentCopy,
+                                    contentDescription = "Copy",
+                                    tint = stemTheme.inkMuted,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
@@ -206,140 +203,96 @@ fun SproutFloatingOverlay(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Preset Selection Chips (34dp)
+                    // Preset Selection Chips (Compact)
                     PresetChipsRow(
                         selectedPreset = selectedPreset,
                         onPresetSelected = onPresetSelected,
-                        presets = presets
+                        presets = presets,
+                        compact = true
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Diff / Comparison Area or Thinking State
+                    // Diff / Comparison Area
                     if (isTransforming) {
-                        com.veggiebit.sprout.features.enhancement.ui.components.SproutThinkingCard(
-                            engineTitle = selectedPreset.title,
-                            subtitle = "Generating ${selectedPreset.shortName} refinement..."
-                        )
-                    } else if (transformResult != null) {
-                        if (transformResult.diffTokens.isNotEmpty()) {
-                            DiffViewer(diffTokens = transformResult.diffTokens)
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(MaterialTheme.colorScheme.surface)
-                                    .padding(14.dp)
-                            ) {
-                                Text(
-                                    text = transformResult.transformedText.ifBlank { "No text detected." },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(StemSharpShape)
+                                .background(stemTheme.bg)
+                                .border(1.dp, stemTheme.border, StemSharpShape)
+                                .padding(14.dp)
                         ) {
                             Text(
-                                text = transformResult.summaryNote ?: "Transformation ready",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = if (transformResult.hasChanges) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                text = "Applying ${selectedPreset.title}...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = stemTheme.inkMuted
                             )
+                        }
+                    } else if (transformResult != null) {
+                        if (selectedPreset.useDiff && transformResult.diffTokens.isNotEmpty()) {
+                            DiffViewer(diffTokens = transformResult.diffTokens)
+                        } else {
+                            BeforeAfterDiffBlock(
+                                beforeText = transformResult.originalText,
+                                afterText = transformResult.transformedText
+                            )
+                        }
 
-                            if (transformResult.wordsSaved > 0) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(MaterialTheme.colorScheme.tertiaryContainer)
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "-${transformResult.wordsSaved} words",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                                        )
-                                    )
-                                }
-                            }
+                        if (transformResult.wordsSaved > 0) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "-${transformResult.wordsSaved} words",
+                                style = StemMonoBadge,
+                                color = stemTheme.add
+                            )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    // Action Buttons Row — undo/history/copy as compact outlined icon buttons,
-                    // primary Replace action taking the remaining width. (M3 Expressive's
-                    // HorizontalFloatingToolbar was the original design here, but it and
-                    // FloatingToolbarDefaults are internal — not usable from app code — in this
-                    // project's resolved material3:1.4.0.)
+                    // Action Buttons: Dismiss & Replace
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
-                            onClick = { transformResult?.let(onReplaceInline) },
-                            enabled = transformResult?.hasChanges == true,
-                            modifier = Modifier.weight(1f).height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(StemSharpShape)
+                                .border(1.dp, stemTheme.border, StemSharpShape)
+                                .clickable(
+                                    role = Role.Button,
+                                    onClick = onDismiss
+                                )
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Dismiss",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = stemTheme.ink
                             )
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                Icon(imageVector = Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(text = "Replace Inline", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
-                            }
                         }
 
-                        if (canUndo) {
-                            OutlinedButton(
-                                onClick = onUndoClick,
-                                modifier = Modifier.height(48.dp),
-                                shape = RoundedCornerShape(14.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Rounded.Undo,
-                                    contentDescription = "Undo",
-                                    modifier = Modifier.size(18.dp)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(StemSharpShape)
+                                .background(if (transformResult?.hasChanges == true) stemTheme.ink else stemTheme.surface2)
+                                .clickable(
+                                    enabled = transformResult?.hasChanges == true,
+                                    role = Role.Button,
+                                    onClick = { transformResult?.let(onReplaceInline) }
                                 )
-                            }
-                        }
-
-                        if (historyEntries.size > 1) {
-                            OutlinedButton(
-                                onClick = { showHistory = !showHistory },
-                                modifier = Modifier.height(48.dp),
-                                shape = RoundedCornerShape(14.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.History,
-                                    contentDescription = "History",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-
-                        OutlinedButton(
-                            onClick = { transformResult?.let { onCopyText(it.transformedText) } },
-                            modifier = Modifier.height(48.dp),
-                            shape = RoundedCornerShape(14.dp)
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.ContentCopy,
-                                contentDescription = "Copy",
-                                modifier = Modifier.size(18.dp)
+                            Text(
+                                text = "Replace",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = if (transformResult?.hasChanges == true) stemTheme.onInk else stemTheme.inkFaint
                             )
                         }
                     }
@@ -351,14 +304,15 @@ fun SproutFloatingOverlay(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(120.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(MaterialTheme.colorScheme.surface)
+                                    .clip(StemSharpShape)
+                                    .background(stemTheme.bg)
+                                    .border(1.dp, stemTheme.border, StemSharpShape)
                             ) {
                                 items(historyEntries.asReversed(), key = { it.id }) { entry ->
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                            .padding(horizontal = 10.dp, vertical = 6.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column(
@@ -368,24 +322,28 @@ fun SproutFloatingOverlay(
                                         ) {
                                             Text(
                                                 text = entry.originalText,
-                                                style = MaterialTheme.typography.labelSmall.copy(textDecoration = TextDecoration.LineThrough),
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                style = MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.LineThrough),
+                                                color = stemTheme.inkMuted,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
                                             Text(
                                                 text = entry.replacedText,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurface,
+                                                color = stemTheme.ink,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
                                         }
-                                        IconButton(onClick = { onHistoryEntrySelected(entry) }) {
+                                        IconButton(
+                                            onClick = { onHistoryEntrySelected(entry) },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
                                             Icon(
                                                 imageVector = Icons.AutoMirrored.Rounded.Undo,
                                                 contentDescription = "Restore",
-                                                modifier = Modifier.size(16.dp)
+                                                tint = stemTheme.ink,
+                                                modifier = Modifier.size(14.dp)
                                             )
                                         }
                                     }
@@ -398,3 +356,4 @@ fun SproutFloatingOverlay(
         }
     }
 }
+

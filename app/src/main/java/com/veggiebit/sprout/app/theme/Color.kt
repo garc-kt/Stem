@@ -3,90 +3,97 @@ package com.veggiebit.sprout.app.theme
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-// Sprout brand seed — Citrus/Amber primary with Sprout Green secondary, per plan.md §3.1 and
-// ARCHITECTURE_AND_PROCESS.md §2 Phase 5. Used as the static fallback scheme on API < 31 and
-// whenever dynamic color is disabled; Android 12+ devices use dynamicLight/DarkColorScheme()
-// (wallpaper-derived Monet) as the primary path — see Theme.kt.
+// Stem Design System — Warm-stone neutrals, sharp geometry, Manrope + Space Mono,
+// one desaturated accent pair reserved for diff states.
+// Source: Stem.dc.html
 
-// --- Light scheme -----------------------------------------------------------------------
+// --- Light Theme Tokens -----------------------------------------------------------------
 
-val SproutLightPrimary = Color(0xFF8A4B00)
-val SproutLightOnPrimary = Color(0xFFFFFFFF)
-val SproutLightPrimaryContainer = Color(0xFFFFDCBE)
-val SproutLightOnPrimaryContainer = Color(0xFF2C1600)
+val StemLightBg = Color(0xFFFAF8F5)
+val StemLightSurface = Color(0xFFFCFAF8)
+val StemLightSurface2 = Color(0xFFF2EFE9)
+val StemLightSurface3 = Color(0xFFE6E2DA)
+val StemLightBorder = Color(0xFFD7D2C7)
+val StemLightInk = Color(0xFF282521)
+val StemLightInkMuted = Color(0xFF6E685F)
+val StemLightInkFaint = Color(0xFF9E978C)
+val StemLightOnInk = Color(0xFFFAF8F5)
+val StemLightAdd = Color(0xFF2E7D47)
+val StemLightAddBg = Color(0xFFEBF6EE)
+val StemLightRemove = Color(0xFFA14B3B)
+val StemLightRemoveBg = Color(0xFFF9EBE8)
 
-val SproutLightSecondary = Color(0xFF3A6A1F)
-val SproutLightOnSecondary = Color(0xFFFFFFFF)
-val SproutLightSecondaryContainer = Color(0xFFBAF397)
-val SproutLightOnSecondaryContainer = Color(0xFF0B2100)
+// --- Dark Theme Tokens ------------------------------------------------------------------
 
-val SproutLightTertiary = Color(0xFF00696B)
-val SproutLightOnTertiary = Color(0xFFFFFFFF)
-val SproutLightTertiaryContainer = Color(0xFF9CF1F2)
-val SproutLightOnTertiaryContainer = Color(0xFF002020)
+val StemDarkBg = Color(0xFF23211E)
+val StemDarkSurface = Color(0xFF2D2A26)
+val StemDarkSurface2 = Color(0xFF37342F)
+val StemDarkSurface3 = Color(0xFF44403B)
+val StemDarkBorder = Color(0xFF4E4943)
+val StemDarkInk = Color(0xFFF1EFEB)
+val StemDarkInkMuted = Color(0xFFB4ADA3)
+val StemDarkInkFaint = Color(0xFF847E74)
+val StemDarkOnInk = Color(0xFF23211E)
+val StemDarkAdd = Color(0xFF6ECB8E)
+val StemDarkAddBg = Color(0xFF1A3824)
+val StemDarkRemove = Color(0xFFE98C76)
+val StemDarkRemoveBg = Color(0xFF422019)
 
-val SproutLightError = Color(0xFFBA1A1A)
-val SproutLightOnError = Color(0xFFFFFFFF)
-val SproutLightErrorContainer = Color(0xFFFFDAD6)
-val SproutLightOnErrorContainer = Color(0xFF410002)
+// --- Extended & Semantic Colors ---------------------------------------------------------
 
-val SproutLightBackground = Color(0xFFFFFBFF)
-val SproutLightOnBackground = Color(0xFF201B13)
-val SproutLightSurface = Color(0xFFFFFBFF)
-val SproutLightOnSurface = Color(0xFF201B13)
-val SproutLightSurfaceVariant = Color(0xFFF0E0D0)
-val SproutLightOnSurfaceVariant = Color(0xFF504536)
+data class StemColors(
+    val bg: Color,
+    val surface: Color,
+    val surface2: Color,
+    val surface3: Color,
+    val border: Color,
+    val ink: Color,
+    val inkMuted: Color,
+    val inkFaint: Color,
+    val onInk: Color,
+    val add: Color,
+    val addBg: Color,
+    val remove: Color,
+    val removeBg: Color,
+    val isDark: Boolean
+)
 
-val SproutLightSurfaceContainerLow = Color(0xFFFBF1E7)
-val SproutLightSurfaceContainer = Color(0xFFF5EBE1)
-val SproutLightSurfaceContainerHigh = Color(0xFFEFE5DB)
-val SproutLightSurfaceContainerHighest = Color(0xFFE9E0D5)
+val StemLightColors = StemColors(
+    bg = StemLightBg,
+    surface = StemLightSurface,
+    surface2 = StemLightSurface2,
+    surface3 = StemLightSurface3,
+    border = StemLightBorder,
+    ink = StemLightInk,
+    inkMuted = StemLightInkMuted,
+    inkFaint = StemLightInkFaint,
+    onInk = StemLightOnInk,
+    add = StemLightAdd,
+    addBg = StemLightAddBg,
+    remove = StemLightRemove,
+    removeBg = StemLightRemoveBg,
+    isDark = false
+)
 
-val SproutLightOutline = Color(0xFF827567)
-val SproutLightOutlineVariant = Color(0xFFD4C4B4)
+val StemDarkColors = StemColors(
+    bg = StemDarkBg,
+    surface = StemDarkSurface,
+    surface2 = StemDarkSurface2,
+    surface3 = StemDarkSurface3,
+    border = StemDarkBorder,
+    ink = StemDarkInk,
+    inkMuted = StemDarkInkMuted,
+    inkFaint = StemDarkInkFaint,
+    onInk = StemDarkOnInk,
+    add = StemDarkAdd,
+    addBg = StemDarkAddBg,
+    remove = StemDarkRemove,
+    removeBg = StemDarkRemoveBg,
+    isDark = true
+)
 
-// --- Dark scheme -------------------------------------------------------------------------
+val LocalStemColors = staticCompositionLocalOf { StemLightColors }
 
-val SproutDarkPrimary = Color(0xFFFFB876)
-val SproutDarkOnPrimary = Color(0xFF4A2800)
-val SproutDarkPrimaryContainer = Color(0xFF693A00)
-val SproutDarkOnPrimaryContainer = Color(0xFFFFDCBE)
-
-val SproutDarkSecondary = Color(0xFF9FD67F)
-val SproutDarkOnSecondary = Color(0xFF123900)
-val SproutDarkSecondaryContainer = Color(0xFF255100)
-val SproutDarkOnSecondaryContainer = Color(0xFFBAF397)
-
-val SproutDarkTertiary = Color(0xFF4DD9DB)
-val SproutDarkOnTertiary = Color(0xFF003738)
-val SproutDarkTertiaryContainer = Color(0xFF004F51)
-val SproutDarkOnTertiaryContainer = Color(0xFF9CF1F2)
-
-val SproutDarkError = Color(0xFFFFB4AB)
-val SproutDarkOnError = Color(0xFF690005)
-val SproutDarkErrorContainer = Color(0xFF93000A)
-val SproutDarkOnErrorContainer = Color(0xFFFFDAD6)
-
-val SproutDarkBackground = Color(0xFF17130D)
-val SproutDarkOnBackground = Color(0xFFEAE1D6)
-val SproutDarkSurface = Color(0xFF17130D)
-val SproutDarkOnSurface = Color(0xFFEAE1D6)
-val SproutDarkSurfaceVariant = Color(0xFF504536)
-val SproutDarkOnSurfaceVariant = Color(0xFFD4C4B4)
-
-val SproutDarkSurfaceContainerLow = Color(0xFF201B13)
-val SproutDarkSurfaceContainer = Color(0xFF241F17)
-val SproutDarkSurfaceContainerHigh = Color(0xFF2F2921)
-val SproutDarkSurfaceContainerHighest = Color(0xFF3A342B)
-
-val SproutDarkOutline = Color(0xFF9C8F7F)
-val SproutDarkOutlineVariant = Color(0xFF504536)
-
-/**
- * Diff-viewer accent colors. Kept separate from the M3 color scheme (rather than reused as
- * literal light-mode hexes as before) because they need distinct light/dark pairs to stay
- * legible — the old hardcoded values were unreadable once dark mode shipped.
- */
 data class SproutExtendedColors(
     val diffAdded: Color,
     val diffAddedBackground: Color,
@@ -95,17 +102,18 @@ data class SproutExtendedColors(
 )
 
 val SproutLightExtendedColors = SproutExtendedColors(
-    diffAdded = Color(0xFF1E8E3E),
-    diffAddedBackground = Color(0xFFE6F4EA),
-    diffDeleted = Color(0xFFD93025),
-    diffDeletedBackground = Color(0xFFFCE8E6)
+    diffAdded = StemLightAdd,
+    diffAddedBackground = StemLightAddBg,
+    diffDeleted = StemLightRemove,
+    diffDeletedBackground = StemLightRemoveBg
 )
 
 val SproutDarkExtendedColors = SproutExtendedColors(
-    diffAdded = Color(0xFF7DDA8F),
-    diffAddedBackground = Color(0xFF0F3D1A),
-    diffDeleted = Color(0xFFFFB4A9),
-    diffDeletedBackground = Color(0xFF4B120C)
+    diffAdded = StemDarkAdd,
+    diffAddedBackground = StemDarkAddBg,
+    diffDeleted = StemDarkRemove,
+    diffDeletedBackground = StemDarkRemoveBg
 )
 
 val LocalSproutExtendedColors = staticCompositionLocalOf { SproutLightExtendedColors }
+

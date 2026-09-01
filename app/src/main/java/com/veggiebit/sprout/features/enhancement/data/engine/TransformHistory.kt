@@ -23,6 +23,7 @@ object TransformHistory {
         val nodeHashCode: Int,
         val originalText: String,
         val replacedText: String,
+        val presetName: String = "Enhance",
         val timestamp: Long = System.currentTimeMillis()
     )
 
@@ -32,7 +33,7 @@ object TransformHistory {
     val history: StateFlow<List<Snapshot>> = _history.asStateFlow()
 
     @Synchronized
-    fun recordChange(nodeHashCode: Int, original: String, replaced: String) {
+    fun recordChange(nodeHashCode: Int, original: String, replaced: String, presetName: String = "Enhance") {
         if (original == replaced || original.isBlank() || replaced.isBlank()) return
         val current = _history.value
         val last = current.lastOrNull()
@@ -40,7 +41,7 @@ object TransformHistory {
         if (last != null && last.originalText == original && last.replacedText == replaced && (System.currentTimeMillis() - last.timestamp < 2000)) {
             return
         }
-        _history.value = (current + Snapshot(nodeHashCode = nodeHashCode, originalText = original, replacedText = replaced)).takeLast(MAX_HISTORY)
+        _history.value = (current + Snapshot(nodeHashCode = nodeHashCode, originalText = original, replacedText = replaced, presetName = presetName)).takeLast(MAX_HISTORY)
     }
 
     @Synchronized

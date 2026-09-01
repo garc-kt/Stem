@@ -3,9 +3,11 @@ package com.veggiebit.sprout.features.enhancement.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,31 +22,41 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.veggiebit.sprout.app.theme.LocalSproutExtendedColors
+import com.veggiebit.sprout.app.theme.LocalStemColors
+import com.veggiebit.sprout.app.theme.StemMonoBadge
+import com.veggiebit.sprout.app.theme.StemSharpShape
 import com.veggiebit.sprout.features.enhancement.data.models.DiffToken
 import com.veggiebit.sprout.features.enhancement.data.models.DiffType
 
 /**
- * High-craft Visual Diff Viewer rendering inline additions and deletions with M3 tokens.
+ * Stem Visual Diff Viewer rendering inline additions and deletions.
+ * Matches Stem.dc.html wordDiff styling.
  */
 @Composable
 fun DiffViewer(
     diffTokens: List<DiffToken>,
     modifier: Modifier = Modifier
 ) {
-    val extendedColors = LocalSproutExtendedColors.current
+    val stemTheme = LocalStemColors.current
 
     val annotatedString = buildAnnotatedString {
         diffTokens.forEach { token ->
             when (token.type) {
                 DiffType.UNMODIFIED -> {
+                    pushStyle(
+                        SpanStyle(
+                            color = stemTheme.ink,
+                            fontWeight = FontWeight.Normal
+                        )
+                    )
                     append(token.text)
+                    pop()
                 }
                 DiffType.ADDED -> {
                     pushStyle(
                         SpanStyle(
-                            color = extendedColors.diffAdded,
-                            background = extendedColors.diffAddedBackground,
+                            color = stemTheme.add,
+                            textDecoration = TextDecoration.Underline,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -54,10 +66,9 @@ fun DiffViewer(
                 DiffType.DELETED -> {
                     pushStyle(
                         SpanStyle(
-                            color = extendedColors.diffDeleted,
-                            background = extendedColors.diffDeletedBackground,
+                            color = stemTheme.remove,
                             textDecoration = TextDecoration.LineThrough,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = FontWeight.Bold
                         )
                     )
                     append(token.text)
@@ -67,9 +78,6 @@ fun DiffViewer(
         }
     }
 
-    // TalkBack would otherwise read added/removed text run together as one flat string with
-    // no indication of what actually changed (the strikethrough/bold/color cues are visual
-    // only) — this spells out the change explicitly for screen-reader users.
     val accessibilitySummary = remember(diffTokens) {
         buildString {
             diffTokens.forEach { token ->
@@ -85,20 +93,67 @@ fun DiffViewer(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(14.dp)
+            .clip(StemSharpShape)
+            .background(stemTheme.surface)
+            .border(1.dp, stemTheme.border, StemSharpShape)
+            .padding(12.dp)
             .clearAndSetSemantics { contentDescription = accessibilitySummary }
     ) {
         Text(
             text = annotatedString,
-            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 24.sp),
-            color = MaterialTheme.colorScheme.onSurface
+            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp),
+            color = stemTheme.ink
         )
     }
 }
+
+/**
+ * Before/After comparison block for presets that transform entire sentence structure
+ * (Summarize, Bulletize, Expand) where word-level diffing is not appropriate.
+ */
+@Composable
+fun BeforeAfterDiffBlock(
+    beforeText: String,
+    afterText: String,
+    modifier: Modifier = Modifier
+) {
+    val stemTheme = LocalStemColors.current
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(StemSharpShape)
+            .background(stemTheme.surface)
+            .border(1.dp, stemTheme.border, StemSharpShape)
+            .padding(12.dp)
+    ) {
+        Column {
+            Text(
+                text = "BEFORE",
+                style = StemMonoBadge,
+                color = stemTheme.inkFaint
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = beforeText,
+                style = MaterialTheme.typography.bodySmall.copy(lineHeight = 18.sp),
+                color = stemTheme.inkMuted
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "AFTER",
+                style = StemMonoBadge,
+                color = stemTheme.inkFaint
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = afterText,
+                style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
+                color = stemTheme.ink
+            )
+        }
+    }
+}
+

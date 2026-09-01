@@ -18,11 +18,14 @@ val versionProps = Properties().apply {
 val semVerMajor = versionProps.getProperty("VERSION_MAJOR", "1").toInt()
 val semVerMinor = versionProps.getProperty("VERSION_MINOR", "0").toInt()
 val semVerPatch = versionProps.getProperty("VERSION_PATCH", "0").toInt()
+val semVerBuild = (System.getenv("GITHUB_RUN_NUMBER") ?: System.getenv("BUILD_NUMBER") ?: versionProps.getProperty("VERSION_BUILD", "1")).toIntOrNull() ?: 1
 val semVerPreRelease = versionProps.getProperty("VERSION_PRE_RELEASE", "").trim()
 val semVerBuildMetadata = versionProps.getProperty("VERSION_BUILD_METADATA", "").trim()
 
-// Semantic Version Code: MAJOR * 10000 + MINOR * 100 + PATCH
-val semVerCode = semVerMajor * 10000 + semVerMinor * 100 + semVerPatch
+// Structured Decimal Mask / CI Build Counter:
+// MAJOR (0-214) * 1,000,000 + MINOR (0-99) * 10,000 + PATCH (0-99) * 100 + BUILD (0-99)
+// Example: 1.0.0 (build 1) -> 1000001; 1.2.3 (build 42) -> 1020342
+val structuredVersionCode = (semVerMajor * 1_000_000) + (semVerMinor * 10_000) + (semVerPatch * 100) + (semVerBuild % 100)
 val semVerName = buildString {
     append("$semVerMajor.$semVerMinor.$semVerPatch")
     if (semVerPreRelease.isNotEmpty()) {
@@ -54,12 +57,13 @@ android {
         applicationId = "com.veggiebit.sprout"
         minSdk = 26
         targetSdk = 36
-        versionCode = semVerCode
+        versionCode = structuredVersionCode
         versionName = semVerName
 
         buildConfigField("int", "SEMVER_MAJOR", "$semVerMajor")
         buildConfigField("int", "SEMVER_MINOR", "$semVerMinor")
         buildConfigField("int", "SEMVER_PATCH", "$semVerPatch")
+        buildConfigField("int", "BUILD_COUNTER", "$semVerBuild")
         buildConfigField("String", "SEMVER_NAME", "\"$semVerName\"")
     }
 

@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;-webkit-font-smoothing:antialiased;}
+a{color:#3b3630;text-decoration:underline;}
+a:hover{color:#6b665d;}
+</style>
+</helmet>
+<div style="background:{{theme.bg}};min-height:100vh;box-sizing:border-box;padding:64px 32px 96px;display:flex;flex-direction:column;align-items:center;gap:56px;font-family:'Manrope',system-ui,sans-serif;color:{{theme.ink}};">
+
+  <div style="width:100%;max-width:1040px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:{{theme.inkFaint}};">Stem — brand &amp; prototype</div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <button onClick="{{restartOnboarding}}" style="font:600 12px 'Manrope',sans-serif;background:transparent;border:none;color:{{theme.inkMuted}};cursor:pointer;padding:0;">Restart onboarding</button>
+      <div style="display:flex;border:1px solid {{theme.border}};border-radius:3px;overflow:hidden;">
+        <button onClick="{{setThemeLight}}" style="font:600 12px 'Manrope',sans-serif;padding:6px 12px;border:none;cursor:pointer;background:{{lightBtnBg}};color:{{lightBtnFg}};">Light</button>
+        <button onClick="{{setThemeDark}}" style="font:600 12px 'Manrope',sans-serif;padding:6px 12px;border:none;cursor:pointer;background:{{darkBtnBg}};color:{{darkBtnFg}};">Dark</button>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="Brand" style="width:100%;max-width:1040px;background:{{theme.surface}};border:1px solid {{theme.border}};border-radius:4px;padding:40px;box-sizing:border-box;display:flex;flex-direction:column;gap:32px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;position:relative;flex-shrink:0;">
+        <div style="position:absolute;left:18px;top:4px;width:4px;height:32px;background:{{theme.ink}};"></div>
+        <div style="position:absolute;left:7px;top:11px;width:22px;height:4px;background:{{theme.ink}};transform:rotate(38deg);transform-origin:left center;"></div>
+      </div>
+      <div style="font:800 44px 'Manrope',sans-serif;letter-spacing:-0.02em;">stem</div>
+    </div>
+    <div style="font:500 15px/1.5 'Manrope',sans-serif;color:{{theme.inkMuted}};max-width:560px;">Ambient writing help, wherever you type. Warm-stone neutrals, sharp geometry, Manrope + Space Mono, one desaturated accent pair reserved for diff states.</div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px;">
+      <div style="display:flex;flex-direction:column;gap:6px;"><div style="width:56px;height:56px;border-radius:3px;background:{{theme.bg}};border:1px solid {{theme.border}};"></div><div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};">bg</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;"><div style="width:56px;height:56px;border-radius:3px;background:{{theme.surface2}};border:1px solid {{theme.border}};"></div><div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};">surface</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;"><div style="width:56px;height:56px;border-radius:3px;background:{{theme.ink}};"></div><div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};">ink</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;"><div style="width:56px;height:56px;border-radius:3px;background:{{theme.add}};"></div><div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};">add</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;"><div style="width:56px;height:56px;border-radius:3px;background:{{theme.remove}};"></div><div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};">remove</div></div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:baseline;">
+      <div><div style="font:800 40px 'Manrope',sans-serif;">Aa</div><div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};margin-top:4px;">Manrope — UI</div></div>
+      <div><div style="font:400 40px 'Space Mono',monospace;">0123</div><div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};margin-top:4px;">Space Mono — metadata</div></div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+      <div style="font:600 13px 'Manrope',sans-serif;padding:10px 18px;background:{{theme.ink}};color:{{theme.onInk}};border-radius:3px;">Primary</div>
+      <div style="font:600 13px 'Manrope',sans-serif;padding:10px 18px;border:1px solid {{theme.border}};border-radius:3px;">Secondary</div>
+      <div style="font:600 12px 'Manrope',sans-serif;padding:7px 14px;border:1px solid {{theme.border}};border-radius:3px;">Chip</div>
+      <div style="font:600 12px 'Manrope',sans-serif;padding:7px 14px;background:{{theme.ink}};color:{{theme.onInk}};border-radius:3px;">Chip selected</div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+    <x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" dark="{{isDark}}" hint-size="412,892">
+      <div style="height:100%;width:100%;display:flex;flex-direction:column;position:relative;overflow:hidden;background:{{theme.bg}};color:{{theme.ink}};font-family:'Manrope',system-ui,sans-serif;box-sizing:border-box;">
+
+        <sc-if value="{{screenIsOnboarding}}" hint-placeholder-val="{{true}}">
+          <div data-screen-label="Onboarding" style="height:100%;display:flex;flex-direction:column;padding:28px 24px;box-sizing:border-box;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;gap:6px;">
+                <div style="width:20px;height:4px;border-radius:2px;background:{{dot0Color}};"></div>
+                <div style="width:20px;height:4px;border-radius:2px;background:{{dot1Color}};"></div>
+                <div style="width:20px;height:4px;border-radius:2px;background:{{dot2Color}};"></div>
+                <div style="width:20px;height:4px;border-radius:2px;background:{{dot3Color}};"></div>
+              </div>
+              <sc-if value="{{showSkip}}" hint-placeholder-val="{{true}}">
+                <button onClick="{{skipOnboarding}}" style="font:600 12px 'Manrope',sans-serif;background:transparent;border:none;color:{{theme.inkFaint}};cursor:pointer;">Skip</button>
+              </sc-if>
+            </div>
+
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;">
+              <sc-if value="{{step0}}" hint-placeholder-val="{{true}}">
+                <div style="width:56px;height:56px;position:relative;margin-bottom:8px;">
+                  <div style="position:absolute;left:25px;top:6px;width:5px;height:44px;background:{{theme.ink}};"></div>
+                  <div style="position:absolute;left:9px;top:15px;width:30px;height:5px;background:{{theme.ink}};transform:rotate(38deg);transform-origin:left center;"></div>
+                </div>
+                <div style="font:800 28px 'Manrope',sans-serif;">stem</div>
+                <div style="font:400 14px/1.5 'Manrope',sans-serif;color:{{theme.inkMuted}};max-width:260px;">Ambient writing help, wherever you type.</div>
+              </sc-if>
+              <sc-if value="{{step1}}" hint-placeholder-val="{{false}}">
+                <div style="width:44px;height:44px;position:relative;margin-bottom:8px;">
+                  <div style="position:absolute;left:19px;top:3px;width:4px;height:34px;background:{{theme.ink}};"></div>
+                  <div style="position:absolute;left:6px;top:11px;width:23px;height:4px;background:{{theme.ink}};transform:rotate(38deg);transform-origin:left center;"></div>
+                </div>
+                <div style="font:700 19px 'Manrope',sans-serif;">Read &amp; replace text</div>
+                <div style="font:400 13px/1.6 'Manrope',sans-serif;color:{{theme.inkMuted}};max-width:260px;">Stem uses Accessibility access to see the field you're typing in and swap in the improved text.</div>
+                <sc-if value="{{accessNotGranted}}" hint-placeholder-val="{{true}}">
+                  <button onClick="{{grantAccess}}" style="font:600 13px 'Manrope',sans-serif;padding:10px 20px;background:{{theme.ink}};color:{{theme.onInk}};border:none;border-radius:3px;cursor:pointer;margin-top:4px;">Grant access</button>
+                </sc-if>
+                <sc-if value="{{accessGranted}}" hint-placeholder-val="{{false}}">
+                  <div style="font:600 12px 'Manrope',sans-serif;padding:8px 16px;border:1px solid {{theme.border}};border-radius:3px;color:{{theme.inkMuted}};margin-top:4px;">Access granted</div>
+                </sc-if>
+              </sc-if>
+              <sc-if value="{{step2}}" hint-placeholder-val="{{false}}">
+                <div style="width:44px;height:44px;position:relative;margin-bottom:8px;">
+                  <div style="position:absolute;left:19px;top:3px;width:4px;height:34px;background:{{theme.ink}};"></div>
+                  <div style="position:absolute;left:6px;top:11px;width:23px;height:4px;background:{{theme.ink}};transform:rotate(38deg);transform-origin:left center;"></div>
+                </div>
+                <div style="font:700 19px 'Manrope',sans-serif;">Show over other apps</div>
+                <div style="font:400 13px/1.6 'Manrope',sans-serif;color:{{theme.inkMuted}};max-width:260px;">The floating pill needs display-over-apps permission to sit above your keyboard.</div>
+                <sc-if value="{{overlayPermNotGranted}}" hint-placeholder-val="{{true}}">
+                  <button onClick="{{grantOverlay}}" style="font:600 13px 'Manrope',sans-serif;padding:10px 20px;background:{{theme.ink}};color:{{theme.onInk}};border:none;border-radius:3px;cursor:pointer;margin-top:4px;">Allow</button>
+                </sc-if>
+                <sc-if value="{{overlayPermGranted}}" hint-placeholder-val="{{false}}">
+                  <div style="font:600 12px 'Manrope',sans-serif;padding:8px 16px;border:1px solid {{theme.border}};border-radius:3px;color:{{theme.inkMuted}};margin-top:4px;">Permission granted</div>
+                </sc-if>
+              </sc-if>
+              <sc-if value="{{step3}}" hint-placeholder-val="{{false}}">
+                <div style="font:700 19px 'Manrope',sans-serif;">You're set</div>
+                <div style="font:400 13px/1.6 'Manrope',sans-serif;color:{{theme.inkMuted}};max-width:260px;">Stem will now work quietly across your apps. Adjust presets and providers any time in Settings.</div>
+              </sc-if>
+            </div>
+
+            <button onClick="{{onboardCtaOnClick}}" disabled="{{onboardCtaDisabled}}" style="width:100%;padding:14px;background:{{theme.ink}};color:{{theme.onInk}};border:none;border-radius:3px;font:700 14px 'Manrope',sans-serif;cursor:pointer;opacity:{{onboardCtaOpacity}};box-sizing:border-box;">{{onboardCtaLabel}}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{screenIsMainTabs}}" hint-placeholder-val="{{false}}">
+          <div style="height:100%;display:flex;flex-direction:column;">
+            <div style="height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid {{theme.border}};box-sizing:border-box;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <sc-if value="{{screenIsHome}}" hint-placeholder-val="{{true}}">
+                  <div style="width:20px;height:20px;position:relative;">
+                    <div style="position:absolute;left:9px;top:2px;width:2px;height:16px;background:{{theme.ink}};"></div>
+                    <div style="position:absolute;left:3px;top:5px;width:11px;height:2px;background:{{theme.ink}};transform:rotate(38deg);transform-origin:left center;"></div>
+                  </div>
+                </sc-if>
+                <div style="font:700 19px 'Manrope',sans-serif;">{{mainTitle}}</div>
+              </div>
+              <sc-if value="{{showClearHistory}}" hint-placeholder-val="{{false}}">
+                <button onClick="{{clearHistory}}" style="font:600 12px 'Manrope',sans-serif;background:transparent;border:none;color:{{theme.inkMuted}};cursor:pointer;">Clear</button>
+              </sc-if>
+            </div>
+
+            <div style="flex:1;overflow:auto;">
+              <sc-if value="{{screenIsHome}}" hint-placeholder-val="{{true}}">
+                <div data-screen-label="Home" style="padding:20px;display:flex;flex-direction:column;gap:20px;">
+                  <div style="border:1px solid {{theme.border}};border-radius:4px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:{{theme.surface}};">
+                    <div>
+                      <div style="font:700 15px 'Manrope',sans-serif;">Stem is active</div>
+                      <div style="font:400 12px 'Manrope',sans-serif;color:{{theme.inkMuted}};margin-top:2px;">Runs quietly in your keyboard and text fields.</div>
+                    </div>
+                    <div onClick="{{toggleService}}" style="width:44px;height:24px;border-radius:12px;background:{{trackBg}};position:relative;cursor:pointer;flex-shrink:0;border:1px solid {{theme.border}};box-sizing:border-box;">
+                      <div style="position:absolute;top:2px;left:{{knobLeft}};width:18px;height:18px;border-radius:50%;background:{{theme.bg}};transition:left .15s ease;"></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="font:600 11px 'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;color:{{theme.inkFaint}};margin-bottom:10px;">Quick presets</div>
+                    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;">
+                      <sc-for list="{{presetChipsHome}}" as="p" hint-placeholder-count="8">
+                        <button onClick="{{p.onClick}}" style="flex-shrink:0;display:flex;align-items:center;gap:6px;font:600 13px 'Manrope',sans-serif;padding:8px 14px;border:1px solid {{theme.border}};border-radius:3px;background:transparent;color:{{theme.ink}};cursor:pointer;white-space:nowrap;">
+                          <sc-if value="{{p.isSquareOutline}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;border:1.5px solid currentColor;border-radius:1px;flex-shrink:0;"></div></sc-if>
+                          <sc-if value="{{p.isBar}}" hint-placeholder-val="{{false}}"><div style="width:10px;height:2px;background:currentColor;flex-shrink:0;"></div></sc-if>
+                          <sc-if value="{{p.isSquareFilled}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;background:currentColor;border-radius:1px;flex-shrink:0;"></div></sc-if>
+                          <sc-if value="{{p.isTriangle}}" hint-placeholder-val="{{false}}"><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid currentColor;flex-shrink:0;"></div></sc-if>
+                          <sc-if value="{{p.isCircleOutline}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;border:1.5px solid currentColor;border-radius:50%;flex-shrink:0;"></div></sc-if>
+                          <sc-if value="{{p.isLines}}" hint-placeholder-val="{{false}}"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><div style="width:9px;height:1.5px;background:currentColor;"></div><div style="width:9px;height:1.5px;background:currentColor;"></div><div style="width:9px;height:1.5px;background:currentColor;"></div></div></sc-if>
+                          <sc-if value="{{p.isDots}}" hint-placeholder-val="{{false}}"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div></div></sc-if>
+                          <sc-if value="{{p.isDiamond}}" hint-placeholder-val="{{false}}"><div style="width:8px;height:8px;background:currentColor;transform:rotate(45deg);flex-shrink:0;"></div></sc-if>
+                          <span>{{p.label}}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div style="border:1px solid {{theme.border}};border-radius:4px;padding:16px;background:{{theme.surface}};display:flex;flex-direction:column;gap:12px;">
+                    <div style="font:600 13px 'Manrope',sans-serif;">Try it</div>
+                    <div style="font:400 13px/1.5 'Manrope',sans-serif;color:{{theme.inkMuted}};border:1px solid {{theme.border}};border-radius:3px;padding:10px 12px;background:{{theme.bg}};">hey just wanted to check if u got the file i sent yesterday, lmk if not thx</div>
+                    <button onClick="{{openSelection}}" style="align-self:flex-start;font:600 12px 'Manrope',sans-serif;padding:8px 14px;border:1px solid {{theme.border}};border-radius:3px;background:transparent;color:{{theme.ink}};cursor:pointer;">Simulate text selection</button>
+                  </div>
+
+                  <div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                      <div style="font:600 11px 'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;color:{{theme.inkFaint}};">Recent</div>
+                      <button onClick="{{goHistoryClick}}" style="font:600 12px 'Manrope',sans-serif;background:transparent;border:none;color:{{theme.inkMuted}};cursor:pointer;">See all</button>
+                    </div>
+                    <div style="border:1px solid {{theme.border}};border-radius:4px;overflow:hidden;">
+                      <sc-for list="{{recentHome}}" as="h" hint-placeholder-count="3">
+                        <div style="padding:12px 14px;background:{{theme.surface}};display:flex;flex-direction:column;gap:4px;border-bottom:1px solid {{theme.border}};">
+                          <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="font:600 10px 'Space Mono',monospace;padding:2px 6px;border:1px solid {{theme.border}};border-radius:2px;color:{{theme.inkMuted}};">{{h.preset}}</div>
+                            <div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};">{{h.time}}</div>
+                          </div>
+                          <div style="font:13px 'Manrope',sans-serif;color:{{theme.ink}};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{h.after}}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{screenIsSettings}}" hint-placeholder-val="{{false}}">
+                <div data-screen-label="Settings" style="padding:20px;display:flex;flex-direction:column;gap:28px;">
+                  <div>
+                    <div style="font:600 11px 'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;color:{{theme.inkFaint}};margin-bottom:10px;">AI provider</div>
+                    <div style="border:1px solid {{theme.border}};border-radius:4px;overflow:hidden;">
+                      <sc-for list="{{providers}}" as="p" hint-placeholder-count="5">
+                        <div style="border-bottom:1px solid {{theme.border}};background:{{theme.surface}};">
+                          <div onClick="{{p.onClick}}" style="display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer;">
+                            <div style="width:16px;height:16px;border:1.5px solid {{theme.border}};border-radius:2px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                              <div style="width:8px;height:8px;background:{{p.radioBg}};border-radius:1px;"></div>
+                            </div>
+                            <div style="width:16px;height:16px;color:{{theme.inkMuted}};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                              <sc-if value="{{p.isSquareOutline}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;border:1.5px solid currentColor;border-radius:1px;"></div></sc-if>
+                              <sc-if value="{{p.isSquareFilled}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;background:currentColor;border-radius:1px;"></div></sc-if>
+                              <sc-if value="{{p.isCircleOutline}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;border:1.5px solid currentColor;border-radius:50%;"></div></sc-if>
+                              <sc-if value="{{p.isTriangle}}" hint-placeholder-val="{{false}}"><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid currentColor;"></div></sc-if>
+                              <sc-if value="{{p.isDiamond}}" hint-placeholder-val="{{false}}"><div style="width:8px;height:8px;background:currentColor;transform:rotate(45deg);"></div></sc-if>
+                              <sc-if value="{{p.isLines}}" hint-placeholder-val="{{false}}"><div style="display:flex;flex-direction:column;gap:2px;"><div style="width:9px;height:1.5px;background:currentColor;"></div><div style="width:9px;height:1.5px;background:currentColor;"></div><div style="width:9px;height:1.5px;background:currentColor;"></div></div></sc-if>
+                              <sc-if value="{{p.isPlus}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;position:relative;"><div style="position:absolute;top:4px;left:0;width:9px;height:1.5px;background:currentColor;"></div><div style="position:absolute;left:4px;top:0;width:1.5px;height:9px;background:currentColor;"></div></div></sc-if>
+                            </div>
+                            <div style="flex:1;">
+                              <div style="font:600 14px 'Manrope',sans-serif;">{{p.name}}</div>
+                              <div style="font:12px 'Manrope',sans-serif;color:{{theme.inkMuted}};margin-top:2px;">{{p.desc}}</div>
+                            </div>
+                          </div>
+                          <sc-if value="{{p.showField}}" hint-placeholder-val="{{false}}">
+                            <div style="padding:0 14px 14px 42px;display:flex;flex-direction:column;gap:8px;">
+                              <input value="{{p.fieldValue}}" onChange="{{p.onChange}}" placeholder="{{p.placeholder}}" style="width:100%;box-sizing:border-box;font:13px 'Space Mono',monospace;padding:9px 10px;border:1px solid {{theme.border}};border-radius:3px;background:{{theme.bg}};color:{{theme.ink}};outline:none;" />
+                              <input value="{{p.modelValue}}" onChange="{{p.onModelChange}}" placeholder="{{p.modelPlaceholder}}" style="width:100%;box-sizing:border-box;font:13px 'Space Mono',monospace;padding:9px 10px;border:1px solid {{theme.border}};border-radius:3px;background:{{theme.bg}};color:{{theme.ink}};outline:none;" />
+                            </div>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="font:600 11px 'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;color:{{theme.inkFaint}};margin-bottom:10px;">Appearance</div>
+                    <div style="display:flex;border:1px solid {{theme.border}};border-radius:3px;overflow:hidden;width:fit-content;">
+                      <button onClick="{{setThemeLight}}" style="font:600 12px 'Manrope',sans-serif;padding:8px 18px;border:none;cursor:pointer;background:{{lightBtnBg}};color:{{lightBtnFg}};">Light</button>
+                      <button onClick="{{setThemeDark}}" style="font:600 12px 'Manrope',sans-serif;padding:8px 18px;border:none;cursor:pointer;background:{{darkBtnBg}};color:{{darkBtnFg}};">Dark</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="font:600 11px 'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;color:{{theme.inkFaint}};margin-bottom:8px;">Privacy</div>
+                    <div style="font:12px/1.6 'Manrope',sans-serif;color:{{theme.inkMuted}};">No analytics, no tracking. On-device rules never leave your phone. Cloud presets send only the selected text to the provider you choose.</div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{screenIsSnippets}}" hint-placeholder-val="{{false}}">
+                <div data-screen-label="Snippets" style="padding:20px;display:flex;flex-direction:column;gap:20px;">
+                  <div style="border:1px solid {{theme.border}};border-radius:4px;padding:14px;display:flex;flex-direction:column;gap:8px;background:{{theme.surface}};">
+                    <input value="{{newTrigger}}" onChange="{{onNewTriggerChange}}" placeholder="Trigger, e.g. ..addr" style="font:13px 'Space Mono',monospace;padding:9px 10px;border:1px solid {{theme.border}};border-radius:3px;background:{{theme.bg}};color:{{theme.ink}};outline:none;box-sizing:border-box;" />
+                    <input value="{{newExpansion}}" onChange="{{onNewExpansionChange}}" placeholder="Expands to..." style="font:13px 'Manrope',sans-serif;padding:9px 10px;border:1px solid {{theme.border}};border-radius:3px;background:{{theme.bg}};color:{{theme.ink}};outline:none;box-sizing:border-box;" />
+                    <button onClick="{{addSnippet}}" style="align-self:flex-end;font:600 12px 'Manrope',sans-serif;padding:8px 16px;background:{{theme.ink}};color:{{theme.onInk}};border:none;border-radius:3px;cursor:pointer;">Add</button>
+                  </div>
+
+                  <div style="border:1px solid {{theme.border}};border-radius:4px;overflow:hidden;">
+                    <sc-for list="{{snippets}}" as="sn" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid {{theme.border}};background:{{theme.surface}};">
+                        <div style="min-width:0;">
+                          <div style="font:700 13px 'Space Mono',monospace;">{{sn.trigger}}</div>
+                          <div style="font:12px 'Manrope',sans-serif;color:{{theme.inkMuted}};margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{sn.expansion}}</div>
+                        </div>
+                        <button onClick="{{sn.onDelete}}" style="flex-shrink:0;font:600 16px 'Manrope',sans-serif;background:transparent;border:none;color:{{theme.inkFaint}};cursor:pointer;line-height:1;">×</button>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{screenIsHistory}}" hint-placeholder-val="{{false}}">
+                <div data-screen-label="History" style="padding:20px;">
+                  <div style="border:1px solid {{theme.border}};border-radius:4px;overflow:hidden;">
+                    <sc-for list="{{history}}" as="h" hint-placeholder-count="4">
+                      <div style="border-bottom:1px solid {{theme.border}};background:{{theme.surface}};">
+                        <div onClick="{{h.onToggle}}" style="padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px;">
+                          <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="font:600 10px 'Space Mono',monospace;padding:2px 6px;border:1px solid {{theme.border}};border-radius:2px;color:{{theme.inkMuted}};">{{h.preset}}</div>
+                            <div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};">{{h.time}}</div>
+                          </div>
+                          <div style="font:13px 'Manrope',sans-serif;">{{h.after}}</div>
+                        </div>
+                        <sc-if value="{{h.expanded}}" hint-placeholder-val="{{false}}">
+                          <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;">
+                            <div>
+                              <div style="font:10px 'Space Mono',monospace;color:{{theme.inkFaint}};margin-bottom:3px;">BEFORE</div>
+                              <div style="font:12px/1.5 'Manrope',sans-serif;color:{{theme.remove}};text-decoration:line-through;">{{h.before}}</div>
+                            </div>
+                            <div>
+                              <div style="font:10px 'Space Mono',monospace;color:{{theme.inkFaint}};margin-bottom:3px;">AFTER</div>
+                              <div style="font:12px/1.5 'Manrope',sans-serif;color:{{theme.add}};">{{h.after}}</div>
+                            </div>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+
+            <div style="height:64px;flex-shrink:0;display:flex;border-top:1px solid {{theme.border}};background:{{theme.surface}};">
+              <button onClick="{{goHomeClick}}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:none;cursor:pointer;">
+                <div style="width:16px;height:16px;border:2px solid {{homeColor}};border-radius:2px;box-sizing:border-box;"></div>
+                <div style="font-family:'Manrope',sans-serif;font-weight:{{homeWeight}};font-size:10px;color:{{homeColor}};">Home</div>
+              </button>
+              <button onClick="{{goSnippetsClick}}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:none;cursor:pointer;">
+                <div style="display:flex;flex-direction:column;gap:3px;align-items:center;">
+                  <div style="width:14px;height:2px;background:{{snippetsColor}};"></div>
+                  <div style="width:10px;height:2px;background:{{snippetsColor}};"></div>
+                  <div style="width:12px;height:2px;background:{{snippetsColor}};"></div>
+                </div>
+                <div style="font-family:'Manrope',sans-serif;font-weight:{{snippetsWeight}};font-size:10px;color:{{snippetsColor}};">Snippets</div>
+              </button>
+              <button onClick="{{goHistoryClick}}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:none;cursor:pointer;">
+                <div style="width:16px;height:16px;border:2px solid {{historyColor}};border-radius:50%;box-sizing:border-box;position:relative;">
+                  <div style="position:absolute;left:6.5px;top:2px;width:1.5px;height:5px;background:{{historyColor}};"></div>
+                </div>
+                <div style="font-family:'Manrope',sans-serif;font-weight:{{historyWeight}};font-size:10px;color:{{historyColor}};">History</div>
+              </button>
+              <button onClick="{{goSettingsClick}}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:none;cursor:pointer;">
+                <div style="display:flex;gap:4px;align-items:flex-end;height:16px;">
+                  <div style="width:2px;height:10px;background:{{settingsColor}};"></div>
+                  <div style="width:2px;height:16px;background:{{settingsColor}};"></div>
+                  <div style="width:2px;height:8px;background:{{settingsColor}};"></div>
+                </div>
+                <div style="font-family:'Manrope',sans-serif;font-weight:{{settingsWeight}};font-size:10px;color:{{settingsColor}};">Settings</div>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{screenIsOverlay}}" hint-placeholder-val="{{false}}">
+          <div data-screen-label="Overlay preview" style="height:100%;display:flex;flex-direction:column;position:relative;">
+            <div style="height:56px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid {{theme.border}};box-sizing:border-box;">
+              <button onClick="{{backToHome}}" style="background:transparent;border:none;cursor:pointer;padding:4px;color:{{theme.ink}};font:700 16px 'Manrope',sans-serif;">←</button>
+              <div style="font:700 15px 'Manrope',sans-serif;">Floating pill</div>
+            </div>
+
+            <div style="flex:1;padding:20px;display:flex;flex-direction:column;gap:14px;">
+              <div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};text-transform:uppercase;letter-spacing:0.06em;">Mock messages app</div>
+              <div style="height:10px;width:70%;background:{{theme.surface3}};border-radius:2px;"></div>
+              <div style="height:10px;width:52%;background:{{theme.surface3}};border-radius:2px;"></div>
+              <div style="border:1px solid {{theme.border}};border-radius:3px;padding:10px 12px;font:13px 'Manrope',sans-serif;background:{{theme.surface}};">{{overlayPreset.before}}</div>
+            </div>
+
+            <sc-if value="{{pillCollapsed}}" hint-placeholder-val="{{true}}">
+              <div onClick="{{togglePill}}" style="position:absolute;right:16px;bottom:16px;width:40px;height:40px;background:{{theme.ink}};border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px {{theme.shadow}};">
+                <div style="width:16px;height:16px;position:relative;">
+                  <div style="position:absolute;left:7px;top:1px;width:2px;height:13px;background:{{theme.onInk}};"></div>
+                  <div style="position:absolute;left:2px;top:4px;width:9px;height:2px;background:{{theme.onInk}};transform:rotate(38deg);transform-origin:left center;"></div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{pillExpanded}}" hint-placeholder-val="{{false}}">
+              <div style="position:absolute;left:12px;right:12px;bottom:16px;background:{{theme.surface}};border:1px solid {{theme.border}};border-radius:10px;padding:16px;box-shadow:0 -8px 24px {{theme.shadow}};display:flex;flex-direction:column;gap:12px;box-sizing:border-box;">
+                <div style="display:flex;gap:6px;overflow-x:auto;">
+                  <sc-for list="{{presetChipsOverlay}}" as="p" hint-placeholder-count="8">
+                    <button onClick="{{p.onClick}}" style="flex-shrink:0;display:flex;align-items:center;gap:6px;font:600 12px 'Manrope',sans-serif;padding:6px 12px;border:1px solid {{theme.border}};border-radius:3px;background:{{p.bg}};color:{{p.fg}};cursor:pointer;white-space:nowrap;">
+                      <sc-if value="{{p.isSquareOutline}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;border:1.5px solid currentColor;border-radius:1px;flex-shrink:0;"></div></sc-if>
+                      <sc-if value="{{p.isBar}}" hint-placeholder-val="{{false}}"><div style="width:10px;height:2px;background:currentColor;flex-shrink:0;"></div></sc-if>
+                      <sc-if value="{{p.isSquareFilled}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;background:currentColor;border-radius:1px;flex-shrink:0;"></div></sc-if>
+                      <sc-if value="{{p.isTriangle}}" hint-placeholder-val="{{false}}"><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid currentColor;flex-shrink:0;"></div></sc-if>
+                      <sc-if value="{{p.isCircleOutline}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;border:1.5px solid currentColor;border-radius:50%;flex-shrink:0;"></div></sc-if>
+                      <sc-if value="{{p.isLines}}" hint-placeholder-val="{{false}}"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><div style="width:9px;height:1.5px;background:currentColor;"></div><div style="width:9px;height:1.5px;background:currentColor;"></div><div style="width:9px;height:1.5px;background:currentColor;"></div></div></sc-if>
+                      <sc-if value="{{p.isDots}}" hint-placeholder-val="{{false}}"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div></div></sc-if>
+                      <sc-if value="{{p.isDiamond}}" hint-placeholder-val="{{false}}"><div style="width:8px;height:8px;background:currentColor;transform:rotate(45deg);flex-shrink:0;"></div></sc-if>
+                      <span>{{p.label}}</span>
+                    </button>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{overlayPreset.useDiff}}" hint-placeholder-val="{{true}}">
+                  <div style="font:13px/1.6 'Manrope',sans-serif;">
+                    <sc-for list="{{overlayDiffTokens}}" as="tok" hint-placeholder-count="12">
+                      <span style="color:{{tok.color}};text-decoration:{{tok.deco}};font-weight:{{tok.weight}};">{{tok.t}}</span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{overlayPreset.useDiffFalse}}" hint-placeholder-val="{{false}}">
+                  <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="font:10px 'Space Mono',monospace;color:{{theme.inkFaint}};">BEFORE</div>
+                    <div style="font:12px/1.5 'Manrope',sans-serif;color:{{theme.inkMuted}};">{{overlayPreset.before}}</div>
+                    <div style="font:10px 'Space Mono',monospace;color:{{theme.inkFaint}};margin-top:4px;">AFTER</div>
+                    <div style="font:12px/1.5 'Manrope',sans-serif;">{{overlayPreset.after}}</div>
+                  </div>
+                </sc-if>
+
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                  <button onClick="{{togglePill}}" style="font:600 12px 'Manrope',sans-serif;padding:9px 16px;border:1px solid {{theme.border}};border-radius:3px;background:transparent;color:{{theme.ink}};cursor:pointer;">Dismiss</button>
+                  <button onClick="{{togglePill}}" style="font:600 12px 'Manrope',sans-serif;padding:9px 16px;border:none;border-radius:3px;background:{{theme.ink}};color:{{theme.onInk}};cursor:pointer;">Replace</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{screenIsSelection}}" hint-placeholder-val="{{false}}">
+          <div data-screen-label="Selection sheet" style="height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden;">
+            <div style="height:56px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid {{theme.border}};box-sizing:border-box;">
+              <button onClick="{{backToHome}}" style="background:transparent;border:none;cursor:pointer;padding:4px;color:{{theme.ink}};font:700 16px 'Manrope',sans-serif;">←</button>
+              <div style="font:700 15px 'Manrope',sans-serif;">Selection menu</div>
+            </div>
+
+            <div style="flex:1;padding:20px;display:flex;flex-direction:column;gap:14px;">
+              <div style="font:11px 'Space Mono',monospace;color:{{theme.inkFaint}};text-transform:uppercase;letter-spacing:0.06em;">Mock notes app</div>
+              <div style="border:1px solid {{theme.border}};border-radius:3px;padding:14px;background:{{theme.surface}};font:14px/1.6 'Manrope',sans-serif;">{{selPreset.before}}</div>
+              <button onClick="{{openSheet}}" style="align-self:flex-start;font:600 12px 'Manrope',sans-serif;padding:9px 16px;border:1px solid {{theme.border}};border-radius:3px;background:transparent;color:{{theme.ink}};cursor:pointer;">Select text</button>
+            </div>
+
+            <sc-if value="{{sheetOpen}}" hint-placeholder-val="{{false}}">
+              <div onClick="{{closeSheet}}" style="position:absolute;inset:0;background:{{scrimColor}};"></div>
+            </sc-if>
+
+            <div style="position:absolute;left:0;right:0;bottom:0;background:{{theme.surface}};border-top:1px solid {{theme.border}};border-radius:10px 10px 0 0;padding:14px 16px 20px;box-shadow:0 -8px 24px {{theme.shadow}};box-sizing:border-box;transform:translateY({{sheetTransform}});transition:transform .28s ease;display:flex;flex-direction:column;gap:12px;">
+              <div style="width:36px;height:4px;background:{{theme.border}};border-radius:2px;align-self:center;"></div>
+              <div style="display:flex;gap:6px;overflow-x:auto;">
+                <sc-for list="{{presetChipsSel}}" as="p" hint-placeholder-count="8">
+                  <button onClick="{{p.onClick}}" style="flex-shrink:0;display:flex;align-items:center;gap:6px;font:600 12px 'Manrope',sans-serif;padding:6px 12px;border:1px solid {{theme.border}};border-radius:3px;background:{{p.bg}};color:{{p.fg}};cursor:pointer;white-space:nowrap;">
+                    <sc-if value="{{p.isSquareOutline}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;border:1.5px solid currentColor;border-radius:1px;flex-shrink:0;"></div></sc-if>
+                    <sc-if value="{{p.isBar}}" hint-placeholder-val="{{false}}"><div style="width:10px;height:2px;background:currentColor;flex-shrink:0;"></div></sc-if>
+                    <sc-if value="{{p.isSquareFilled}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;background:currentColor;border-radius:1px;flex-shrink:0;"></div></sc-if>
+                    <sc-if value="{{p.isTriangle}}" hint-placeholder-val="{{false}}"><div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid currentColor;flex-shrink:0;"></div></sc-if>
+                    <sc-if value="{{p.isCircleOutline}}" hint-placeholder-val="{{false}}"><div style="width:9px;height:9px;border:1.5px solid currentColor;border-radius:50%;flex-shrink:0;"></div></sc-if>
+                    <sc-if value="{{p.isLines}}" hint-placeholder-val="{{false}}"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><div style="width:9px;height:1.5px;background:currentColor;"></div><div style="width:9px;height:1.5px;background:currentColor;"></div><div style="width:9px;height:1.5px;background:currentColor;"></div></div></sc-if>
+                    <sc-if value="{{p.isDots}}" hint-placeholder-val="{{false}}"><div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div><div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div></div></sc-if>
+                    <sc-if value="{{p.isDiamond}}" hint-placeholder-val="{{false}}"><div style="width:8px;height:8px;background:currentColor;transform:rotate(45deg);flex-shrink:0;"></div></sc-if>
+                    <span>{{p.label}}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <sc-if value="{{selPreset.useDiff}}" hint-placeholder-val="{{true}}">
+                <div style="font:13px/1.6 'Manrope',sans-serif;">
+                  <sc-for list="{{selDiffTokens}}" as="tok" hint-placeholder-count="12">
+                    <span style="color:{{tok.color}};text-decoration:{{tok.deco}};font-weight:{{tok.weight}};">{{tok.t}}</span>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{selPreset.useDiffFalse}}" hint-placeholder-val="{{false}}">
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <div style="font:10px 'Space Mono',monospace;color:{{theme.inkFaint}};">BEFORE</div>
+                  <div style="font:12px/1.5 'Manrope',sans-serif;color:{{theme.inkMuted}};">{{selPreset.before}}</div>
+                  <div style="font:10px 'Space Mono',monospace;color:{{theme.inkFaint}};margin-top:4px;">AFTER</div>
+                  <div style="font:12px/1.5 'Manrope',sans-serif;">{{selPreset.after}}</div>
+                </div>
+              </sc-if>
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button onClick="{{closeSheet}}" style="font:600 12px 'Manrope',sans-serif;padding:9px 16px;border:1px solid {{theme.border}};border-radius:3px;background:transparent;color:{{theme.ink}};cursor:pointer;">Copy</button>
+                <button onClick="{{closeSheet}}" style="font:600 12px 'Manrope',sans-serif;padding:9px 16px;border:none;border-radius:3px;background:{{theme.ink}};color:{{theme.onInk}};cursor:pointer;">Replace inline</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+    </x-import>
+    <div style="font:12px 'Space Mono',monospace;color:{{theme.inkFaint}};">Interactive prototype — tap around</div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1400,&quot;height&quot;:1160},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;light&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;tsType&quot;:&quot;'light'|'dark'&quot;,&quot;section&quot;:&quot;Behavior&quot;},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;onboarding&quot;,&quot;options&quot;:[&quot;onboarding&quot;,&quot;home&quot;],&quot;tsType&quot;:&quot;'onboarding'|'home'&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+class Component extends DCLogic {
+  state = {
+    theme: 'light',
+    screen: 'onboarding',
+    onboardStep: 0,
+    accessGranted: false,
+    overlayPermGranted: false,
+    serviceEnabled: true,
+    overlayPresetKey: 'fix',
+    pillExpanded: false,
+    selPresetKey: 'concise',
+    sheetOpen: false,
+    selectedProviderId: 'custom',
+    providerFields: { ollama: '', gemini: '', openai: '', claude: '', custom: '' },
+    modelFields: { ollama: 'llama3.2', gemini: 'gemini-2.0-flash', openai: 'gpt-4o-mini', claude: 'claude-3-5-sonnet', custom: '' },
+    snippets: [
+      { id: 1, trigger: '..email', expansion: 'alex@stemapp.io' },
+      { id: 2, trigger: '..addr', expansion: '123 Main Street, Austin TX' },
+      { id: 3, trigger: '..sig', expansion: 'Best, Alex' },
+    ],
+    newTrigger: '',
+    newExpansion: '',
+    history: [
+      { id: 1, preset: 'Fix', time: '2m ago', before: "hey just wanted to check if u got the file i sent yesterday, lmk if not thx", after: "Hey, just wanted to check if you got the file I sent yesterday. Let me know if not. Thanks!" },
+      { id: 2, preset: 'Professional', time: '1h ago', before: "hey can you send that report over whenever, no rush lol", after: "Hi, could you send over the report at your convenience? Thank you." },
+      { id: 3, preset: 'Concise', time: 'Yesterday', before: "I was just thinking that maybe we could possibly consider looking into the option of rescheduling the meeting to sometime next week if that works for everyone.", after: "Can we reschedule the meeting to next week if that works for everyone?" },
+      { id: 4, preset: 'Friendly', time: '2 days ago', before: "The meeting has been rescheduled to Thursday at 3pm.", after: "Just a heads up — we moved the meeting to Thursday at 3pm!" },
+    ],
+    expandedHistoryId: null,
+  };
+
+  presets = [
+    { key: 'fix', label: 'Fix', before: "hey just wanted to check if u got the file i sent yesterday, lmk if not thx", after: "Hey, just wanted to check if you got the file I sent yesterday. Let me know if not. Thanks!", useDiff: true, useDiffFalse: false, icon: 'squareOutline' },
+    { key: 'concise', label: 'Concise', before: "I was just thinking that maybe we could possibly consider looking into the option of rescheduling the meeting to sometime next week if that works for everyone.", after: "Can we reschedule the meeting to next week if that works for everyone?", useDiff: true, useDiffFalse: false, icon: 'bar' },
+    { key: 'professional', label: 'Professional', before: "hey can you send that report over whenever, no rush lol", after: "Hi, could you send over the report at your convenience? Thank you.", useDiff: true, useDiffFalse: false, icon: 'squareFilled' },
+    { key: 'punchy', label: 'Punchy', before: "We think this new update improves things for users in several small ways.", after: "This update makes things better. Faster. Simpler.", useDiff: true, useDiffFalse: false, icon: 'triangle' },
+    { key: 'friendly', label: 'Friendly', before: "The meeting has been rescheduled to Thursday at 3pm.", after: "Just a heads up — we moved the meeting to Thursday at 3pm!", useDiff: true, useDiffFalse: false, icon: 'circleOutline' },
+    { key: 'summarize', label: 'Summarize', before: "The quarterly report shows revenue grew 12% year over year, driven mainly by strong performance in the EU region, while costs stayed flat due to the hiring freeze in Q2.", after: "Revenue up 12% YoY, driven by EU growth. Costs flat from the Q2 hiring freeze.", useDiff: false, useDiffFalse: true, icon: 'lines' },
+    { key: 'bulletize', label: 'Bulletize', before: "For the launch we need to finish the landing page, get legal sign-off on the terms, and confirm the email list is ready to go.", after: "• Finish landing page  • Get legal sign-off on terms  • Confirm email list", useDiff: false, useDiffFalse: true, icon: 'dots' },
+    { key: 'expand', label: 'Expand', before: "Meeting moved to Thursday.", after: "The meeting originally scheduled for this week has been moved to Thursday at the same time. Please update your calendar accordingly.", useDiff: false, useDiffFalse: true, icon: 'diamond' },
+  ];
+
+  providers = [
+    { id: 'local', name: 'On-device rules', desc: 'Instant · private · offline', needsField: false, placeholder: '', icon: 'squareFilled' },
+    { id: 'ollama', name: 'Ollama (LAN)', desc: 'Local PC over Wi-Fi', needsField: true, placeholder: '192.168.1.42:11434', modelPlaceholder: 'e.g. llama3.2', icon: 'circleOutline' },
+    { id: 'gemini', name: 'Google Gemini', desc: "Google's Gemini models", needsField: true, placeholder: 'AIza••••••••', modelPlaceholder: 'e.g. gemini-2.0-flash', icon: 'diamond' },
+    { id: 'openai', name: 'OpenAI-compatible', desc: 'GPT-4o · DeepSeek · Groq', needsField: true, placeholder: 'sk-••••••••', modelPlaceholder: 'e.g. gpt-4o-mini', icon: 'triangle' },
+    { id: 'claude', name: 'Anthropic Claude', desc: "Anthropic's Claude models", needsField: true, placeholder: 'sk-ant-••••••••', modelPlaceholder: 'e.g. claude-3-5-sonnet', icon: 'lines' },
+    { id: 'custom', name: 'Custom model', desc: 'Default · type in your own model or endpoint', needsField: true, placeholder: 'e.g. my-finetune@192.168.1.5:8000', modelPlaceholder: 'e.g. your-model-name', icon: 'plus' },
+  ];
+
+  lightTheme = {
+    bg: 'oklch(98.2% 0.004 75)', surface: 'oklch(99.4% 0.002 75)', surface2: 'oklch(95.5% 0.005 75)', surface3: 'oklch(91.5% 0.006 75)',
+    border: 'oklch(86% 0.007 75)', ink: 'oklch(19% 0.006 75)', inkMuted: 'oklch(46% 0.007 75)', inkFaint: 'oklch(64% 0.007 75)',
+    onInk: 'oklch(98.2% 0.004 75)', add: 'oklch(52% 0.07 145)', remove: 'oklch(52% 0.08 35)',
+    shadow: 'oklch(20% 0.01 75 / 0.14)',
+  };
+  darkTheme = {
+    bg: 'oklch(17% 0.006 75)', surface: 'oklch(21% 0.007 75)', surface2: 'oklch(25% 0.008 75)', surface3: 'oklch(30% 0.009 75)',
+    border: 'oklch(34% 0.01 75)', ink: 'oklch(95% 0.004 75)', inkMuted: 'oklch(72% 0.007 75)', inkFaint: 'oklch(54% 0.007 75)',
+    onInk: 'oklch(17% 0.006 75)', add: 'oklch(75% 0.08 145)', remove: 'oklch(78% 0.08 35)',
+    shadow: 'oklch(0% 0 0 / 0.45)',
+  };
+
+  componentDidMount() {
+    const upd = {};
+    if (this.props.theme === 'dark' || this.props.theme === 'light') upd.theme = this.props.theme;
+    if (this.props.startScreen === 'home' || this.props.startScreen === 'onboarding') upd.screen = this.props.startScreen;
+    if (Object.keys(upd).length) this.setState(upd);
+  }
+
+  setThemeLight = () => this.setState({ theme: 'light' });
+  setThemeDark = () => this.setState({ theme: 'dark' });
+  restartOnboarding = () => this.setState({ screen: 'onboarding', onboardStep: 0, accessGranted: false, overlayPermGranted: false });
+
+  goHomeClick = () => this.setState({ screen: 'home' });
+  goSettingsClick = () => this.setState({ screen: 'settings' });
+  goSnippetsClick = () => this.setState({ screen: 'snippets' });
+  goHistoryClick = () => this.setState({ screen: 'history' });
+  backToHome = () => this.setState({ screen: 'home', pillExpanded: false, sheetOpen: false });
+
+  onboardNext = () => this.setState(s => ({ onboardStep: Math.min(s.onboardStep + 1, 3) }));
+  skipOnboarding = () => this.setState({ screen: 'home' });
+  finishOnboarding = () => this.setState({ screen: 'home' });
+  grantAccess = () => this.setState({ accessGranted: true });
+  grantOverlay = () => this.setState({ overlayPermGranted: true });
+
+  toggleService = () => this.setState(s => ({ serviceEnabled: !s.serviceEnabled }));
+
+  selectHomePreset = (key) => this.setState({ overlayPresetKey: key, pillExpanded: true, screen: 'overlay' });
+  togglePill = () => this.setState(s => ({ pillExpanded: !s.pillExpanded }));
+  selectOverlayPreset = (key) => this.setState({ overlayPresetKey: key });
+
+  openSelection = () => this.setState({ screen: 'selection', sheetOpen: false });
+  openSheet = () => this.setState({ sheetOpen: true });
+  closeSheet = () => this.setState({ sheetOpen: false });
+  selectSelPreset = (key) => this.setState({ selPresetKey: key });
+
+  selectProvider = (id) => this.setState({ selectedProviderId: id });
+  setProviderField = (id, val) => this.setState(s => ({ providerFields: { ...s.providerFields, [id]: val } }));
+  setModelField = (id, val) => this.setState(s => ({ modelFields: { ...s.modelFields, [id]: val } }));
+
+  onNewTriggerChange = (e) => this.setState({ newTrigger: e.target.value });
+  onNewExpansionChange = (e) => this.setState({ newExpansion: e.target.value });
+  addSnippet = () => this.setState(s => (s.newTrigger.trim() && s.newExpansion.trim())
+    ? { snippets: [...s.snippets, { id: Date.now(), trigger: s.newTrigger.trim(), expansion: s.newExpansion.trim() }], newTrigger: '', newExpansion: '' }
+    : {});
+  deleteSnippet = (id) => this.setState(s => ({ snippets: s.snippets.filter(x => x.id !== id) }));
+
+  toggleHistoryExpand = (id) => this.setState(s => ({ expandedHistoryId: s.expandedHistoryId === id ? null : id }));
+  clearHistory = () => this.setState({ history: [], expandedHistoryId: null });
+
+  wordDiff(a, b) {
+    const aw = a.split(/(\s+)/);
+    const bw = b.split(/(\s+)/);
+    const n = aw.length, m = bw.length;
+    const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        dp[i][j] = aw[i] === bw[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+    const out = [];
+    let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (aw[i] === bw[j]) { out.push({ t: aw[i], k: 'same' }); i++; j++; }
+      else if (dp[i + 1][j] >= dp[i][j + 1]) { out.push({ t: aw[i], k: 'del' }); i++; }
+      else { out.push({ t: bw[j], k: 'add' }); j++; }
+    }
+    while (i < n) { out.push({ t: aw[i], k: 'del' }); i++; }
+    while (j < m) { out.push({ t: bw[j], k: 'add' }); j++; }
+    return out;
+  }
+
+  iconFlags(icon) {
+    return {
+      isSquareOutline: icon === 'squareOutline', isBar: icon === 'bar', isSquareFilled: icon === 'squareFilled',
+      isTriangle: icon === 'triangle', isCircleOutline: icon === 'circleOutline', isLines: icon === 'lines',
+      isDots: icon === 'dots', isDiamond: icon === 'diamond', isPlus: icon === 'plus',
+    };
+  }
+
+  buildDiffTokens(preset, theme) {
+    if (!preset.useDiff) return [];
+    return this.wordDiff(preset.before, preset.after).map((tok, idx) => ({
+      idx,
+      t: tok.t,
+      color: tok.k === 'del' ? theme.remove : tok.k === 'add' ? theme.add : theme.ink,
+      deco: tok.k === 'del' ? 'line-through' : tok.k === 'add' ? 'underline' : 'none',
+      weight: tok.k === 'same' ? 400 : 700,
+    }));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const isDark = s.theme === 'dark';
+    const theme = isDark ? this.darkTheme : this.lightTheme;
+    const screen = s.screen;
+    const screenIsOnboarding = screen === 'onboarding';
+    const screenIsHome = screen === 'home';
+    const screenIsSettings = screen === 'settings';
+    const screenIsSnippets = screen === 'snippets';
+    const screenIsHistory = screen === 'history';
+    const screenIsOverlay = screen === 'overlay';
+    const screenIsSelection = screen === 'selection';
+    const screenIsMainTabs = screenIsHome || screenIsSettings || screenIsSnippets || screenIsHistory;
+
+    const mainTitle = screenIsHome ? 'Stem' : screenIsSettings ? 'Settings' : screenIsSnippets ? 'Snippets' : 'History';
+
+    const overlayPreset = this.presets.find(p => p.key === s.overlayPresetKey) || this.presets[0];
+    const selPreset = this.presets.find(p => p.key === s.selPresetKey) || this.presets[0];
+    const overlayDiffTokens = this.buildDiffTokens(overlayPreset, theme);
+    const selDiffTokens = this.buildDiffTokens(selPreset, theme);
+
+    const presetChipsHome = this.presets.map(p => ({ ...p, ...this.iconFlags(p.icon), onClick: () => this.selectHomePreset(p.key) }));
+    const presetChipsOverlay = this.presets.map(p => {
+      const sel = p.key === s.overlayPresetKey;
+      return { ...p, ...this.iconFlags(p.icon), bg: sel ? theme.ink : 'transparent', fg: sel ? theme.onInk : theme.ink, onClick: () => this.selectOverlayPreset(p.key) };
+    });
+    const presetChipsSel = this.presets.map(p => {
+      const sel = p.key === s.selPresetKey;
+      return { ...p, ...this.iconFlags(p.icon), bg: sel ? theme.ink : 'transparent', fg: sel ? theme.onInk : theme.ink, onClick: () => this.selectSelPreset(p.key) };
+    });
+
+    const providersComputed = this.providers.map(p => {
+      const selected = p.id === s.selectedProviderId;
+      return {
+        ...p,
+        ...this.iconFlags(p.icon),
+        selected,
+        showField: selected && p.needsField,
+        fieldValue: s.providerFields[p.id] || '',
+        modelValue: s.modelFields[p.id] || '',
+        onClick: () => this.selectProvider(p.id),
+        onChange: (e) => this.setProviderField(p.id, e.target.value),
+        onModelChange: (e) => this.setModelField(p.id, e.target.value),
+        radioBg: selected ? theme.ink : 'transparent',
+      };
+    });
+
+    const snippetsComputed = s.snippets.map(sn => ({ ...sn, onDelete: () => this.deleteSnippet(sn.id) }));
+
+    const historyComputed = s.history.map(h => ({
+      ...h,
+      expanded: h.id === s.expandedHistoryId,
+      onToggle: () => this.toggleHistoryExpand(h.id),
+    }));
+    const recentHome = historyComputed.slice(0, 3);
+    const showClearHistory = screenIsHistory && s.history.length > 0;
+
+    const trackBg = s.serviceEnabled ? theme.ink : theme.surface3;
+    const knobLeft = s.serviceEnabled ? '22px' : '2px';
+
+    const onboardCtaLabel = s.onboardStep === 0 ? 'Get started' : s.onboardStep === 3 ? 'Open Stem' : 'Continue';
+    const onboardCtaDisabled = (s.onboardStep === 1 && !s.accessGranted) || (s.onboardStep === 2 && !s.overlayPermGranted);
+    const onboardCtaOnClick = s.onboardStep === 3 ? this.finishOnboarding : this.onboardNext;
+
+    return {
+      theme, isDark,
+      screenIsOnboarding, screenIsMainTabs, screenIsHome, screenIsSettings, screenIsSnippets, screenIsHistory, screenIsOverlay, screenIsSelection,
+      mainTitle,
+      homeColor: screenIsHome ? theme.ink : theme.inkFaint,
+      settingsColor: screenIsSettings ? theme.ink : theme.inkFaint,
+      snippetsColor: screenIsSnippets ? theme.ink : theme.inkFaint,
+      historyColor: screenIsHistory ? theme.ink : theme.inkFaint,
+      homeWeight: screenIsHome ? 700 : 500,
+      settingsWeight: screenIsSettings ? 700 : 500,
+      snippetsWeight: screenIsSnippets ? 700 : 500,
+      historyWeight: screenIsHistory ? 700 : 500,
+      step0: s.onboardStep === 0, step1: s.onboardStep === 1, step2: s.onboardStep === 2, step3: s.onboardStep === 3,
+      dot0Color: theme.ink,
+      dot1Color: s.onboardStep >= 1 ? theme.ink : theme.border,
+      dot2Color: s.onboardStep >= 2 ? theme.ink : theme.border,
+      dot3Color: s.onboardStep >= 3 ? theme.ink : theme.border,
+      showSkip: s.onboardStep < 3,
+      accessGranted: s.accessGranted, accessNotGranted: !s.accessGranted,
+      overlayPermGranted: s.overlayPermGranted, overlayPermNotGranted: !s.overlayPermGranted,
+      onboardCtaLabel, onboardCtaDisabled, onboardCtaOnClick, onboardCtaOpacity: onboardCtaDisabled ? 0.4 : 1,
+      serviceEnabled: s.serviceEnabled, trackBg, knobLeft,
+      presetChipsHome, presetChipsOverlay, presetChipsSel,
+      overlayPreset, selPreset, overlayDiffTokens, selDiffTokens,
+      pillExpanded: s.pillExpanded, pillCollapsed: !s.pillExpanded, sheetOpen: s.sheetOpen,
+      sheetTransform: s.sheetOpen ? '0%' : '100%',
+      scrimColor: isDark ? 'oklch(0% 0 0 / 0.5)' : 'oklch(20% 0.01 75 / 0.35)',
+      providers: providersComputed,
+      snippets: snippetsComputed, newTrigger: s.newTrigger, newExpansion: s.newExpansion,
+      recentHome, history: historyComputed, showClearHistory,
+      lightBtnBg: !isDark ? theme.ink : 'transparent', lightBtnFg: !isDark ? theme.onInk : theme.ink,
+      darkBtnBg: isDark ? theme.ink : 'transparent', darkBtnFg: isDark ? theme.onInk : theme.ink,
+      setThemeLight: this.setThemeLight, setThemeDark: this.setThemeDark, restartOnboarding: this.restartOnboarding,
+      goHomeClick: this.goHomeClick, goSettingsClick: this.goSettingsClick, goSnippetsClick: this.goSnippetsClick, goHistoryClick: this.goHistoryClick,
+      backToHome: this.backToHome,
+      onboardNext: this.onboardNext, skipOnboarding: this.skipOnboarding, finishOnboarding: this.finishOnboarding,
+      grantAccess: this.grantAccess, grantOverlay: this.grantOverlay,
+      toggleService: this.toggleService,
+      togglePill: this.togglePill,
+      openSelection: this.openSelection, openSheet: this.openSheet, closeSheet: this.closeSheet,
+      onNewTriggerChange: this.onNewTriggerChange, onNewExpansionChange: this.onNewExpansionChange, addSnippet: this.addSnippet,
+      clearHistory: this.clearHistory,
+    };
+  }
+}
+</script>
+</body>
+</html>
+

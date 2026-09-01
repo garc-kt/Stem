@@ -4,19 +4,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
-// The "Increased" shape roles (extraSmallIncreased, mediumIncreased, etc.) that ship with M3
-// Expressive aren't available in this project's resolved material3:1.4.0 build — the Shapes
-// constructor here only accepts the five base roles. Sprout's rounder, more expressive corner
-// treatment for cards/containers is applied directly via RoundedCornerShape literals instead.
+// Stem Design System — Sharp geometry (2dp–4dp radii for controls/cards, 10dp for sheets/overlays)
+// Source: Stem.dc.html
 val SproutShapes = Shapes(
-    extraSmall = RoundedCornerShape(4.dp),
-    small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+    extraSmall = RoundedCornerShape(2.dp),
+    small = RoundedCornerShape(3.dp),
+    medium = RoundedCornerShape(4.dp),
+    large = RoundedCornerShape(10.dp),
+    extraLarge = RoundedCornerShape(14.dp)
 )
 
-val SproutPillShape = RoundedCornerShape(18.dp) // 36dp height pill
-val SproutCapsuleShape = RoundedCornerShape(28.dp) // Expanded capsule
-val SproutChipShape = RoundedCornerShape(16.dp) // 32dp height chip
-val SproutLargeIncreasedShape = RoundedCornerShape(20.dp) // Rounder container treatment
+val StemSharpShape = RoundedCornerShape(3.dp)
+val StemCardShape = RoundedCornerShape(4.dp)
+val StemSheetShape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+val StemOverlayShape = RoundedCornerShape(10.dp)
+val StemPillShape = RoundedCornerShape(4.dp)
+val StemIndicatorShape = RoundedCornerShape(2.dp)
+
+// Backward-compatible aliases for existing components
+val SproutPillShape = StemPillShape
+val SproutCapsuleShape = StemOverlayShape
+val SproutChipShape = StemSharpShape
+val SproutLargeIncreasedShape = StemCardShape
+

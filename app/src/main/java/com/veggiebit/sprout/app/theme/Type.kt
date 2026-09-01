@@ -6,119 +6,138 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Roboto (system SansSerif) stands in for Google Sans / Google Sans Text called for in
-// plan.md §3.1 — those are not publicly distributable, and the Google-Fonts-downloadable-
-// provider path requires bundling long provider certificate hashes that can't be verified
-// without a device to test against, plus a Google Play Services dependency that's a poor fit
-// for a privacy-focused app. Roboto is what most Android devices already render as the system
-// sans anyway, so the visual delta is small; Roboto Mono covers the counter/metadata role.
-private val SproutSans = FontFamily.SansSerif
-private val SproutMono = FontFamily.Monospace
+// Stem Design System — Manrope (UI) + Space Mono (metadata/code)
+// Source: Stem.dc.html
+val StemSans = FontFamily.SansSerif
+val StemMono = FontFamily.Monospace
+
+val StemMonoLabel = TextStyle(
+    fontFamily = StemMono,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 11.sp,
+    lineHeight = 16.sp,
+    letterSpacing = 0.06.sp
+)
+
+val StemMonoCode = TextStyle(
+    fontFamily = StemMono,
+    fontWeight = FontWeight.Normal,
+    fontSize = 13.sp,
+    lineHeight = 18.sp
+)
+
+val StemMonoBadge = TextStyle(
+    fontFamily = StemMono,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 10.sp,
+    lineHeight = 14.sp
+)
 
 val SproutTypography = Typography(
     displayLarge = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.Normal,
-        fontSize = 57.sp,
-        lineHeight = 64.sp,
-        letterSpacing = (-0.25).sp
+        fontFamily = StemSans,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 44.sp,
+        lineHeight = 52.sp,
+        letterSpacing = (-0.02).sp
     ),
     displayMedium = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.Normal,
-        fontSize = 45.sp,
-        lineHeight = 52.sp,
-        letterSpacing = 0.sp
-    ),
-    displaySmall = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.Normal,
+        fontFamily = StemSans,
+        fontWeight = FontWeight.ExtraBold,
         fontSize = 36.sp,
         lineHeight = 44.sp,
-        letterSpacing = 0.sp
+        letterSpacing = (-0.02).sp
+    ),
+    displaySmall = TextStyle(
+        fontFamily = StemSans,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.01).sp
     ),
     headlineLarge = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
-        letterSpacing = 0.sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = StemSans,
+        fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
         lineHeight = 36.sp,
         letterSpacing = 0.sp
     ),
-    headlineSmall = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.SemiBold,
+    headlineMedium = TextStyle(
+        fontFamily = StemSans,
+        fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
+    headlineSmall = TextStyle(
+        fontFamily = StemSans,
+        fontWeight = FontWeight.Bold,
+        fontSize = 19.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.sp
+    ),
     titleLarge = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
+        fontFamily = StemSans,
+        fontWeight = FontWeight.Bold,
+        fontSize = 19.sp,
+        lineHeight = 26.sp,
         letterSpacing = 0.sp
     ),
     titleMedium = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.15.sp
+        fontFamily = StemSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
+        letterSpacing = 0.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
+        fontFamily = StemSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.sp
     ),
     bodyLarge = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
+        fontFamily = StemSans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 15.sp,
+        lineHeight = 23.sp,
+        letterSpacing = 0.sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = SproutSans,
+        fontFamily = StemSans,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
+        fontSize = 13.sp,
         lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
+        letterSpacing = 0.sp
     ),
     bodySmall = TextStyle(
-        fontFamily = SproutSans,
+        fontFamily = StemSans,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
+        lineHeight = 18.sp,
+        letterSpacing = 0.sp
     ),
     labelLarge = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
+        fontFamily = StemSans,
+        fontWeight = FontWeight.Bold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = SproutSans,
-        fontWeight = FontWeight.Medium,
+        fontFamily = StemSans,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 12.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = SproutMono,
+        fontFamily = StemMono,
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.06.sp
     )
 )
+
