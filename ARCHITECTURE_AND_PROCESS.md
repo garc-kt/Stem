@@ -1,4 +1,4 @@
-﻿# 📘 Sprout — Bitácora Completa de Proceso, Arquitectura y Control de Versiones
+# 📘 Sprout — Bitácora Completa de Proceso, Arquitectura y Control de Versiones
 
 Documento técnico exhaustivo que recopila todo el proceso de ingeniería, diseño, arquitectura de software, gestión de versiones (SemVer) y despliegue del asistente de escritura **Sprout** (`com.veggiebit.sprout`).
 
@@ -278,6 +278,6 @@ Todos los cambios en Git siguen el estándar:
 - **Licencia**: **Apache License 2.0**
   - Permite uso libre, comercial, distribución y modificación.
   - Incluye protección expresa de patentes para el autor y los usuarios.
-  - Exige mención de autoría (*Copyright 2026 Garc2004*).
-- **Repositorio Oficial**: [https://github.com/Garc2004/Sprout](https://github.com/Garc2004/Sprout)
-- **Primer Release Publicado**: [https://github.com/Garc2004/Sprout/releases/tag/v1.0.0](https://github.com/Garc2004/Sprout/releases/tag/v1.0.0)
+  - Exige mención de autoría (*Copyright 2026 garc-kt*).
+- **Repositorio Oficial**: [https://github.com/garc-kt/Stem](https://github.com/garc-kt/Stem)
+- **Primer Release Publicado**: [https://github.com/garc-kt/Stem/releases/tag/v1.0.0](https://github.com/garc-kt/Stem/releases/tag/v1.0.0)

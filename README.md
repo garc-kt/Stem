@@ -22,7 +22,7 @@ Stem enhances your text anywhere across Android—without popups, lock-in, or te
 ## 🚀 Getting Started
 
 ### Installation
-Download the latest APK from [Releases](https://github.com/Garc2004/Stem/releases).
+Download the latest APK from [Releases](https://github.com/garc-kt/Stem/releases).
 
 ### Usage
 1. **Selection Menu**: Highlight text in any app $\rightarrow$ tap **Stem** $\rightarrow$ choose a preset.
