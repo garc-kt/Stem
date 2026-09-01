@@ -1,4 +1,12 @@
-# 🌱 Stem
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/icon-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/icon-light.png">
+    <img alt="Stem" src="assets/icon-light.png" width="120">
+  </picture>
+</p>
+
+# Stem
 
 Ambient writing and inline text enhancement assistant for Android.
 
