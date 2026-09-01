@@ -188,61 +188,58 @@ class SproutAccessibilityService : AccessibilityService() {
                     } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.OPENAI_COMPATIBLE && userSettings.openaiApiKey.isBlank()) {
                         Toast.makeText(this, "Sprout: Add your OpenAI API Key in Settings to use AI", Toast.LENGTH_LONG).show()
                     }
-
                     if (userSettings.hapticFeedbackEnabled) {
                         HapticHelper.performClickHaptic(this)
                     }
 
-                    // Show live thinking indicator on screen
-                    if (PermissionHelper.hasOverlayPermission(this)) {
-                        overlayManager?.showInlineThinking(payload.boundsInScreen)
-                    }
+                    // Direct In-Field Thinking right on the active text field of the keyboard
+                    injectReplacementText("${inlineResult.body} [Thinking...]")
 
                     serviceScope.launch {
                         val engine = com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider.getEngine(userSettings)
                         val result = engine.transform(com.veggiebit.sprout.features.enhancement.data.models.TextPayload(inlineResult.body), inlineResult.preset)
-                        overlayManager?.hide()
                         if (result.transformedText.isNotBlank()) {
                             if (userSettings.hapticFeedbackEnabled) {
                                 HapticHelper.performSuccessHaptic(this@SproutAccessibilityService)
                             }
                             injectReplacementText(result.transformedText)
-                            Toast.makeText(this@SproutAccessibilityService, "Sprout: ${result.summaryNote ?: inlineResult.summary}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@SproutAccessibilityService, "Stem: ${result.summaryNote ?: inlineResult.summary}", Toast.LENGTH_SHORT).show()
+                        } else {
+                            injectReplacementText(inlineResult.body)
                         }
                     }
                     return
                 }
                 is InlineCommandEngine.CommandResult.RunAIPrompt -> {
                     if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.LOCAL_RULES) {
-                        Toast.makeText(this, "Sprout: Select Gemini, Claude, or OpenAI in Settings to use custom AI prompts", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Stem: Select Gemini, Claude, or OpenAI in Settings to use custom AI prompts", Toast.LENGTH_LONG).show()
                     } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.GEMINI_AI && userSettings.geminiApiKey.isBlank()) {
-                        Toast.makeText(this, "Sprout: Add your Gemini API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Stem: Add your Gemini API Key in Settings to use AI", Toast.LENGTH_LONG).show()
                     } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.CLAUDE_AI && userSettings.claudeApiKey.isBlank()) {
-                        Toast.makeText(this, "Sprout: Add your Claude API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Stem: Add your Claude API Key in Settings to use AI", Toast.LENGTH_LONG).show()
                     } else if (userSettings.engineMode == com.veggiebit.sprout.features.enhancement.data.models.EngineMode.OPENAI_COMPATIBLE && userSettings.openaiApiKey.isBlank()) {
-                        Toast.makeText(this, "Sprout: Add your OpenAI API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Stem: Add your OpenAI API Key in Settings to use AI", Toast.LENGTH_LONG).show()
                     }
 
                     if (userSettings.hapticFeedbackEnabled) {
                         HapticHelper.performClickHaptic(this)
                     }
 
-                    // Show live thinking indicator on screen
-                    if (PermissionHelper.hasOverlayPermission(this)) {
-                        overlayManager?.showInlineThinking(payload.boundsInScreen)
-                    }
+                    // Direct In-Field Thinking right on the active text field of the keyboard
+                    injectReplacementText("${inlineResult.body} [Thinking...]")
 
                     serviceScope.launch {
                         val customSettings = userSettings.copy(customPromptInstruction = inlineResult.customPrompt)
                         val engine = com.veggiebit.sprout.features.enhancement.data.engine.TextEngineProvider.getEngine(customSettings)
                         val result = engine.transform(com.veggiebit.sprout.features.enhancement.data.models.TextPayload(inlineResult.body), com.veggiebit.sprout.features.enhancement.data.models.TransformPreset.CUSTOM)
-                        overlayManager?.hide()
                         if (result.transformedText.isNotBlank()) {
                             if (userSettings.hapticFeedbackEnabled) {
                                 HapticHelper.performSuccessHaptic(this@SproutAccessibilityService)
                             }
                             injectReplacementText(result.transformedText)
-                            Toast.makeText(this@SproutAccessibilityService, "Sprout: ${result.summaryNote ?: inlineResult.summary}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@SproutAccessibilityService, "Stem: Enhanced", Toast.LENGTH_SHORT).show()
+                        } else {
+                            injectReplacementText(inlineResult.body)
                         }
                     }
                     return
@@ -254,12 +251,7 @@ class SproutAccessibilityService : AccessibilityService() {
         }
 
         lastObservedPayload = payload
-        // Only show floating UI over apps if explicitly enabled by user
-        if (userSettings.overlayEnabled && PermissionHelper.hasOverlayPermission(this)) {
-            overlayManager?.show(payload, userSettings.defaultPreset)
-        } else {
-            overlayManager?.hide()
-        }
+        overlayManager?.hide()
     }
 
     private fun injectReplacementText(newText: String) {

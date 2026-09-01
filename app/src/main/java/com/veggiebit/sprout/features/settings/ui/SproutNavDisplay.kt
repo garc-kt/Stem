@@ -53,7 +53,6 @@ import com.veggiebit.sprout.features.settings.ui.sections.SnippetsScreen
  * - Snippets
  * - History
  * - Settings
- * Matches Stem.dc.html design specification.
  */
 @Composable
 fun SproutNavDisplay(
@@ -96,104 +95,70 @@ fun SproutNavDisplay(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            // Stem TopBar with Status Bar Insets Protection
-            Column(
+            // Clean TopBar with Status Bar Insets Protection
+            Surface(
+                color = stemTheme.surface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(stemTheme.surface)
+                    .border(width = 1.dp, color = stemTheme.border)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
-                        .height(64.dp)
-                        .border(width = 1.dp, color = stemTheme.border)
+                        .height(58.dp)
                         .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        when (currentTab) {
-                            StemTab.HOME -> {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    StemLogoMark(size = 28.dp, tint = stemTheme.ink)
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text(
-                                            text = "Stem",
-                                            style = MaterialTheme.typography.titleLarge,
-                                            color = stemTheme.ink
-                                        )
-                                        Text(
-                                            text = "ambient writing",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = stemTheme.inkMuted
-                                        )
-                                    }
-                                }
+                    when (currentTab) {
+                        StemTab.HOME -> {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                StemLogoMark(size = 28.dp, tint = stemTheme.ink)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Stem",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = stemTheme.ink
+                                )
                             }
-                            StemTab.SNIPPETS -> {
-                                Column {
-                                    Text(
-                                        text = "Snippets",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = stemTheme.ink
-                                    )
-                                    Text(
-                                        text = "auto-expansions",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = stemTheme.inkMuted
-                                    )
-                                }
-                            }
-                            StemTab.HISTORY -> {
-                                Column {
-                                    Text(
-                                        text = "History",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = stemTheme.ink
-                                    )
-                                    Text(
-                                        text = "recent transforms",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = stemTheme.inkMuted
-                                    )
-                                }
-                            }
-                            StemTab.SETTINGS -> {
-                                Column {
-                                    Text(
-                                        text = "Settings",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = stemTheme.ink
-                                    )
-                                    Text(
-                                        text = "models & rules",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = stemTheme.inkMuted
-                                    )
-                                }
-                            }
+                        }
+                        StemTab.SNIPPETS -> {
+                            Text(
+                                text = "Snippets",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = stemTheme.ink
+                            )
+                        }
+                        StemTab.HISTORY -> {
+                            Text(
+                                text = "History",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = stemTheme.ink
+                            )
+                        }
+                        StemTab.SETTINGS -> {
+                            Text(
+                                text = "Settings",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = stemTheme.ink
+                            )
                         }
                     }
                 }
             }
         },
         bottomBar = {
-            // Stem BottomBar with Navigation Bar Insets Protection
-            Column(
+            // Fixed BottomBar elevated above Android navigation bar
+            Surface(
+                color = stemTheme.surface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(stemTheme.surface)
                     .border(width = 1.dp, color = stemTheme.border)
-                    .navigationBarsPadding()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .height(64.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -238,8 +203,8 @@ fun SproutNavDisplay(
                         onRequestOverlayPermission = onRequestOverlayPermission,
                         onRequestAccessibilityPermission = onRequestAccessibilityPermission,
                         onToggleOverlay = viewModel::toggleOverlay,
-                        onSelectDefaultPreset = viewModel::selectDefaultPreset,
-                        onNavigateToHistory = { currentTab = StemTab.HISTORY }
+                        onNavigateToHistory = { currentTab = StemTab.HISTORY },
+                        onNavigateToSettings = { currentTab = StemTab.SETTINGS }
                     )
                 }
                 StemTab.SNIPPETS -> {
