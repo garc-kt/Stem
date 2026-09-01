@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -94,80 +96,86 @@ fun SproutNavDisplay(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            // Stem 64dp TopBar
-            Box(
+            // Stem TopBar with Status Bar Insets Protection
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
                     .background(stemTheme.surface)
-                    .border(width = 1.dp, color = stemTheme.border)
-                    .padding(horizontal = 20.dp),
-                contentAlignment = Alignment.CenterStart
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .height(64.dp)
+                        .border(width = 1.dp, color = stemTheme.border)
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    when (currentTab) {
-                        StemTab.HOME -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                StemLogoMark(size = 28.dp, tint = stemTheme.ink)
-                                Spacer(modifier = Modifier.width(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        when (currentTab) {
+                            StemTab.HOME -> {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    StemLogoMark(size = 28.dp, tint = stemTheme.ink)
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "Stem",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            color = stemTheme.ink
+                                        )
+                                        Text(
+                                            text = "ambient writing",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = stemTheme.inkMuted
+                                        )
+                                    }
+                                }
+                            }
+                            StemTab.SNIPPETS -> {
                                 Column {
                                     Text(
-                                        text = "Stem",
+                                        text = "Snippets",
                                         style = MaterialTheme.typography.titleLarge,
                                         color = stemTheme.ink
                                     )
                                     Text(
-                                        text = "ambient writing",
+                                        text = "auto-expansions",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = stemTheme.inkMuted
                                     )
                                 }
                             }
-                        }
-                        StemTab.SNIPPETS -> {
-                            Column {
-                                Text(
-                                    text = "Snippets",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = stemTheme.ink
-                                )
-                                Text(
-                                    text = "auto-expansions",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = stemTheme.inkMuted
-                                )
+                            StemTab.HISTORY -> {
+                                Column {
+                                    Text(
+                                        text = "History",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = stemTheme.ink
+                                    )
+                                    Text(
+                                        text = "recent transforms",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = stemTheme.inkMuted
+                                    )
+                                }
                             }
-                        }
-                        StemTab.HISTORY -> {
-                            Column {
-                                Text(
-                                    text = "History",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = stemTheme.ink
-                                )
-                                Text(
-                                    text = "recent transforms",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = stemTheme.inkMuted
-                                )
-                            }
-                        }
-                        StemTab.SETTINGS -> {
-                            Column {
-                                Text(
-                                    text = "Settings",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = stemTheme.ink
-                                )
-                                Text(
-                                    text = "models & rules",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = stemTheme.inkMuted
-                                )
+                            StemTab.SETTINGS -> {
+                                Column {
+                                    Text(
+                                        text = "Settings",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = stemTheme.ink
+                                    )
+                                    Text(
+                                        text = "models & rules",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = stemTheme.inkMuted
+                                    )
+                                }
                             }
                         }
                     }
@@ -175,16 +183,18 @@ fun SproutNavDisplay(
             }
         },
         bottomBar = {
-            // Stem 64dp BottomBar
-            Box(
+            // Stem BottomBar with Navigation Bar Insets Protection
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
                     .background(stemTheme.surface)
                     .border(width = 1.dp, color = stemTheme.border)
+                    .navigationBarsPadding()
             ) {
                 Row(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     StemTab.entries.forEach { tab ->
