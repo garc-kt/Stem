@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,12 +19,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -37,12 +44,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemCardShape
 import com.stem.ui.theme.StemMonoBadge
@@ -50,6 +59,7 @@ import com.stem.ui.theme.StemSharpShape
 import com.stem.ui.theme.ThemeMode
 import com.stem.core.models.EngineMode
 import com.stem.core.models.StemUserSettings
+import com.stem.core.util.InstalledAppsHelper
 
 
 
@@ -139,6 +149,7 @@ fun EngineScreen(
     onClearGeminiApiKey: () -> Unit = {},
     onClearOpenAIApiKey: () -> Unit = {},
     onClearClaudeApiKey: () -> Unit = {},
+    onSetPackageExcluded: (String, Boolean) -> Unit = { _, _ -> },
     onSaveCustomPromptInstruction: (String) -> Unit = {},
     onSelectThemeMode: (ThemeMode) -> Unit = {},
     onToggleHaptics: (Boolean) -> Unit = {},
@@ -450,6 +461,62 @@ fun EngineScreen(
             }
         }
 
+        // Section: Excluded Apps
+        item {
+            Column {
+                Text(
+                    text = "EXCLUDED APPS",
+                    style = StemMonoBadge,
+                    color = stemTheme.inkFaint
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Stem reads text from every app by default. Exclude apps you don't want it active in — password managers and banking apps are good candidates.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = stemTheme.inkMuted
+                )
+            }
+        }
+        item {
+            var showAppPicker by remember { mutableStateOf(false) }
+            val excludedCount = userSettings.excludedPackages.size
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(StemCardShape)
+                    .background(stemTheme.surface)
+                    .border(1.dp, stemTheme.border, StemCardShape)
+                    .clickable(role = Role.Button, onClick = { showAppPicker = true })
+                    .padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (excludedCount == 0) "No apps excluded" else "$excludedCount app${if (excludedCount != 1) "s" else ""} excluded",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = stemTheme.ink
+                    )
+                    Text(
+                        text = "MANAGE",
+                        style = StemMonoBadge,
+                        color = stemTheme.ink
+                    )
+                }
+            }
+
+            if (showAppPicker) {
+                AppExclusionDialog(
+                    excludedPackages = userSettings.excludedPackages,
+                    onSetExcluded = onSetPackageExcluded,
+                    onDismiss = { showAppPicker = false }
+                )
+            }
+        }
+
         // Section: Privacy Guarantee Card
         item {
             Box(
@@ -617,5 +684,90 @@ private fun TemperatureControl(
         ),
         modifier = Modifier.fillMaxWidth()
     )
+}
+
+@Composable
+private fun AppExclusionDialog(
+    excludedPackages: Set<String>,
+    onSetExcluded: (String, Boolean) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val stemTheme = LocalStemColors.current
+    val context = LocalContext.current
+    val apps = remember { InstalledAppsHelper.getLaunchableApps(context) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.82f),
+            shape = StemCardShape,
+            color = stemTheme.surface
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "EXCLUDED APPS",
+                        style = StemMonoBadge,
+                        color = stemTheme.inkFaint
+                    )
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Close",
+                            tint = stemTheme.inkMuted,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (apps.isEmpty()) {
+                    Text(
+                        text = "No other apps found on this device.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = stemTheme.inkMuted,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(apps, key = { it.packageName }) { app ->
+                            val isExcluded = app.packageName in excludedPackages
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(role = Role.Switch) { onSetExcluded(app.packageName, !isExcluded) }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = app.label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = stemTheme.ink,
+                                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                )
+                                Switch(
+                                    checked = isExcluded,
+                                    onCheckedChange = { checked -> onSetExcluded(app.packageName, checked) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = stemTheme.onInk,
+                                        checkedTrackColor = stemTheme.ink,
+                                        uncheckedThumbColor = stemTheme.inkMuted,
+                                        uncheckedTrackColor = stemTheme.surface2
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 

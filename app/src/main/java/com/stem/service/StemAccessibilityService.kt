@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import com.stem.app.StemApplication
 import com.stem.core.models.EngineMode
+import com.stem.core.models.PersistedHistoryEntry
 import com.stem.core.models.StemUserSettings
 import com.stem.core.models.TextPayload
 import com.stem.core.models.TransformPreset
@@ -121,6 +122,7 @@ class StemAccessibilityService : AccessibilityService() {
     private fun handleTextPayload(payload: TextPayload) {
         if (!userSettings.serviceEnabled) return
         if (payload.packageName == packageName) return
+        if (payload.packageName in userSettings.excludedPackages) return
 
         val currentText = payload.text.trimEnd()
         if (currentText.length < 2) return
@@ -376,6 +378,19 @@ class StemAccessibilityService : AccessibilityService() {
                 replaced = newText,
                 presetName = presetName
             )
+            // TransformHistory above is the in-memory undo stack, cleared on every service
+            // restart. This is the separate, persisted browsing log the History tab reads.
+            serviceScope.launch {
+                StemApplication.instance.preferencesRepository.addHistoryEntry(
+                    PersistedHistoryEntry(
+                        id = java.util.UUID.randomUUID().toString(),
+                        originalText = originalToRecord,
+                        replacedText = newText,
+                        presetName = presetName,
+                        timestamp = System.currentTimeMillis()
+                    )
+                )
+            }
         }
 
         val success = AccessibilityUtils.injectText(targetNode, newText, this)

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -41,7 +42,25 @@ class SettingsViewModel : ViewModel() {
         .onEach { _isReady.value = true }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StemUserSettings())
 
-    val history: StateFlow<List<TransformHistory.Snapshot>> = TransformHistory.history
+    // Backed by the persisted history log (survives the accessibility service restarting),
+    // not TransformHistory.history — that in-memory list exists solely for ?undo and is
+    // deliberately cleared on every service restart. Mapped to the same Snapshot shape so
+    // HistoryScreen/HomeScreen need no changes; nodeHashCode is meaningless here (undo-only)
+    // and always 0.
+    val history: StateFlow<List<TransformHistory.Snapshot>> = repository.historyFlow
+        .map { entries ->
+            entries.map { entry ->
+                TransformHistory.Snapshot(
+                    id = entry.id,
+                    nodeHashCode = 0,
+                    originalText = entry.originalText,
+                    replacedText = entry.replacedText,
+                    presetName = entry.presetName,
+                    timestamp = entry.timestamp
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun toggleServiceEnabled(enabled: Boolean) = viewModelScope.launch { repository.setServiceEnabled(enabled) }
 
@@ -81,6 +100,11 @@ class SettingsViewModel : ViewModel() {
 
     fun deleteCustomCommand(trigger: String) = viewModelScope.launch { repository.deleteCustomCommand(trigger) }
 
-    fun clearHistory() = TransformHistory.clear()
+    fun setPackageExcluded(packageName: String, excluded: Boolean) = viewModelScope.launch { repository.setPackageExcluded(packageName, excluded) }
+
+    fun clearHistory() {
+        TransformHistory.clear()
+        viewModelScope.launch { repository.clearHistory() }
+    }
 }
 

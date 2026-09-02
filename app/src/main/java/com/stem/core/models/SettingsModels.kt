@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.stem.core.crypto.CryptoBox
 import com.stem.ui.theme.ThemeMode
@@ -15,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -44,7 +47,8 @@ data class StemUserSettings(
     val claudeApiKey: String = "",
     val claudeModel: String = "claude-sonnet-5",
     val snippets: Map<String, String> = defaultSnippets,
-    val customCommands: Map<String, String> = defaultCustomCommands
+    val customCommands: Map<String, String> = defaultCustomCommands,
+    val excludedPackages: Set<String> = defaultExcludedPackages
 ) {
     companion object {
         val defaultSnippets = mapOf(
@@ -61,8 +65,40 @@ data class StemUserSettings(
             "poetic" to "Rewrite this in a beautiful, poetic, and eloquent style.",
             "tldr" to "Give a single punchy TL;DR takeaway sentence for this text."
         )
+
+        // The service reads text from every app with no built-in exclusion, so it defaults to
+        // staying out of well-known password managers. Banking apps are deliberately not
+        // guessed here — package names vary too much by bank and region to enumerate reliably,
+        // and a wrong guess would give false reassurance. Users add any app via Settings.
+        val defaultExcludedPackages = setOf(
+            "com.lastpass.lpandroid",
+            "com.onepassword.android",
+            "com.agilebits.onepassword", // legacy 1Password package, pre-rebrand
+            "com.dashlane",
+            "com.x8bit.bitwarden",
+            "com.nordpass.android.app.password.manager",
+            "com.callpod.android_apps.keeper",
+            "com.google.android.apps.authenticator2"
+        )
     }
 }
+
+/**
+ * A persisted, browsable transform-history entry — deliberately its own type rather than reusing
+ * [com.stem.engine.TransformHistory.Snapshot], which belongs to the engine layer (this file stays
+ * dependency-free of it) and carries an undo-only [nodeHashCode] that has no meaning once an
+ * entry is written here. This list is purely a display log: it survives the accessibility
+ * service restarting (that Snapshot list is in-memory and clears on every restart) and doesn't
+ * support popping.
+ */
+@Serializable
+data class PersistedHistoryEntry(
+    val id: String,
+    val originalText: String,
+    val replacedText: String,
+    val presetName: String,
+    val timestamp: Long
+)
 
 class PreferencesRepository(private val context: Context) {
 
@@ -89,6 +125,8 @@ class PreferencesRepository(private val context: Context) {
         val CLAUDE_MODEL = stringPreferencesKey("claude_model")
         val SNIPPETS_DATA = stringPreferencesKey("snippets_data")
         val CUSTOM_COMMANDS_DATA = stringPreferencesKey("custom_commands_data")
+        val HISTORY_DATA = stringPreferencesKey("history_data")
+        val EXCLUDED_PACKAGES = stringSetPreferencesKey("excluded_packages")
     }
 
     val settingsFlow: Flow<StemUserSettings> = context.dataStore.data
@@ -154,6 +192,8 @@ class PreferencesRepository(private val context: Context) {
                 deserializePairs(rawCustomCommands)
             }
 
+            val excludedPackages = preferences[PreferencesKeys.EXCLUDED_PACKAGES] ?: StemUserSettings.defaultExcludedPackages
+
             StemUserSettings(
                 serviceEnabled = serviceEnabled,
                 defaultPreset = TransformPreset.fromId(defaultPresetId),
@@ -174,7 +214,8 @@ class PreferencesRepository(private val context: Context) {
                 claudeApiKey = claudeApiKey,
                 claudeModel = claudeModel,
                 snippets = snippets,
-                customCommands = customCommands
+                customCommands = customCommands,
+                excludedPackages = excludedPackages
             )
         }
         // DataStore can re-emit its Preferences object on writes that don't affect any field
@@ -342,6 +383,51 @@ class PreferencesRepository(private val context: Context) {
         }
     }
 
+    val historyFlow: Flow<List<PersistedHistoryEntry>> = context.dataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences -> deserializeHistory(preferences[PreferencesKeys.HISTORY_DATA]) }
+        .distinctUntilChanged()
+
+    suspend fun addHistoryEntry(entry: PersistedHistoryEntry) {
+        context.dataStore.edit { preferences ->
+            val current = deserializeHistory(preferences[PreferencesKeys.HISTORY_DATA])
+            val updated = (current + entry).takeLast(MAX_PERSISTED_HISTORY)
+            preferences[PreferencesKeys.HISTORY_DATA] = historyJson.encodeToString(historyListSerializer, updated)
+        }
+    }
+
+    suspend fun clearHistory() {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.HISTORY_DATA] = ""
+        }
+    }
+
+    suspend fun setPackageExcluded(packageName: String, excluded: Boolean) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[PreferencesKeys.EXCLUDED_PACKAGES] ?: StemUserSettings.defaultExcludedPackages
+            preferences[PreferencesKeys.EXCLUDED_PACKAGES] = if (excluded) {
+                current + packageName
+            } else {
+                current - packageName
+            }
+        }
+    }
+
+    private fun deserializeHistory(raw: String?): List<PersistedHistoryEntry> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return try {
+            historyJson.decodeFromString(historyListSerializer, raw)
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun migrateLegacyPlaintextKeysIfNeeded() {
         context.dataStore.edit { preferences ->
             for (key in listOf(PreferencesKeys.GEMINI_API_KEY, PreferencesKeys.OPENAI_API_KEY, PreferencesKeys.CLAUDE_API_KEY)) {
@@ -360,6 +446,13 @@ class PreferencesRepository(private val context: Context) {
 
     private val pairsMapSerializer = MapSerializer(String.serializer(), String.serializer())
     private val pairsJson = Json { ignoreUnknownKeys = true }
+
+    private val historyListSerializer = ListSerializer(PersistedHistoryEntry.serializer())
+    private val historyJson = Json { ignoreUnknownKeys = true }
+
+    private companion object {
+        const val MAX_PERSISTED_HISTORY = 50
+    }
 
     private fun serializePairs(map: Map<String, String>): String {
         return pairsJson.encodeToString(pairsMapSerializer, map)
