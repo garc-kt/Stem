@@ -4,6 +4,7 @@ import androidx.compose.runtime.setValue
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,7 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -97,7 +98,13 @@ fun StemNavDisplay(
         return
     }
 
-    var currentTab by remember { mutableStateOf(StemTab.HOME) }
+    var currentTab by rememberSaveable { mutableStateOf(StemTab.HOME) }
+
+    // Without this, back from any non-Home tab exits the app instead of returning Home — the
+    // expected behavior for a flat, tab-based (non-back-stack) navigation shell like this one.
+    BackHandler(enabled = currentTab != StemTab.HOME) {
+        currentTab = StemTab.HOME
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -291,7 +298,7 @@ fun StemNavDisplay(
                         hasAccessibilityPermission = hasAccessibilityPermission,
                         recentHistory = history,
                         onRequestAccessibilityPermission = onRequestAccessibilityPermission,
-                        onToggleOverlay = viewModel::toggleOverlay,
+                        onToggleService = viewModel::toggleServiceEnabled,
                         onNavigateToSnippets = { currentTab = StemTab.SNIPPETS },
                         onNavigateToHistory = { currentTab = StemTab.HISTORY },
                         onNavigateToSettings = { currentTab = StemTab.SETTINGS }

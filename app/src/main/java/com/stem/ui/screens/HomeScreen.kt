@@ -53,14 +53,14 @@ fun HomeScreen(
     hasAccessibilityPermission: Boolean,
     recentHistory: List<TransformHistory.Snapshot> = emptyList(),
     onRequestAccessibilityPermission: () -> Unit = {},
-    onToggleOverlay: (Boolean) -> Unit = {},
+    onToggleService: (Boolean) -> Unit = {},
     onNavigateToSnippets: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val stemTheme = LocalStemColors.current
-    val isFullyEnabled = userSettings.overlayEnabled && hasAccessibilityPermission
+    val isFullyEnabled = userSettings.serviceEnabled && hasAccessibilityPermission
 
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -101,10 +101,10 @@ fun HomeScreen(
                         }
 
                         Switch(
-                            checked = userSettings.overlayEnabled,
+                            checked = userSettings.serviceEnabled,
                             onCheckedChange = { enabled ->
                                 if (enabled && !hasAccessibilityPermission) onRequestAccessibilityPermission()
-                                onToggleOverlay(enabled)
+                                onToggleService(enabled)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = stemTheme.onInk,

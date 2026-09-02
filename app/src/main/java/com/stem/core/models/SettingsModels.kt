@@ -25,7 +25,7 @@ import java.io.IOException
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "stem_settings")
 
 data class StemUserSettings(
-    val overlayEnabled: Boolean = false,
+    val serviceEnabled: Boolean = false,
     val defaultPreset: TransformPreset = TransformPreset.FIX,
     val hapticFeedbackEnabled: Boolean = true,
     val engineMode: EngineMode = EngineMode.LOCAL_RULES,
@@ -67,7 +67,9 @@ data class StemUserSettings(
 class PreferencesRepository(private val context: Context) {
 
     private object PreferencesKeys {
-        val OVERLAY_ENABLED = booleanPreferencesKey("overlay_enabled")
+        // Kotlin identifier renamed from the "overlay" era; the stored key string is left
+        // unchanged ("overlay_enabled") so existing installs' stored preference still loads.
+        val SERVICE_ENABLED = booleanPreferencesKey("overlay_enabled")
         val DEFAULT_PRESET = stringPreferencesKey("default_preset")
         val HAPTIC_FEEDBACK = booleanPreferencesKey("haptic_feedback")
         val ENGINE_MODE = stringPreferencesKey("engine_mode")
@@ -98,7 +100,7 @@ class PreferencesRepository(private val context: Context) {
             }
         }
         .map { preferences ->
-            val overlayEnabled = preferences[PreferencesKeys.OVERLAY_ENABLED] ?: false
+            val serviceEnabled = preferences[PreferencesKeys.SERVICE_ENABLED] ?: false
             val defaultPresetId = preferences[PreferencesKeys.DEFAULT_PRESET] ?: TransformPreset.FIX.id
             val hapticFeedback = preferences[PreferencesKeys.HAPTIC_FEEDBACK] ?: true
             val engineModeId = preferences[PreferencesKeys.ENGINE_MODE] ?: EngineMode.LOCAL_RULES.id
@@ -153,7 +155,7 @@ class PreferencesRepository(private val context: Context) {
             }
 
             StemUserSettings(
-                overlayEnabled = overlayEnabled,
+                serviceEnabled = serviceEnabled,
                 defaultPreset = TransformPreset.fromId(defaultPresetId),
                 hapticFeedbackEnabled = hapticFeedback,
                 engineMode = EngineMode.fromId(engineModeId),
@@ -181,9 +183,9 @@ class PreferencesRepository(private val context: Context) {
         // update and (for a subscribed screen) recomposition — skip the redundant ones.
         .distinctUntilChanged()
 
-    suspend fun setOverlayEnabled(enabled: Boolean) {
+    suspend fun setServiceEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.OVERLAY_ENABLED] = enabled
+            preferences[PreferencesKeys.SERVICE_ENABLED] = enabled
         }
     }
 

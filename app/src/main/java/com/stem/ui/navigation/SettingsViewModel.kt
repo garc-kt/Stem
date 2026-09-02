@@ -43,7 +43,7 @@ class SettingsViewModel : ViewModel() {
 
     val history: StateFlow<List<TransformHistory.Snapshot>> = TransformHistory.history
 
-    fun toggleOverlay(enabled: Boolean) = viewModelScope.launch { repository.setOverlayEnabled(enabled) }
+    fun toggleServiceEnabled(enabled: Boolean) = viewModelScope.launch { repository.setServiceEnabled(enabled) }
 
     fun toggleHaptics(enabled: Boolean) = viewModelScope.launch { repository.setHapticFeedback(enabled) }
 

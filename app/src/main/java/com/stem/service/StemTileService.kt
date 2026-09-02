@@ -27,8 +27,8 @@ class StemTileService : TileService() {
         serviceScope.launch {
             val repo = StemApplication.instance.preferencesRepository
             val currentSettings = repo.settingsFlow.first()
-            val newEnabled = !currentSettings.overlayEnabled
-            repo.setOverlayEnabled(newEnabled)
+            val newEnabled = !currentSettings.serviceEnabled
+            repo.setServiceEnabled(newEnabled)
             updateTileState(newEnabled)
         }
     }
@@ -36,7 +36,7 @@ class StemTileService : TileService() {
     private fun updateTileState(forcedState: Boolean? = null) {
         serviceScope.launch {
             val tile = qsTile ?: return@launch
-            val isEnabled = forcedState ?: StemApplication.instance.preferencesRepository.settingsFlow.first().overlayEnabled
+            val isEnabled = forcedState ?: StemApplication.instance.preferencesRepository.settingsFlow.first().serviceEnabled
 
             tile.state = if (isEnabled) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
             tile.label = "Stem Assistant"

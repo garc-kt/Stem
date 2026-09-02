@@ -119,7 +119,7 @@ class StemAccessibilityService : AccessibilityService() {
     }
 
     private fun handleTextPayload(payload: TextPayload) {
-        if (!userSettings.overlayEnabled) return
+        if (!userSettings.serviceEnabled) return
         if (payload.packageName == packageName) return
 
         val currentText = payload.text.trimEnd()
