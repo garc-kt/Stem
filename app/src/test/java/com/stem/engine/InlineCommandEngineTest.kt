@@ -211,5 +211,19 @@ class InlineCommandEngineTest {
         assertTrue(nowResult is InlineCommandEngine.CommandResult.Replaced)
         assertTrue((nowResult as InlineCommandEngine.CommandResult.Replaced).newText.startsWith("Signed at "))
     }
+
+    @Test
+    fun testPlainProseWithoutDotOrQuestionMarkBailsToNone() {
+        // Every recognized trigger contains a literal '.' or '?' — evaluate() short-circuits
+        // before the regex/suffix cascade when neither is present in the trimmed text.
+        val result = InlineCommandEngine.evaluate("just an ordinary sentence with no triggers yet", 123)
+        assertTrue(result is InlineCommandEngine.CommandResult.None)
+    }
+
+    @Test
+    fun testPlainProseContainingPeriodWithoutMatchingTriggerStillBailsToNone() {
+        val result = InlineCommandEngine.evaluate("This is a normal sentence with a period.", 123)
+        assertTrue(result is InlineCommandEngine.CommandResult.None)
+    }
 }
 

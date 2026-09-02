@@ -5,6 +5,7 @@ import com.stem.core.models.LanguagePreference
 import com.stem.core.models.TextPayload
 import com.stem.core.models.TransformPreset
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -123,6 +124,34 @@ class LocalRuleEngineTest {
                 result.transformedText.contains("test@example.Com")
             )
         }
+    }
+
+    // Golden-output pins for SUMMARIZE/BULLETIZE/EXPAND, captured from the pre-refactor
+    // implementation. Guards the upcoming regex-hoisting change (compiling shared patterns once
+    // instead of per-call) against any accidental behavior drift.
+
+    @Test
+    fun testSummarizeGoldenOutput() = runBlocking {
+        val payload = TextPayload("We had a great meeting today. The deadline is March 5. It was nice weather outside. Please submit the report by then.")
+        val result = LocalRuleEngine.transform(payload, TransformPreset.SUMMARIZE, LanguagePreference.ENGLISH)
+
+        assertEquals("We had a great meeting today. The deadline is March 5.", result.transformedText)
+    }
+
+    @Test
+    fun testBulletizeGoldenOutput() = runBlocking {
+        val payload = TextPayload("First we need to review the draft and then send it to legal. Second, schedule a follow-up.")
+        val result = LocalRuleEngine.transform(payload, TransformPreset.BULLETIZE, LanguagePreference.ENGLISH)
+
+        assertEquals("• First we need to review the draft\n• send it to legal\n• Second, schedule a follow-up", result.transformedText)
+    }
+
+    @Test
+    fun testExpandGoldenOutput() = runBlocking {
+        val payload = TextPayload("btw the report is done, thx")
+        val result = LocalRuleEngine.transform(payload, TransformPreset.EXPAND, LanguagePreference.ENGLISH)
+
+        assertEquals("To elaborate: by the way the report is done, thank you.", result.transformedText)
     }
 }
 

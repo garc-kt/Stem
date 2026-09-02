@@ -93,7 +93,9 @@ data class TextPayload(
     val timestamp: Long = System.currentTimeMillis()
 ) {
     val isValid: Boolean get() = text.isNotBlank() && text.length >= 2
-    val wordCount: Int = if (text.isBlank()) 0 else text.trim().split(WHITESPACE_REGEX).size
+    // Computed on access, not at construction: a TextPayload is built on every accessibility
+    // event, but nothing on that hot path reads wordCount today.
+    val wordCount: Int get() = if (text.isBlank()) 0 else text.trim().split(WHITESPACE_REGEX).size
     val charCount: Int get() = text.length
 }
 
@@ -208,11 +210,14 @@ data class TransformResult(
 ) {
     val hasChanges: Boolean get() = originalText != transformedText
 
-    val originalWordCount: Int = if (originalText.isBlank()) 0 else originalText.trim().split(WHITESPACE_REGEX).size
-    val transformedWordCount: Int = if (transformedText.isBlank()) 0 else transformedText.trim().split(WHITESPACE_REGEX).size
+    // Computed on access, not at construction: a TransformResult is built on every transform
+    // (including the accessibility-service inline-command hot path), but only ProcessTextActivity
+    // ever reads these word-count stats.
+    val originalWordCount: Int get() = if (originalText.isBlank()) 0 else originalText.trim().split(WHITESPACE_REGEX).size
+    val transformedWordCount: Int get() = if (transformedText.isBlank()) 0 else transformedText.trim().split(WHITESPACE_REGEX).size
 
-    val wordsDelta: Int = transformedWordCount - originalWordCount
+    val wordsDelta: Int get() = transformedWordCount - originalWordCount
     val charDelta: Int get() = transformedText.length - originalText.length
 
-    val wordsSaved: Int = if (wordsDelta < 0) -wordsDelta else 0
+    val wordsSaved: Int get() = if (wordsDelta < 0) -wordsDelta else 0
 }

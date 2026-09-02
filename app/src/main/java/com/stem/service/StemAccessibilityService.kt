@@ -19,12 +19,15 @@ import com.stem.engine.TransformCache
 import com.stem.engine.TransformHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 
 
@@ -34,6 +37,12 @@ class StemAccessibilityService : AccessibilityService() {
     private var userSettings = StemUserSettings()
 
     private var currentActiveNode: AccessibilityNodeInfoCompat? = null
+
+    // A second trigger firing while an AI transform is still animating/in flight (a different
+    // field, or the same one again) previously launched a second concurrent coroutine, so two
+    // animation loops fought over injectReplacementText. Only one may run at a time; a new
+    // trigger cancels whatever is still running.
+    private var activeThinkingJob: Job? = null
 
     // Suppresses reprocessing of the accessibility event Stem's own text injection generates.
     // A boolean flag cleared synchronously right after injectText() returns doesn't work here:
@@ -250,7 +259,8 @@ class StemAccessibilityService : AccessibilityService() {
         presetName: String = "Enhance",
         onTransform: suspend () -> TransformResult
     ) {
-        serviceScope.launch {
+        activeThinkingJob?.cancel()
+        activeThinkingJob = serviceScope.launch {
             var frameIndex = 0
             var isDone = false
             var finalResult = ""
@@ -299,9 +309,11 @@ class StemAccessibilityService : AccessibilityService() {
             }
 
             try {
-                val result = onTransform()
+                val result = withTimeout(TRANSFORM_TIMEOUT_MS) { onTransform() }
                 finalResult = result.transformedText
                 errorMessage = result.errorMessage
+            } catch (_: TimeoutCancellationException) {
+                errorMessage = "Request timed out"
             } finally {
                 isDone = true
                 animationJob.cancelAndJoin()
@@ -388,5 +400,9 @@ class StemAccessibilityService : AccessibilityService() {
         // Must comfortably exceed the OS's async AccessibilityEvent delivery latency (normally
         // well under 100ms) so the reflected event from our own injection never slips through.
         private const val SUPPRESSION_WINDOW_MS = 400L
+
+        // Below HttpClientFactory's 30s OkHttp read timeout so the thinking animation gives up
+        // and restores the original text instead of animating indefinitely on a stalled request.
+        private const val TRANSFORM_TIMEOUT_MS = 20_000L
     }
 }

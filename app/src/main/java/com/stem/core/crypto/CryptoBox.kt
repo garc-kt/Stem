@@ -30,7 +30,14 @@ object CryptoBox {
     private const val GCM_TAG_LENGTH_BITS = 128
     const val PREFIX = "ENC1:"
 
-    private fun getOrCreateKey(): SecretKey {
+    // Every encrypt/decrypt call previously re-resolved this from the Keystore daemon (an IPC
+    // round-trip) even though the resolved key is stable for the process lifetime. `by lazy`
+    // caches the successful result; if resolution throws, Kotlin's Lazy leaves it uninitialized
+    // and retries on the next access rather than caching the failure — so a transient Keystore
+    // hiccup doesn't permanently break encryption for the rest of the process's life.
+    private val secretKey: SecretKey by lazy { resolveOrCreateKey() }
+
+    private fun resolveOrCreateKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         (keyStore.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
 
@@ -62,7 +69,7 @@ object CryptoBox {
         if (plainText.isBlank()) return plainText
         return try {
             val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
             val ciphertext = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
             val ivB64 = Base64.encodeToString(cipher.iv, Base64.NO_WRAP)
             val cipherB64 = Base64.encodeToString(ciphertext, Base64.NO_WRAP)
@@ -88,7 +95,7 @@ object CryptoBox {
             val ciphertext = Base64.decode(parts[1], Base64.NO_WRAP)
 
             val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.DECRYPT_MODE, getOrCreateKey(), GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
             String(cipher.doFinal(ciphertext), Charsets.UTF_8)
         } catch (_: Exception) {
             null

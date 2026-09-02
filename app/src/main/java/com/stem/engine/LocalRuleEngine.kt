@@ -32,13 +32,15 @@ object LanguageDetector {
         "their", "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", "me"
     )
 
+    private val wordSplitRegex = Regex("[^\\p{L}']+")
+
     fun detect(text: String): DetectedLanguage {
         if (text.isBlank()) return DetectedLanguage.ENGLISH
 
         val accentDensity = text.count { it in spanishAccentedChars }.toDouble() / text.length
         if (accentDensity > 0.01) return DetectedLanguage.SPANISH
 
-        val words = text.lowercase().split(Regex("[^\\p{L}']+")).filter { it.isNotBlank() }
+        val words = text.lowercase().split(wordSplitRegex).filter { it.isNotBlank() }
         if (words.isEmpty()) return DetectedLanguage.ENGLISH
 
         val spanishHits = words.count { it in spanishStopwords }
@@ -70,6 +72,61 @@ object LocalRuleEngine : TextEngine {
         Regex("[@#][A-Za-z0-9_]+"),
         Regex("\\d+\\.\\d+")
     )
+
+    // --- Regexes hoisted to compile once at class-init instead of once per transform() call.
+    // LocalRuleEngine runs on the accessibility hot path (every matching keystroke), so a fresh
+    // Regex() per call across every rule below was real, avoidable per-call cost.
+    private val whitespaceCollapseRegex = Regex("[ \\t]+")
+    private val whitespaceSplitRegex = Regex("\\s+")
+    private val spaceBeforePunctuationRegex = Regex("\\s+([,.:;?!])")
+    private val punctuationSpaceAfterRegex = Regex("([,.:;?!])([a-zA-Z])")
+    private val bareIRegex = Regex("\\bi\\b")
+    private val imRegex = Regex("\\bi'm\\b", RegexOption.IGNORE_CASE)
+    private val illRegex = Regex("\\bi'll\\b", RegexOption.IGNORE_CASE)
+    private val iveRegex = Regex("\\bi've\\b", RegexOption.IGNORE_CASE)
+    private val idRegex = Regex("\\bi'd\\b", RegexOption.IGNORE_CASE)
+    private val duplicateWordRegex = Regex("\\b(\\w+)\\s+\\1\\b", RegexOption.IGNORE_CASE)
+
+    private val fillers = listOf("really", "basically", "literally", "actually", "honestly", "needless to say,")
+    private val fillerRegexes = fillers.map { Regex("\\b$it\\s+", RegexOption.IGNORE_CASE) }
+
+    private val thanksALotRegex = Regex("\\b(thanks a lot|thanks so much)\\b", RegexOption.IGNORE_CASE)
+    private val canYouPleaseRegex = Regex("\\b(can you please)\\b", RegexOption.IGNORE_CASE)
+    private val giveMeACallRegex = Regex("\\b(give me a call)\\b", RegexOption.IGNORE_CASE)
+
+    private val iJustWantedToRegex = Regex("\\bi just wanted to\\b", RegexOption.IGNORE_CASE)
+    private val tryToRegex = Regex("\\btry to\\b", RegexOption.IGNORE_CASE)
+
+    private val pleaseNoteThatRegex = Regex("\\b(please note that)\\b", RegexOption.IGNORE_CASE)
+    private val iRegretToInformYouRegex = Regex("\\b(I regret to inform you)\\b", RegexOption.IGNORE_CASE)
+    private val isRequiredRegex = Regex("\\b(is required)\\b", RegexOption.IGNORE_CASE)
+
+    private val signalWords = listOf("must", "important", "deadline", "urgent", "asap", "required", "critical")
+    private val signalRegex = Regex("\\b(${signalWords.joinToString("|")})\\b", RegexOption.IGNORE_CASE)
+    private val hasDigitRegex = Regex("\\d")
+
+    private val bulletizeSplitRegex = Regex("(?:,?\\s+and then\\s+|;\\s*)", RegexOption.IGNORE_CASE)
+    private val sentenceSplitRegex = Regex("(?<=[.!?])\\s+")
+
+    private val expansions = mapOf(
+        "asap" to "as soon as possible",
+        "btw" to "by the way",
+        "fyi" to "for your information",
+        "thx" to "thank you",
+        "wanna" to "want to",
+        "gonna" to "going to",
+        "gotta" to "have got to"
+    )
+
+    // Compiled-pattern caches for replacePreservingCase/replaceFormalGuarded, whose regex
+    // depends on the dictionary entry's `target` string rather than being a fixed literal —
+    // these can't be hoisted to a single val above, but the pattern for a given target never
+    // changes, so compiling it once (on first use) and reusing it thereafter still eliminates
+    // the per-call recompilation. Plain-match patterns don't depend on which LanguageRules is
+    // active, so a flat cache keyed by target is safe; guarded patterns additionally depend on
+    // rules.phrasalVerbGuards, so that cache is keyed by (rules, target).
+    private val plainPatternCache = HashMap<String, Regex>()
+    private val guardedPatternCache = HashMap<Pair<LanguageRules, String>, Regex>()
 
     private fun protectSpans(input: String, rules: LanguageRules): Pair<String, List<String>> {
         val saved = mutableListOf<String>()
@@ -130,25 +187,25 @@ object LocalRuleEngine : TextEngine {
         val (protectedInput, savedSpans) = protectSpans(input, rules)
         var text = protectedInput
 
-        text = text.replace(Regex("\\s+([,.:;?!])"), "$1")
-        text = text.replace(Regex("([,.:;?!])([a-zA-Z])"), "$1 $2")
-        text = text.replace(Regex("[ \\t]+"), " ")
+        text = text.replace(spaceBeforePunctuationRegex, "$1")
+        text = text.replace(punctuationSpaceAfterRegex, "$1 $2")
+        text = text.replace(whitespaceCollapseRegex, " ")
 
         for ((wrong, right) in rules.typoDictionary) {
             text = replacePreservingCase(text, wrong, right)
         }
 
-        text = text.replace(Regex("\\bi\\b"), "I")
-        text = text.replace(Regex("\\bi'm\\b", RegexOption.IGNORE_CASE), "I'm")
-        text = text.replace(Regex("\\bi'll\\b", RegexOption.IGNORE_CASE), "I'll")
-        text = text.replace(Regex("\\bi've\\b", RegexOption.IGNORE_CASE), "I've")
-        text = text.replace(Regex("\\bi'd\\b", RegexOption.IGNORE_CASE), "I'd")
+        text = text.replace(bareIRegex, "I")
+        text = text.replace(imRegex, "I'm")
+        text = text.replace(illRegex, "I'll")
+        text = text.replace(iveRegex, "I've")
+        text = text.replace(idRegex, "I'd")
 
-        text = text.replace(Regex("\\b(\\w+)\\s+\\1\\b", RegexOption.IGNORE_CASE), "$1")
+        text = text.replace(duplicateWordRegex, "$1")
         text = capitalizeSentences(text)
 
         if (text.length > 3 && !text.endsWith(".") && !text.endsWith("!") && !text.endsWith("?")) {
-            val words = text.trim().split(Regex("\\s+"))
+            val words = text.trim().split(whitespaceSplitRegex)
             if (words.size >= 3) {
                 text += "."
             }
@@ -166,13 +223,12 @@ object LocalRuleEngine : TextEngine {
             text = replacePreservingCase(text, wordy, concise)
         }
 
-        val fillers = listOf("really", "basically", "literally", "actually", "honestly", "needless to say,")
-        for (filler in fillers) {
-            text = text.replace(Regex("\\b$filler\\s+", RegexOption.IGNORE_CASE), "")
+        for (fillerRegex in fillerRegexes) {
+            text = text.replace(fillerRegex, "")
         }
 
-        text = text.replace(Regex("[ \\t]+"), " ")
-        text = text.replace(Regex("\\s+([,.:;?!])"), "$1")
+        text = text.replace(whitespaceCollapseRegex, " ")
+        text = text.replace(spaceBeforePunctuationRegex, "$1")
         text = capitalizeSentencesGuarded(text, rules)
 
         return text.trim()
@@ -185,9 +241,9 @@ object LocalRuleEngine : TextEngine {
             text = replaceFormalGuarded(text, casual, formal, rules)
         }
 
-        text = text.replace(Regex("\\b(thanks a lot|thanks so much)\\b", RegexOption.IGNORE_CASE), "Thank you very much")
-        text = text.replace(Regex("\\b(can you please)\\b", RegexOption.IGNORE_CASE), "Could you please")
-        text = text.replace(Regex("\\b(give me a call)\\b", RegexOption.IGNORE_CASE), "reach out via phone")
+        text = text.replace(thanksALotRegex, "Thank you very much")
+        text = text.replace(canYouPleaseRegex, "Could you please")
+        text = text.replace(giveMeACallRegex, "reach out via phone")
 
         text = capitalizeSentencesGuarded(text, rules)
         return text.trim()
@@ -204,10 +260,10 @@ object LocalRuleEngine : TextEngine {
             text = replacePreservingCase(text, word, punchy)
         }
 
-        text = text.replace(Regex("\\bi just wanted to\\b", RegexOption.IGNORE_CASE), "I wanted to")
-        text = text.replace(Regex("\\btry to\\b", RegexOption.IGNORE_CASE), "")
+        text = text.replace(iJustWantedToRegex, "I wanted to")
+        text = text.replace(tryToRegex, "")
 
-        text = text.replace(Regex("[ \\t]+"), " ")
+        text = text.replace(whitespaceCollapseRegex, " ")
         text = capitalizeSentencesGuarded(text, rules)
         return text.trim()
     }
@@ -219,9 +275,9 @@ object LocalRuleEngine : TextEngine {
             text = replacePreservingCase(text, formal, casual)
         }
 
-        text = text.replace(Regex("\\b(please note that)\\b", RegexOption.IGNORE_CASE), "just so you know,")
-        text = text.replace(Regex("\\b(I regret to inform you)\\b", RegexOption.IGNORE_CASE), "I'm sorry to say")
-        text = text.replace(Regex("\\b(is required)\\b", RegexOption.IGNORE_CASE), "is needed")
+        text = text.replace(pleaseNoteThatRegex, "just so you know,")
+        text = text.replace(iRegretToInformYouRegex, "I'm sorry to say")
+        text = text.replace(isRequiredRegex, "is needed")
 
         text = capitalizeSentencesGuarded(text, rules)
         return text.trim()
@@ -232,13 +288,9 @@ object LocalRuleEngine : TextEngine {
         val sentences = splitSentences(polished)
         if (sentences.size <= 2) return polished
 
-        val signalWords = listOf("must", "important", "deadline", "urgent", "asap", "required", "critical")
-        val signalRegex = Regex("\\b(${signalWords.joinToString("|")})\\b", RegexOption.IGNORE_CASE)
-        val hasDigit = Regex("\\d")
-
         val kept = mutableListOf(sentences.first())
         for (sentence in sentences.drop(1)) {
-            if (signalRegex.containsMatchIn(sentence) || hasDigit.containsMatchIn(sentence)) {
+            if (signalRegex.containsMatchIn(sentence) || hasDigitRegex.containsMatchIn(sentence)) {
                 kept.add(sentence)
             }
         }
@@ -251,7 +303,7 @@ object LocalRuleEngine : TextEngine {
         if (sentences.isEmpty()) return polished
 
         return sentences.flatMap { sentence ->
-            sentence.split(Regex("(?:,?\\s+and then\\s+|;\\s*)", RegexOption.IGNORE_CASE))
+            sentence.split(bulletizeSplitRegex)
         }
             .map { it.trim().trimEnd('.', ' ') }
             .filter { it.isNotBlank() }
@@ -261,15 +313,6 @@ object LocalRuleEngine : TextEngine {
     fun applyExpand(input: String, rules: LanguageRules): String {
         var text = applyFixAndPolish(input, rules)
 
-        val expansions = mapOf(
-            "asap" to "as soon as possible",
-            "btw" to "by the way",
-            "fyi" to "for your information",
-            "thx" to "thank you",
-            "wanna" to "want to",
-            "gonna" to "going to",
-            "gotta" to "have got to"
-        )
         for ((short, long) in expansions) {
             text = replacePreservingCase(text, short, long)
         }
@@ -284,7 +327,7 @@ object LocalRuleEngine : TextEngine {
 
     private fun splitSentences(text: String): List<String> {
         if (text.isBlank()) return emptyList()
-        return Regex("(?<=[.!?])\\s+").split(text.trim())
+        return sentenceSplitRegex.split(text.trim())
             .map { it.trim() }
             .filter { it.isNotBlank() }
     }
@@ -321,7 +364,9 @@ object LocalRuleEngine : TextEngine {
     }
 
     private fun replacePreservingCase(source: String, target: String, replacement: String): String {
-        val pattern = Regex("\\b" + Regex.escape(target) + "\\b", RegexOption.IGNORE_CASE)
+        val pattern = plainPatternCache.getOrPut(target) {
+            Regex("\\b" + Regex.escape(target) + "\\b", RegexOption.IGNORE_CASE)
+        }
         return pattern.replace(source) { matchResult ->
             val match = matchResult.value
             when {
@@ -333,14 +378,16 @@ object LocalRuleEngine : TextEngine {
     }
 
     private fun replaceFormalGuarded(source: String, target: String, replacement: String, rules: LanguageRules): String {
-        val particles = rules.phrasalVerbGuards[target.lowercase()]
-        val pattern = if (particles != null) {
-            Regex(
-                "\\b" + Regex.escape(target) + "\\b(?!\\s+(?:" + particles.joinToString("|") { Regex.escape(it) } + ")\\b)",
-                RegexOption.IGNORE_CASE
-            )
-        } else {
-            Regex("\\b" + Regex.escape(target) + "\\b", RegexOption.IGNORE_CASE)
+        val pattern = guardedPatternCache.getOrPut(rules to target) {
+            val particles = rules.phrasalVerbGuards[target.lowercase()]
+            if (particles != null) {
+                Regex(
+                    "\\b" + Regex.escape(target) + "\\b(?!\\s+(?:" + particles.joinToString("|") { Regex.escape(it) } + ")\\b)",
+                    RegexOption.IGNORE_CASE
+                )
+            } else {
+                Regex("\\b" + Regex.escape(target) + "\\b", RegexOption.IGNORE_CASE)
+            }
         }
         return pattern.replace(source) { matchResult ->
             val match = matchResult.value
@@ -354,8 +401,8 @@ object LocalRuleEngine : TextEngine {
 
     private fun buildSummaryNote(preset: TransformPreset, original: String, transformed: String): String {
         if (original == transformed) return "No changes required."
-        val origWords = if (original.isBlank()) 0 else original.trim().split(Regex("\\s+")).size
-        val transWords = if (transformed.isBlank()) 0 else transformed.trim().split(Regex("\\s+")).size
+        val origWords = if (original.isBlank()) 0 else original.trim().split(whitespaceSplitRegex).size
+        val transWords = if (transformed.isBlank()) 0 else transformed.trim().split(whitespaceSplitRegex).size
         val delta = transWords - origWords
 
         return when (preset) {

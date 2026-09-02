@@ -10,7 +10,11 @@ import com.stem.core.models.DiffType
  */
 object DiffCalculator {
 
-    private const val MAX_DIFF_TOKENS = 1200
+    // The LCS matrix below is O(m*n) memory (ShortArray(n+1) per row) — 400*400 shorts is
+    // ~320KB, a bound worth keeping tight since this runs on every AI-engine transform result.
+    // Word-level and paragraph-level fallback share the same cap; if input is pathological on
+    // both axes, calculateDiff skips the matrix entirely rather than allocate further.
+    private const val MAX_DIFF_TOKENS = 400
     private val TOKEN_REGEX = Regex("(\\w+|\\s+|[^\\w\\s]+)")
     private val PARAGRAPH_REGEX = Regex("([^\\n]+\\n?|\\n)")
 
@@ -46,23 +50,33 @@ object DiffCalculator {
         val origTokens = tokenize(original)
         val transTokens = tokenize(transformed)
 
-        return if (origTokens.size > MAX_DIFF_TOKENS || transTokens.size > MAX_DIFF_TOKENS) {
-            lcsDiff(tokenizeParagraphs(original), tokenizeParagraphs(transformed))
-        } else {
-            lcsDiff(origTokens, transTokens)
+        if (origTokens.size <= MAX_DIFF_TOKENS && transTokens.size <= MAX_DIFF_TOKENS) {
+            return lcsDiff(origTokens, transTokens)
         }
+
+        val origParagraphs = tokenizeParagraphs(original)
+        val transParagraphs = tokenizeParagraphs(transformed)
+        if (origParagraphs.size <= MAX_DIFF_TOKENS && transParagraphs.size <= MAX_DIFF_TOKENS) {
+            return lcsDiff(origParagraphs, transParagraphs)
+        }
+
+        // Pathological on both axes (huge word count AND huge paragraph/line count): skip the
+        // O(m*n) matrix entirely rather than allocate further. The diff view is a nicety here —
+        // the transform itself already succeeded — so a coarse whole-block diff is an acceptable
+        // degradation for input this large.
+        return listOf(DiffToken(original, DiffType.DELETED), DiffToken(transformed, DiffType.ADDED))
     }
 
     private fun lcsDiff(origTokens: List<String>, transTokens: List<String>): List<DiffToken> {
         val m = origTokens.size
         val n = transTokens.size
 
-        val dp = Array(m + 1) { IntArray(n + 1) }
+        val dp = Array(m + 1) { ShortArray(n + 1) }
 
         for (i in 1..m) {
             for (j in 1..n) {
                 if (origTokens[i - 1] == transTokens[j - 1]) {
-                    dp[i][j] = dp[i - 1][j - 1] + 1
+                    dp[i][j] = (dp[i - 1][j - 1] + 1).toShort()
                 } else {
                     dp[i][j] = maxOf(dp[i - 1][j], dp[i][j - 1])
                 }

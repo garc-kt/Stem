@@ -13,6 +13,7 @@ import com.stem.core.crypto.CryptoBox
 import com.stem.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
@@ -174,6 +175,11 @@ class PreferencesRepository(private val context: Context) {
                 customCommands = customCommands
             )
         }
+        // DataStore can re-emit its Preferences object on writes that don't affect any field
+        // this flow maps out (or on the same value being written again); every emission here
+        // triggers a decrypt of 3 API keys plus, downstream, an accessibility-service settings
+        // update and (for a subscribed screen) recomposition — skip the redundant ones.
+        .distinctUntilChanged()
 
     suspend fun setOverlayEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->

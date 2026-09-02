@@ -46,6 +46,15 @@ object InlineCommandEngine {
     ): CommandResult {
         val trimmed = text.trimEnd()
 
+        // Fast bail: every trigger recognized below (?cmd:, ..key, ?fix, ?undo, ?now, ?calc:,
+        // custom commands, ...) requires a literal '.' or '?' somewhere in the trimmed text.
+        // This runs once per keystroke on the accessibility hot path, so skipping the entire
+        // regex/suffix cascade for ordinary prose (the overwhelming majority of keystrokes)
+        // is worth a single linear scan.
+        if (trimmed.none { it == '.' || it == '?' }) {
+            return CommandResult.None
+        }
+
         val cmdMatch = cmdRegex.find(trimmed)
         if (cmdMatch != null) {
             val trigger = cmdMatch.groupValues[1]
