@@ -32,9 +32,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,7 +77,7 @@ class ProcessTextActivity : ComponentActivity() {
 
         setContent {
             val userSettings by StemApplication.instance.preferencesRepository.settingsFlow
-                .collectAsState(initial = StemUserSettings())
+                .collectAsStateWithLifecycle(initialValue = StemUserSettings())
 
             var activePreset by remember(userSettings.defaultPreset) { mutableStateOf(userSettings.defaultPreset) }
             var result by remember { mutableStateOf<TransformResult?>(null) }

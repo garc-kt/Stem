@@ -47,9 +47,20 @@ import java.util.concurrent.TimeUnit
 
 // --- HTTP Clients ---
 
+object HttpClientFactory {
+    val client: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build()
+    }
+}
+
 object GeminiClient {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; isLenient = true }
-    private val httpClient = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).writeTimeout(15, TimeUnit.SECONDS).build()
+    private val httpClient get() = HttpClientFactory.client
 
     suspend fun generate(apiKey: String, model: String = "gemini-3.7-flash", prompt: String, systemPrompt: String, temperature: Float = 0.3f): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) return@withContext Result.failure(IllegalArgumentException("Gemini API key is required"))
@@ -77,7 +88,7 @@ object GeminiClient {
 object ClaudeClient {
     const val DEFAULT_MODEL = "claude-3-7-sonnet-latest"
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; isLenient = true }
-    private val httpClient = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).writeTimeout(15, TimeUnit.SECONDS).build()
+    private val httpClient get() = HttpClientFactory.client
 
     suspend fun generate(apiKey: String, model: String = DEFAULT_MODEL, prompt: String, systemPrompt: String, temperature: Float = 0.3f): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) return@withContext Result.failure(IllegalArgumentException("Claude API key is required"))
@@ -105,7 +116,7 @@ object ClaudeClient {
 
 object OpenAIClient {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; isLenient = true }
-    private val httpClient = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).writeTimeout(15, TimeUnit.SECONDS).build()
+    private val httpClient get() = HttpClientFactory.client
 
     suspend fun generate(baseUrl: String = "https://api.openai.com/v1", apiKey: String, model: String = "gpt-4o-mini", prompt: String, systemPrompt: String, temperature: Float = 0.3f): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) return@withContext Result.failure(IllegalArgumentException("API key is required"))
@@ -129,7 +140,7 @@ object OpenAIClient {
 
 object OllamaClient {
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
-    private val httpClient = OkHttpClient.Builder().connectTimeout(5, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).build()
+    private val httpClient get() = HttpClientFactory.client
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
     private fun isCleartextAllowed(url: String): Boolean {
@@ -181,10 +192,10 @@ object OllamaClient {
 // --- Unified AI Rule Engine ---
 
 open class AiRuleEngine(
-    private val engineName: String,
-    private val model: String,
-    private val customInstruction: String = "",
-    private val temperature: Float = 0.3f,
+    val engineName: String,
+    val model: String,
+    val customInstruction: String = "",
+    val temperature: Float = 0.3f,
     private val generator: suspend (prompt: String, systemPrompt: String) -> Result<String>
 ) : TextEngine {
 
@@ -230,10 +241,17 @@ open class AiRuleEngine(
         }
     }
 
+    val engineSignature: String = "$engineName:$model:$temperature:${customInstruction.hashCode()}"
+
     override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.IO) {
         val original = payload.text
         if (original.isBlank()) {
             return@withContext TransformResult(original, original, preset, emptyList())
+        }
+
+        val cached = TransformCache.get(original, preset, engineSignature)
+        if (cached != null) {
+            return@withContext cached
         }
 
         val systemPrompt = getSystemPrompt(preset, customInstruction)
@@ -251,13 +269,15 @@ open class AiRuleEngine(
                 }
 
                 val diff = DiffCalculator.calculateDiff(original, cleaned)
-                TransformResult(
+                val transformRes = TransformResult(
                     originalText = original,
                     transformedText = cleaned,
                     preset = preset,
                     diffTokens = diff,
                     summaryNote = "$engineName ($model) • ${preset.title}"
                 )
+                TransformCache.put(original, preset, engineSignature, transformRes)
+                transformRes
             },
             onFailure = { _ ->
                 val fallback = LocalRuleEngine.transform(payload, preset)

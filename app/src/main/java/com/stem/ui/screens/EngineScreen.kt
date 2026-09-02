@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -34,8 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.stem.ui.theme.LocalStemColors
@@ -73,6 +77,7 @@ fun EngineScreen(
 ) {
     val stemTheme = LocalStemColors.current
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     var ollamaUrlInput by remember(userSettings.ollamaBaseUrl) { mutableStateOf(userSettings.ollamaBaseUrl) }
     var ollamaModelInput by remember(userSettings.ollamaModel) { mutableStateOf(userSettings.ollamaModel) }
@@ -134,6 +139,8 @@ fun EngineScreen(
                             value = ollamaUrlInput,
                             onValueChange = { ollamaUrlInput = it },
                             label = { Text("Server URL", style = MaterialTheme.typography.bodySmall) },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveOllamaUrl(ollamaUrlInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveOllamaUrl(ollamaUrlInput) },
@@ -145,6 +152,8 @@ fun EngineScreen(
                             value = ollamaModelInput,
                             onValueChange = { ollamaModelInput = it },
                             label = { Text("Model Name", style = MaterialTheme.typography.bodySmall) },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveOllamaModel(ollamaModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveOllamaModel(ollamaModelInput) },
@@ -172,6 +181,8 @@ fun EngineScreen(
                             onValueChange = { geminiKeyInput = it },
                             label = { Text("API Key", style = MaterialTheme.typography.bodySmall) },
                             visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveGeminiSettings(geminiKeyInput, geminiModelInput) },
@@ -183,6 +194,8 @@ fun EngineScreen(
                             value = geminiModelInput,
                             onValueChange = { geminiModelInput = it },
                             label = { Text("Model", style = MaterialTheme.typography.bodySmall) },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveGeminiSettings(geminiKeyInput, geminiModelInput) },
@@ -209,6 +222,8 @@ fun EngineScreen(
                             value = openAiUrlInput,
                             onValueChange = { openAiUrlInput = it },
                             label = { Text("Base URL", style = MaterialTheme.typography.bodySmall) },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
@@ -221,6 +236,8 @@ fun EngineScreen(
                             onValueChange = { openAiKeyInput = it },
                             label = { Text("API Key", style = MaterialTheme.typography.bodySmall) },
                             visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
@@ -232,6 +249,8 @@ fun EngineScreen(
                             value = openAiModelInput,
                             onValueChange = { openAiModelInput = it },
                             label = { Text("Model", style = MaterialTheme.typography.bodySmall) },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
@@ -259,6 +278,8 @@ fun EngineScreen(
                             onValueChange = { claudeKeyInput = it },
                             label = { Text("API Key", style = MaterialTheme.typography.bodySmall) },
                             visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveClaudeSettings(claudeKeyInput, claudeModelInput) },
@@ -270,6 +291,8 @@ fun EngineScreen(
                             value = claudeModelInput,
                             onValueChange = { claudeModelInput = it },
                             label = { Text("Model", style = MaterialTheme.typography.bodySmall) },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { if (!it.isFocused) onSaveClaudeSettings(claudeKeyInput, claudeModelInput) },

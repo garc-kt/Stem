@@ -34,6 +34,9 @@ class StemAccessibilityService : AccessibilityService() {
 
     private var currentActiveNode: AccessibilityNodeInfoCompat? = null
 
+    @Volatile
+    private var isInjectingText = false
+
     override fun onCreate() {
         super.onCreate()
         serviceScope.launch {
@@ -44,7 +47,7 @@ class StemAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event == null) return
+        if (event == null || isInjectingText) return
 
         val eventType = event.eventType
         if (eventType == AccessibilityEvent.TYPE_VIEW_FOCUSED ||
@@ -272,6 +275,7 @@ class StemAccessibilityService : AccessibilityService() {
                     newText = originalBody,
                     recordHistory = false
                 )
+                Toast.makeText(this@StemAccessibilityService, "Stem: Could not enhance text - restored original", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -282,37 +286,42 @@ class StemAccessibilityService : AccessibilityService() {
         explicitOriginal: String? = null,
         presetName: String = "Enhance"
     ) {
-        var targetNode = currentActiveNode
-        val isStillValid = targetNode?.refresh() == true
-        if (!isStillValid) {
-            val staleNode = targetNode
-            val freshlyFound = rootInActiveWindow?.let {
-                AccessibilityUtils.findFocusedEditableNode(AccessibilityNodeInfoCompat.wrap(it))
+        isInjectingText = true
+        try {
+            var targetNode = currentActiveNode
+            val isStillValid = targetNode?.refresh() == true
+            if (!isStillValid) {
+                val staleNode = targetNode
+                val freshlyFound = rootInActiveWindow?.let {
+                    AccessibilityUtils.findFocusedEditableNode(AccessibilityNodeInfoCompat.wrap(it))
+                }
+                staleNode?.recycle()
+                if (freshlyFound == null) {
+                    currentActiveNode = null
+                    return
+                }
+                currentActiveNode = freshlyFound
+                targetNode = freshlyFound
             }
-            staleNode?.recycle()
-            if (freshlyFound == null) {
+
+            val originalToRecord = explicitOriginal ?: (targetNode.text?.toString() ?: "")
+
+            if (recordHistory && originalToRecord.isNotBlank() && originalToRecord != newText) {
+                TransformHistory.recordChange(
+                    nodeHashCode = targetNode.hashCode(),
+                    original = originalToRecord,
+                    replaced = newText,
+                    presetName = presetName
+                )
+            }
+
+            val success = AccessibilityUtils.injectText(targetNode, newText, this)
+            if (!success) {
+                targetNode.recycle()
                 currentActiveNode = null
-                return
             }
-            currentActiveNode = freshlyFound
-            targetNode = freshlyFound
-        }
-
-        val originalToRecord = explicitOriginal ?: (targetNode.text?.toString() ?: "")
-
-        if (recordHistory && originalToRecord.isNotBlank() && originalToRecord != newText) {
-            TransformHistory.recordChange(
-                nodeHashCode = targetNode.hashCode(),
-                original = originalToRecord,
-                replaced = newText,
-                presetName = presetName
-            )
-        }
-
-        val success = AccessibilityUtils.injectText(targetNode, newText, this)
-        if (!success) {
-            targetNode.recycle()
-            currentActiveNode = null
+        } finally {
+            isInjectingText = false
         }
     }
 
