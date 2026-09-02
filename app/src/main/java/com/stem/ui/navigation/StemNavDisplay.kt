@@ -2,6 +2,9 @@ package com.stem.ui.navigation
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,19 +29,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.stem.ui.theme.GitHubSponsorHeartIcon
+import com.stem.ui.theme.KoFiIcon
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemLogoMark
 import com.stem.ui.theme.StemMonoBadge
+import com.stem.ui.theme.StemSharpShape
 import com.stem.ui.theme.StemTab
 import com.stem.ui.theme.StemTabIcon
 import com.stem.ui.screens.HomeScreen
@@ -114,41 +123,107 @@ fun StemNavDisplay(
                         .fillMaxWidth()
                         .statusBarsPadding()
                         .height(58.dp)
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    when (currentTab) {
-                        StemTab.HOME -> {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                StemLogoMark(size = 28.dp, tint = stemTheme.ink)
-                                Spacer(modifier = Modifier.width(12.dp))
+                    val context = LocalContext.current
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Left: Current Tab Title
+                        when (currentTab) {
+                            StemTab.HOME -> {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    StemLogoMark(size = 26.dp, tint = stemTheme.ink)
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = "Stem",
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                        color = stemTheme.ink
+                                    )
+                                }
+                            }
+                            StemTab.SNIPPETS -> {
                                 Text(
-                                    text = "Stem",
+                                    text = "Snippets",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = stemTheme.ink
+                                )
+                            }
+                            StemTab.HISTORY -> {
+                                Text(
+                                    text = "History",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = stemTheme.ink
+                                )
+                            }
+                            StemTab.SETTINGS -> {
+                                Text(
+                                    text = "Settings",
                                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                     color = stemTheme.ink
                                 )
                             }
                         }
-                        StemTab.SNIPPETS -> {
-                            Text(
-                                text = "Snippets",
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                color = stemTheme.ink
-                            )
-                        }
-                        StemTab.HISTORY -> {
-                            Text(
-                                text = "History",
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                color = stemTheme.ink
-                            )
-                        }
-                        StemTab.SETTINGS -> {
-                            Text(
-                                text = "Settings",
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                color = stemTheme.ink
-                            )
+
+                        // Right: Top-Right Sponsor Icons & Direct Links
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Ko-fi direct button
+                            Box(
+                                modifier = Modifier
+                                    .clip(StemSharpShape)
+                                    .background(stemTheme.surface2)
+                                    .border(1.dp, stemTheme.border, StemSharpShape)
+                                    .clickable(role = Role.Button) {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/X5R825DY4X"))
+                                        context.startActivity(intent)
+                                    }
+                                    .padding(horizontal = 7.dp, vertical = 5.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    KoFiIcon(color = Color(0xFF72A4F2), size = 14.dp)
+                                    Text(
+                                        text = "KO-FI",
+                                        style = StemMonoBadge,
+                                        color = stemTheme.ink
+                                    )
+                                }
+                            }
+
+                            // GitHub Sponsors direct button
+                            Box(
+                                modifier = Modifier
+                                    .clip(StemSharpShape)
+                                    .background(stemTheme.surface2)
+                                    .border(1.dp, stemTheme.border, StemSharpShape)
+                                    .clickable(role = Role.Button) {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/garc-kt"))
+                                        context.startActivity(intent)
+                                    }
+                                    .padding(horizontal = 7.dp, vertical = 5.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    GitHubSponsorHeartIcon(color = Color(0xFFEA4AAA), size = 14.dp)
+                                    Text(
+                                        text = "SPONSOR",
+                                        style = StemMonoBadge,
+                                        color = stemTheme.ink
+                                    )
+                                }
+                            }
                         }
                     }
                 }

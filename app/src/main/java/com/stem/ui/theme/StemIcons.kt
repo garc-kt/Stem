@@ -256,3 +256,102 @@ enum class StemTab(val title: String) {
     SETTINGS("Settings")
 }
 
+/**
+ * Ko-fi Cup Icon with handle and steam.
+ */
+@Composable
+fun KoFiIcon(
+    color: Color = Color(0xFF72A4F2),
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp
+) {
+    Canvas(modifier = modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+        val strokeW = 1.6.dp.toPx()
+
+        // Cup Body
+        val cupPath = Path().apply {
+            moveTo(w * 0.15f, h * 0.35f)
+            lineTo(w * 0.70f, h * 0.35f)
+            lineTo(w * 0.62f, h * 0.78f)
+            cubicTo(
+                w * 0.60f, h * 0.88f,
+                w * 0.25f, h * 0.88f,
+                w * 0.23f, h * 0.78f
+            )
+            close()
+        }
+        drawPath(cupPath, color = color, style = Stroke(width = strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round))
+
+        // Handle
+        val handlePath = Path().apply {
+            moveTo(w * 0.68f, h * 0.42f)
+            cubicTo(
+                w * 0.92f, h * 0.42f,
+                w * 0.92f, h * 0.68f,
+                w * 0.64f, h * 0.68f
+            )
+        }
+        drawPath(handlePath, color = color, style = Stroke(width = strokeW, cap = StrokeCap.Round))
+
+        // Steam Lines
+        drawLine(
+            color = color,
+            start = Offset(w * 0.32f, h * 0.24f),
+            end = Offset(w * 0.32f, h * 0.12f),
+            strokeWidth = strokeW,
+            cap = StrokeCap.Round
+        )
+        drawLine(
+            color = color,
+            start = Offset(w * 0.50f, h * 0.24f),
+            end = Offset(w * 0.50f, h * 0.12f),
+            strokeWidth = strokeW,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+/**
+ * GitHub Sponsor Heart Icon.
+ */
+@Composable
+fun GitHubSponsorHeartIcon(
+    color: Color = Color(0xFFEA4AAA),
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp
+) {
+    Canvas(modifier = modifier.size(size)) {
+        val w = this.size.width
+        val h = this.size.height
+
+        val heartPath = Path().apply {
+            moveTo(w * 0.5f, h * 0.84f)
+            cubicTo(
+                w * 0.12f, h * 0.56f,
+                w * 0.05f, h * 0.22f,
+                w * 0.28f, h * 0.16f
+            )
+            cubicTo(
+                w * 0.40f, h * 0.13f,
+                w * 0.48f, h * 0.26f,
+                w * 0.50f, h * 0.32f
+            )
+            cubicTo(
+                w * 0.52f, h * 0.26f,
+                w * 0.60f, h * 0.13f,
+                w * 0.72f, h * 0.16f
+            )
+            cubicTo(
+                w * 0.95f, h * 0.22f,
+                w * 0.88f, h * 0.56f,
+                w * 0.50f, h * 0.84f
+            )
+            close()
+        }
+        drawPath(heartPath, color = color, style = Fill)
+    }
+}
+
+
