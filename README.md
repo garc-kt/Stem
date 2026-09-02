@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/sponsors/garc-kt"><img src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ea4aaa?style=flat-square&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors" /></a>
-  <a href="https://ko-fi.com/X5R825DY4X"><img src="https://img.shields.io/badge/Support-Ko--fi-FF5E5B?style=flat-square&logo=kofi&logoColor=white" alt="Ko-Fi" /></a>
+  <a href="https://ko-fi.com/X5R825DY4X"><img src="https://img.shields.io/badge/Support%20on%20Ko--fi-72A4F2?style=flat-square&logo=kofi&logoColor=white" alt="Ko-fi" /></a>
   <a href="https://github.com/garc-kt/Stem/releases"><img src="https://img.shields.io/github/v/release/garc-kt/Stem?style=flat-square&color=blue" alt="Release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-green.svg?style=flat-square" alt="License" /></a>
 </p>
