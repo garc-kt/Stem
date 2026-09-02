@@ -60,6 +60,11 @@ import com.stem.ui.theme.ThemeMode
 import com.stem.core.models.EngineMode
 import com.stem.core.models.StemUserSettings
 import com.stem.core.util.InstalledAppsHelper
+import com.stem.engine.ClaudeClient
+import com.stem.engine.GeminiClient
+import com.stem.engine.OllamaClient
+import com.stem.engine.OpenAIClient
+import kotlinx.coroutines.launch
 
 
 
@@ -240,6 +245,11 @@ fun EngineScreen(
                             singleLine = true,
                             shape = StemSharpShape
                         )
+                        TestConnectionButton(
+                            onTest = {
+                                OllamaClient.fetchAvailableModels(ollamaUrlInput).map { models -> "${models.size} model${if (models.size != 1) "s" else ""} found" }
+                            }
+                        )
                         TemperatureControl(
                             temperature = userSettings.temperature,
                             onSaveTemperature = onSaveTemperature
@@ -274,6 +284,9 @@ fun EngineScreen(
                                 .onFocusChanged(rememberFocusLossSaver { onSaveGeminiSettings(geminiKeyInput, geminiModelInput) }),
                             singleLine = true,
                             shape = StemSharpShape
+                        )
+                        TestConnectionButton(
+                            onTest = { GeminiClient.testConnection(geminiKeyInput).map { "Connected" } }
                         )
                         TemperatureControl(
                             temperature = userSettings.temperature,
@@ -323,6 +336,9 @@ fun EngineScreen(
                             singleLine = true,
                             shape = StemSharpShape
                         )
+                        TestConnectionButton(
+                            onTest = { OpenAIClient.testConnection(openAiUrlInput, openAiKeyInput).map { "Connected" } }
+                        )
                         TemperatureControl(
                             temperature = userSettings.temperature,
                             onSaveTemperature = onSaveTemperature
@@ -357,6 +373,9 @@ fun EngineScreen(
                                 .onFocusChanged(rememberFocusLossSaver { onSaveClaudeSettings(claudeKeyInput, claudeModelInput) }),
                             singleLine = true,
                             shape = StemSharpShape
+                        )
+                        TestConnectionButton(
+                            onTest = { ClaudeClient.testConnection(claudeKeyInput).map { "Connected" } }
                         )
                         // No TemperatureControl here: current Claude models (Sonnet 5 / Opus 5 /
                         // 4.7+) reject a temperature parameter with a 400, and ClaudeClient
@@ -629,6 +648,70 @@ private fun ProviderCard(
                     content()
                 }
             }
+        }
+    }
+}
+
+private sealed class TestConnectionStatus {
+    object Idle : TestConnectionStatus()
+    object Testing : TestConnectionStatus()
+    data class Success(val message: String) : TestConnectionStatus()
+    data class Failure(val message: String) : TestConnectionStatus()
+}
+
+/**
+ * Lets a provider's key be verified before saving — today a bad key just silently degrades to
+ * local rules with no signal. [onTest] should probe a lightweight endpoint (models list, not a
+ * full generation call) so testing doesn't spend the user's completion quota.
+ */
+@Composable
+private fun TestConnectionButton(
+    onTest: suspend () -> Result<String>
+) {
+    val stemTheme = LocalStemColors.current
+    val scope = rememberCoroutineScope()
+    var status by remember { mutableStateOf<TestConnectionStatus>(TestConnectionStatus.Idle) }
+
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .clip(StemSharpShape)
+                .background(stemTheme.surface2)
+                .border(1.dp, stemTheme.border, StemSharpShape)
+                .clickable(
+                    role = Role.Button,
+                    enabled = status !is TestConnectionStatus.Testing,
+                    onClick = {
+                        status = TestConnectionStatus.Testing
+                        scope.launch {
+                            val result = onTest()
+                            status = result.fold(
+                                onSuccess = { TestConnectionStatus.Success(it) },
+                                onFailure = { TestConnectionStatus.Failure(it.message ?: "Connection failed") }
+                            )
+                        }
+                    }
+                )
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = if (status is TestConnectionStatus.Testing) "TESTING..." else "TEST CONNECTION",
+                style = StemMonoBadge,
+                color = stemTheme.ink
+            )
+        }
+
+        when (val s = status) {
+            is TestConnectionStatus.Success -> {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("✓ ${s.message}", style = MaterialTheme.typography.bodySmall, color = stemTheme.add)
+            }
+            is TestConnectionStatus.Failure -> {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("✗ ${s.message}", style = MaterialTheme.typography.bodySmall, color = stemTheme.remove, maxLines = 2)
+            }
+            else -> {}
         }
     }
 }

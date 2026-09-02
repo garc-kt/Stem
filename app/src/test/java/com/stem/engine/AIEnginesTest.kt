@@ -123,5 +123,20 @@ class AIEnginesTest {
         assertTrue(formatted.contains("meeting tomorrow"))
         assertTrue(formatted.contains("Actively polish, improve, and elevate"))
     }
+
+    @Test
+    fun testConnectionRequiresApiKeyForGemini() = runBlocking {
+        assertTrue(GeminiClient.testConnection(apiKey = "").isFailure)
+    }
+
+    @Test
+    fun testConnectionRequiresApiKeyForClaude() = runBlocking {
+        assertTrue(ClaudeClient.testConnection(apiKey = "").isFailure)
+    }
+
+    @Test
+    fun testConnectionRequiresApiKeyForOpenAI() = runBlocking {
+        assertTrue(OpenAIClient.testConnection(apiKey = "").isFailure)
+    }
 }
 

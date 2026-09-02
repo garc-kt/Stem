@@ -84,6 +84,23 @@ object GeminiClient {
             }
         } catch (e: Exception) { Result.failure(e) }
     }
+
+    /** Validates the key/connectivity via the models-list endpoint rather than a full
+     * generation call, so testing a key doesn't spend the user's completion quota. */
+    suspend fun testConnection(apiKey: String): Result<Unit> = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) return@withContext Result.failure(IllegalArgumentException("Gemini API key is required"))
+        val url = "https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey"
+        val request = Request.Builder().url(url).get().build()
+        try {
+            httpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val respString = response.body?.string() ?: ""
+                    return@withContext Result.failure(Exception("Gemini API Error (${response.code}): $respString"))
+                }
+                Result.success(Unit)
+            }
+        } catch (e: Exception) { Result.failure(e) }
+    }
 }
 
 object ClaudeClient {
@@ -117,6 +134,24 @@ object ClaudeClient {
             }
         } catch (e: Exception) { Result.failure(e) }
     }
+
+    /** Validates the key/connectivity via the models-list endpoint rather than a full
+     * generation call, so testing a key doesn't spend the user's completion quota. */
+    suspend fun testConnection(apiKey: String): Result<Unit> = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) return@withContext Result.failure(IllegalArgumentException("Claude API key is required"))
+        val url = "https://api.anthropic.com/v1/models"
+        val request = Request.Builder().url(url).addHeader("x-api-key", apiKey).addHeader("anthropic-version", "2023-06-01").get().build()
+        try {
+            httpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val respString = response.body?.string() ?: ""
+                    val friendlyMessage = runCatching { json.decodeFromString(ClaudeResponse.serializer(), respString).error?.message }.getOrNull()
+                    return@withContext Result.failure(Exception("Claude API Error (${response.code}): ${friendlyMessage ?: respString}"))
+                }
+                Result.success(Unit)
+            }
+        } catch (e: Exception) { Result.failure(e) }
+    }
 }
 
 object OpenAIClient {
@@ -138,6 +173,24 @@ object OpenAIClient {
                 val parsed = json.decodeFromString(OpenAIChatResponse.serializer(), respString)
                 val output = parsed.choices?.firstOrNull()?.message?.content
                 if (!output.isNullOrBlank()) Result.success(output.trim()) else Result.failure(Exception(parsed.error?.message ?: "Empty response from OpenAI"))
+            }
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    /** Validates the key/connectivity via the models-list endpoint rather than a full
+     * generation call, so testing a key doesn't spend the user's completion quota. */
+    suspend fun testConnection(baseUrl: String = "https://api.openai.com/v1", apiKey: String): Result<Unit> = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) return@withContext Result.failure(IllegalArgumentException("API key is required"))
+        val cleanBaseUrl = baseUrl.ifBlank { "https://api.openai.com/v1" }.trimEnd('/')
+        val url = "$cleanBaseUrl/models"
+        val request = Request.Builder().url(url).addHeader("Authorization", "Bearer $apiKey").get().build()
+        try {
+            httpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val respString = response.body?.string() ?: ""
+                    return@withContext Result.failure(Exception("OpenAI API Error (${response.code}): $respString"))
+                }
+                Result.success(Unit)
             }
         } catch (e: Exception) { Result.failure(e) }
     }
