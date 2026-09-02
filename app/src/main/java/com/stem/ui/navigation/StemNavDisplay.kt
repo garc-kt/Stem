@@ -324,6 +324,9 @@ fun StemNavDisplay(
                         onSaveGeminiSettings = viewModel::saveGeminiSettings,
                         onSaveOpenAISettings = viewModel::saveOpenAISettings,
                         onSaveClaudeSettings = viewModel::saveClaudeSettings,
+                        onClearGeminiApiKey = viewModel::clearGeminiApiKey,
+                        onClearOpenAIApiKey = viewModel::clearOpenAIApiKey,
+                        onClearClaudeApiKey = viewModel::clearClaudeApiKey,
                         onSaveCustomPromptInstruction = viewModel::saveCustomPromptInstruction,
                         onSelectThemeMode = viewModel::selectThemeMode,
                         onToggleHaptics = viewModel::toggleHaptics

@@ -9,6 +9,7 @@ import com.stem.core.models.EngineMode
 import com.stem.core.models.StemUserSettings
 import com.stem.core.models.TextPayload
 import com.stem.core.models.TransformPreset
+import com.stem.core.models.TransformResult
 import com.stem.core.util.AccessibilityUtils
 import com.stem.core.util.HapticHelper
 import com.stem.engine.InlineCommandEngine
@@ -34,8 +35,25 @@ class StemAccessibilityService : AccessibilityService() {
 
     private var currentActiveNode: AccessibilityNodeInfoCompat? = null
 
+    // Suppresses reprocessing of the accessibility event Stem's own text injection generates.
+    // A boolean flag cleared synchronously right after injectText() returns doesn't work here:
+    // the OS delivers the resulting AccessibilityEvent asynchronously, arriving after the flag
+    // is already false, so the service would reprocess its own output as if the user had typed
+    // it — replaying whatever inline command just triggered. A short time window keyed to the
+    // specific node closes that race without blocking real input from a different field.
     @Volatile
-    private var isInjectingText = false
+    private var suppressedNodeHash: Int = 0
+    @Volatile
+    private var suppressUntilMs: Long = 0L
+
+    private fun isSuppressed(nodeHashCode: Int): Boolean {
+        return nodeHashCode == suppressedNodeHash && System.currentTimeMillis() < suppressUntilMs
+    }
+
+    private fun markSuppressed(nodeHashCode: Int) {
+        suppressedNodeHash = nodeHashCode
+        suppressUntilMs = System.currentTimeMillis() + SUPPRESSION_WINDOW_MS
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -47,7 +65,7 @@ class StemAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event == null || isInjectingText) return
+        if (event == null) return
 
         val eventType = event.eventType
         if (eventType == AccessibilityEvent.TYPE_VIEW_FOCUSED ||
@@ -59,14 +77,25 @@ class StemAccessibilityService : AccessibilityService() {
             val rootCompat = AccessibilityNodeInfoCompat.wrap(rootNode)
             val focusedNode = AccessibilityUtils.findFocusedEditableNode(rootCompat)
 
+            // findFocusedEditableNode returns the root instance itself when the root is the
+            // focused editable node; only recycle the root wrapper when it's a distinct object
+            // we're done with, not the node we're about to keep.
+            if (focusedNode !== rootCompat) {
+                rootCompat.recycle()
+            }
+
             if (focusedNode != null && AccessibilityUtils.isEditableNode(focusedNode)) {
-                if (currentActiveNode != focusedNode) {
+                // Reference equality, not AccessibilityNodeInfoCompat's structural equals():
+                // each traversal call obtains a distinct native node object even when it
+                // represents the same on-screen field, so a structurally-equal-but-different
+                // instance must still be recycled here or its resource leaks.
+                if (currentActiveNode !== focusedNode) {
                     currentActiveNode?.recycle()
                 }
                 currentActiveNode = focusedNode
 
                 val payload = AccessibilityUtils.extractTextPayload(focusedNode)
-                if (payload != null && payload.isValid) {
+                if (payload != null && payload.isValid && !isSuppressed(payload.nodeHashCode)) {
                     handleTextPayload(payload)
                 }
             } else {
@@ -129,10 +158,21 @@ class StemAccessibilityService : AccessibilityService() {
                 Toast.makeText(this, "Stem: ${inlineResult.summary}", Toast.LENGTH_SHORT).show()
                 return
             }
+            is InlineCommandEngine.CommandResult.Undo -> {
+                val previous = TransformHistory.popUndo(inlineResult.nodeHashCode) ?: TransformHistory.popUndo()
+                if (previous != null) {
+                    if (userSettings.hapticFeedbackEnabled) {
+                        HapticHelper.performSuccessHaptic(this)
+                    }
+                    injectReplacementText(newText = previous, recordHistory = false)
+                    Toast.makeText(this, "Stem: ?undo", Toast.LENGTH_SHORT).show()
+                }
+                return
+            }
             is InlineCommandEngine.CommandResult.RunAIPreset -> {
                 if (userSettings.engineMode == EngineMode.LOCAL_RULES) {
                     serviceScope.launch {
-                        val result = LocalRuleEngine.transform(TextPayload(inlineResult.body), inlineResult.preset)
+                        val result = LocalRuleEngine.transform(TextPayload(inlineResult.body), inlineResult.preset, userSettings.languagePreference)
                         if (userSettings.hapticFeedbackEnabled) {
                             HapticHelper.performSuccessHaptic(this@StemAccessibilityService)
                         }
@@ -149,10 +189,13 @@ class StemAccessibilityService : AccessibilityService() {
 
                 if (userSettings.engineMode == EngineMode.GEMINI_AI && userSettings.geminiApiKey.isBlank()) {
                     Toast.makeText(this, "Stem: Add your Gemini API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    return
                 } else if (userSettings.engineMode == EngineMode.CLAUDE_AI && userSettings.claudeApiKey.isBlank()) {
                     Toast.makeText(this, "Stem: Add your Claude API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    return
                 } else if (userSettings.engineMode == EngineMode.OPENAI_COMPATIBLE && userSettings.openaiApiKey.isBlank()) {
                     Toast.makeText(this, "Stem: Add your OpenAI API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    return
                 }
 
                 if (userSettings.hapticFeedbackEnabled) {
@@ -164,20 +207,23 @@ class StemAccessibilityService : AccessibilityService() {
                     presetName = inlineResult.summary
                 ) {
                     val engine = TextEngineProvider.getEngine(userSettings)
-                    val result = engine.transform(TextPayload(inlineResult.body), inlineResult.preset)
-                    result.transformedText
+                    engine.transform(TextPayload(inlineResult.body), inlineResult.preset, userSettings.languagePreference)
                 }
                 return
             }
             is InlineCommandEngine.CommandResult.RunAIPrompt -> {
                 if (userSettings.engineMode == EngineMode.LOCAL_RULES) {
                     Toast.makeText(this, "Stem: Select Gemini, Claude, or OpenAI in Settings to use custom AI prompts", Toast.LENGTH_LONG).show()
+                    return
                 } else if (userSettings.engineMode == EngineMode.GEMINI_AI && userSettings.geminiApiKey.isBlank()) {
                     Toast.makeText(this, "Stem: Add your Gemini API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    return
                 } else if (userSettings.engineMode == EngineMode.CLAUDE_AI && userSettings.claudeApiKey.isBlank()) {
                     Toast.makeText(this, "Stem: Add your Claude API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    return
                 } else if (userSettings.engineMode == EngineMode.OPENAI_COMPATIBLE && userSettings.openaiApiKey.isBlank()) {
                     Toast.makeText(this, "Stem: Add your OpenAI API Key in Settings to use AI", Toast.LENGTH_LONG).show()
+                    return
                 }
 
                 if (userSettings.hapticFeedbackEnabled) {
@@ -190,8 +236,7 @@ class StemAccessibilityService : AccessibilityService() {
                 ) {
                     val customSettings = userSettings.copy(customPromptInstruction = inlineResult.customPrompt)
                     val engine = TextEngineProvider.getEngine(customSettings)
-                    val result = engine.transform(TextPayload(inlineResult.body), TransformPreset.CUSTOM)
-                    result.transformedText
+                    engine.transform(TextPayload(inlineResult.body), TransformPreset.CUSTOM, customSettings.languagePreference)
                 }
                 return
             }
@@ -203,12 +248,13 @@ class StemAccessibilityService : AccessibilityService() {
     private fun startSkeletonThinking(
         originalBody: String,
         presetName: String = "Enhance",
-        onTransform: suspend () -> String
+        onTransform: suspend () -> TransformResult
     ) {
         serviceScope.launch {
             var frameIndex = 0
             var isDone = false
             var finalResult = ""
+            var errorMessage: String? = null
 
             val tokens = originalBody.split(Regex("(?<=\\s)|(?=\\s)|(?<=[^\\w\\s])|(?=[^\\w\\s])"))
             val wordIndices = tokens.mapIndexedNotNull { index, token ->
@@ -253,7 +299,9 @@ class StemAccessibilityService : AccessibilityService() {
             }
 
             try {
-                finalResult = onTransform()
+                val result = onTransform()
+                finalResult = result.transformedText
+                errorMessage = result.errorMessage
             } finally {
                 isDone = true
                 animationJob.cancelAndJoin()
@@ -269,7 +317,12 @@ class StemAccessibilityService : AccessibilityService() {
                     explicitOriginal = originalBody,
                     presetName = presetName
                 )
-                Toast.makeText(this@StemAccessibilityService, "Stem: Enhanced", Toast.LENGTH_SHORT).show()
+                val toastText = if (errorMessage != null) {
+                    "Stem: engine unavailable ($errorMessage) — used local rules"
+                } else {
+                    "Stem: Enhanced"
+                }
+                Toast.makeText(this@StemAccessibilityService, toastText, Toast.LENGTH_LONG).show()
             } else {
                 injectReplacementText(
                     newText = originalBody,
@@ -286,42 +339,39 @@ class StemAccessibilityService : AccessibilityService() {
         explicitOriginal: String? = null,
         presetName: String = "Enhance"
     ) {
-        isInjectingText = true
-        try {
-            var targetNode = currentActiveNode
-            val isStillValid = targetNode?.refresh() == true
-            if (!isStillValid) {
-                val staleNode = targetNode
-                val freshlyFound = rootInActiveWindow?.let {
-                    AccessibilityUtils.findFocusedEditableNode(AccessibilityNodeInfoCompat.wrap(it))
-                }
-                staleNode?.recycle()
-                if (freshlyFound == null) {
-                    currentActiveNode = null
-                    return
-                }
-                currentActiveNode = freshlyFound
-                targetNode = freshlyFound
+        var targetNode = currentActiveNode
+        val isStillValid = targetNode?.refresh() == true
+        if (!isStillValid) {
+            val staleNode = targetNode
+            val freshlyFound = rootInActiveWindow?.let {
+                AccessibilityUtils.findFocusedEditableNode(AccessibilityNodeInfoCompat.wrap(it))
             }
-
-            val originalToRecord = explicitOriginal ?: (targetNode.text?.toString() ?: "")
-
-            if (recordHistory && originalToRecord.isNotBlank() && originalToRecord != newText) {
-                TransformHistory.recordChange(
-                    nodeHashCode = targetNode.hashCode(),
-                    original = originalToRecord,
-                    replaced = newText,
-                    presetName = presetName
-                )
-            }
-
-            val success = AccessibilityUtils.injectText(targetNode, newText, this)
-            if (!success) {
-                targetNode.recycle()
+            staleNode?.recycle()
+            if (freshlyFound == null) {
                 currentActiveNode = null
+                return
             }
-        } finally {
-            isInjectingText = false
+            currentActiveNode = freshlyFound
+            targetNode = freshlyFound
+        }
+
+        val originalToRecord = explicitOriginal ?: (targetNode.text?.toString() ?: "")
+
+        if (recordHistory && originalToRecord.isNotBlank() && originalToRecord != newText) {
+            TransformHistory.recordChange(
+                nodeHashCode = targetNode.hashCode(),
+                original = originalToRecord,
+                replaced = newText,
+                presetName = presetName
+            )
+        }
+
+        val success = AccessibilityUtils.injectText(targetNode, newText, this)
+        if (success) {
+            markSuppressed(targetNode.hashCode())
+        } else {
+            targetNode.recycle()
+            currentActiveNode = null
         }
     }
 
@@ -332,5 +382,11 @@ class StemAccessibilityService : AccessibilityService() {
         TransformHistory.clear()
         TransformCache.clear()
         serviceScope.cancel()
+    }
+
+    companion object {
+        // Must comfortably exceed the OS's async AccessibilityEvent delivery latency (normally
+        // well under 100ms) so the reflected event from our own injection never slips through.
+        private const val SUPPRESSION_WINDOW_MS = 400L
     }
 }

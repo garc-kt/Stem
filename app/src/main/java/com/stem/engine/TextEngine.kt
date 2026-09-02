@@ -1,6 +1,7 @@
 package com.stem.engine
 
 import com.stem.core.models.EngineMode
+import com.stem.core.models.LanguagePreference
 import com.stem.core.models.StemUserSettings
 import com.stem.core.models.TextPayload
 import com.stem.core.models.TransformPreset
@@ -9,17 +10,27 @@ import com.stem.core.models.TransformResult
 
 
 /**
- * Contract for text transformation engines.
+ * Contract for text transformation engines. [languagePreference] is only meaningful to
+ * [LocalRuleEngine] (which dictionary to apply) but is threaded through every implementation —
+ * including as the local-rules fallback language for the AI engines — as an explicit per-call
+ * parameter rather than shared mutable state: this ran across coroutines on different
+ * dispatchers (the accessibility service, ProcessTextActivity, and an AI engine's own fallback
+ * path could all call it around the same time), so a single `var` on a singleton object was a
+ * genuine data race, not just a style concern.
  */
 interface TextEngine {
-    suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult
+    suspend fun transform(
+        payload: TextPayload,
+        preset: TransformPreset,
+        languagePreference: LanguagePreference = LanguagePreference.AUTO
+    ): TransformResult
 }
 
 object TextEngineProvider {
 
     fun getEngine(settings: StemUserSettings): TextEngine {
         return when (settings.engineMode) {
-            EngineMode.LOCAL_RULES -> LocalRuleEngine.apply { languagePreference = settings.languagePreference }
+            EngineMode.LOCAL_RULES -> LocalRuleEngine
             EngineMode.OLLAMA_AI -> OllamaRuleEngine(
                 baseUrl = settings.ollamaBaseUrl,
                 model = settings.ollamaModel,

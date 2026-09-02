@@ -1,5 +1,6 @@
 package com.stem.engine
 
+import com.stem.core.models.LanguagePreference
 import com.stem.core.models.OllamaGenerateRequest
 import com.stem.core.models.OllamaGenerateResponse
 import com.stem.core.models.OllamaOptions
@@ -86,10 +87,14 @@ object GeminiClient {
 }
 
 object ClaudeClient {
-    const val DEFAULT_MODEL = "claude-3-7-sonnet-latest"
+    const val DEFAULT_MODEL = "claude-sonnet-5"
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; isLenient = true }
     private val httpClient get() = HttpClientFactory.client
 
+    // temperature is accepted for API-shape parity with the other engines but deliberately never
+    // placed on ClaudeRequest — current Claude models (Sonnet 5 / Opus 5 / 4.7+) reject a
+    // temperature parameter with a 400. The Claude provider card hides its temperature slider
+    // to match (see EngineScreen).
     suspend fun generate(apiKey: String, model: String = DEFAULT_MODEL, prompt: String, systemPrompt: String, temperature: Float = 0.3f): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) return@withContext Result.failure(IllegalArgumentException("Claude API key is required"))
         val cleanModel = model.ifBlank { DEFAULT_MODEL }
@@ -243,7 +248,11 @@ open class AiRuleEngine(
 
     val engineSignature: String = "$engineName:$model:$temperature:${customInstruction.hashCode()}"
 
-    override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult = withContext(Dispatchers.IO) {
+    override suspend fun transform(
+        payload: TextPayload,
+        preset: TransformPreset,
+        languagePreference: LanguagePreference
+    ): TransformResult = withContext(Dispatchers.IO) {
         val original = payload.text
         if (original.isBlank()) {
             return@withContext TransformResult(original, original, preset, emptyList())
@@ -279,10 +288,11 @@ open class AiRuleEngine(
                 TransformCache.put(original, preset, engineSignature, transformRes)
                 transformRes
             },
-            onFailure = { _ ->
-                val fallback = LocalRuleEngine.transform(payload, preset)
+            onFailure = { exception ->
+                val fallback = LocalRuleEngine.transform(payload, preset, languagePreference)
                 fallback.copy(
-                    summaryNote = "${fallback.summaryNote ?: "Polished"} (Local fallback)"
+                    summaryNote = "${fallback.summaryNote ?: "Polished"} (Local fallback)",
+                    errorMessage = exception.message ?: "$engineName request failed"
                 )
             }
         )

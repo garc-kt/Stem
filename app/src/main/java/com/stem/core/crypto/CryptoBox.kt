@@ -55,8 +55,10 @@ object CryptoBox {
         return keyGenerator.generateKey()
     }
 
-    /** Encrypts [plainText]; returns it unchanged if blank (nothing to protect). */
-    fun encrypt(plainText: String): String {
+    /** Encrypts [plainText]; returns it unchanged if blank (nothing to protect). Returns null
+     * if the Keystore is unavailable — callers must not persist null (that would silently
+     * replace a working stored value with a broken one); they should skip the write instead. */
+    fun encrypt(plainText: String): String? {
         if (plainText.isBlank()) return plainText
         return try {
             val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -66,9 +68,7 @@ object CryptoBox {
             val cipherB64 = Base64.encodeToString(ciphertext, Base64.NO_WRAP)
             "$PREFIX$ivB64:$cipherB64"
         } catch (_: Exception) {
-            // If encryption is unavailable for some reason, fail safe by not persisting a
-            // silently-broken value — caller keeps whatever it already had.
-            plainText
+            null
         }
     }
 

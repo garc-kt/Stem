@@ -14,6 +14,9 @@ import com.stem.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
 import java.io.IOException
 
 
@@ -38,7 +41,7 @@ data class StemUserSettings(
     val openaiApiKey: String = "",
     val openaiModel: String = "gpt-4o-mini",
     val claudeApiKey: String = "",
-    val claudeModel: String = "claude-3-7-sonnet-latest",
+    val claudeModel: String = "claude-sonnet-5",
     val snippets: Map<String, String> = defaultSnippets,
     val customCommands: Map<String, String> = defaultCustomCommands
 ) {
@@ -124,8 +127,12 @@ class PreferencesRepository(private val context: Context) {
 
             val claudeApiKey = decryptStored(preferences[PreferencesKeys.CLAUDE_API_KEY])
             val storedClaudeModel = preferences[PreferencesKeys.CLAUDE_MODEL]
-            val claudeModel = if (storedClaudeModel.isNullOrBlank() || storedClaudeModel.startsWith("claude-2") || storedClaudeModel.startsWith("claude-3-opus") || storedClaudeModel == "claude-4.5-sonnet" || storedClaudeModel == "claude-3-haiku-20240307" || storedClaudeModel == "claude-3-sonnet-20240229") {
-                "claude-3-7-sonnet-latest"
+            // Forward-migrate any Claude 2.x/3.x id (including dated snapshots like
+            // claude-3-7-sonnet-latest) to the current default. Anything from Claude 4.x
+            // onward is left untouched so this never rewrites a user's already-current
+            // model choice back to something older.
+            val claudeModel = if (storedClaudeModel.isNullOrBlank() || storedClaudeModel.startsWith("claude-2") || storedClaudeModel.startsWith("claude-3")) {
+                "claude-sonnet-5"
             } else {
                 storedClaudeModel
             }
@@ -222,9 +229,26 @@ class PreferencesRepository(private val context: Context) {
         }
     }
 
+    /** Writes [apiKey] to [key] unless it would silently clobber a working stored key with a
+     * broken or blank one: a blank incoming value never overwrites a non-blank stored value
+     * (use [clearApiKey] to clear explicitly), and a Keystore-unavailable [CryptoBox.encrypt]
+     * failure (null) leaves the stored value untouched rather than persisting garbage. */
+    private fun androidx.datastore.preferences.core.MutablePreferences.writeApiKeyGuarded(
+        key: Preferences.Key<String>,
+        apiKey: String
+    ) {
+        val trimmed = apiKey.trim()
+        if (trimmed.isBlank()) {
+            if (decryptStored(this[key]).isBlank()) this[key] = ""
+            return
+        }
+        val encrypted = CryptoBox.encrypt(trimmed) ?: return
+        this[key] = encrypted
+    }
+
     suspend fun setGeminiSettings(apiKey: String, model: String) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.GEMINI_API_KEY] = CryptoBox.encrypt(apiKey.trim())
+            preferences.writeApiKeyGuarded(PreferencesKeys.GEMINI_API_KEY, apiKey)
             preferences[PreferencesKeys.GEMINI_MODEL] = model.trim().ifBlank { "gemini-3.7-flash" }
         }
     }
@@ -232,16 +256,28 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setOpenAISettings(baseUrl: String, apiKey: String, model: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.OPENAI_BASE_URL] = baseUrl.trim().ifBlank { "https://api.openai.com/v1" }
-            preferences[PreferencesKeys.OPENAI_API_KEY] = CryptoBox.encrypt(apiKey.trim())
+            preferences.writeApiKeyGuarded(PreferencesKeys.OPENAI_API_KEY, apiKey)
             preferences[PreferencesKeys.OPENAI_MODEL] = model.trim().ifBlank { "gpt-4o-mini" }
         }
     }
 
     suspend fun setClaudeSettings(apiKey: String, model: String) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.CLAUDE_API_KEY] = CryptoBox.encrypt(apiKey.trim())
-            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-3-7-sonnet-latest" }
+            preferences.writeApiKeyGuarded(PreferencesKeys.CLAUDE_API_KEY, apiKey)
+            preferences[PreferencesKeys.CLAUDE_MODEL] = model.trim().ifBlank { "claude-sonnet-5" }
         }
+    }
+
+    suspend fun clearGeminiApiKey() {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.GEMINI_API_KEY] = "" }
+    }
+
+    suspend fun clearOpenAIApiKey() {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.OPENAI_API_KEY] = "" }
+    }
+
+    suspend fun clearClaudeApiKey() {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.CLAUDE_API_KEY] = "" }
     }
 
     suspend fun saveSnippet(key: String, expansion: String) {
@@ -303,7 +339,7 @@ class PreferencesRepository(private val context: Context) {
             for (key in listOf(PreferencesKeys.GEMINI_API_KEY, PreferencesKeys.OPENAI_API_KEY, PreferencesKeys.CLAUDE_API_KEY)) {
                 val stored = preferences[key]
                 if (!stored.isNullOrBlank() && !CryptoBox.isEncrypted(stored)) {
-                    preferences[key] = CryptoBox.encrypt(stored)
+                    CryptoBox.encrypt(stored)?.let { preferences[key] = it }
                 }
             }
         }
@@ -314,16 +350,29 @@ class PreferencesRepository(private val context: Context) {
         return CryptoBox.decrypt(stored) ?: ""
     }
 
+    private val pairsMapSerializer = MapSerializer(String.serializer(), String.serializer())
+    private val pairsJson = Json { ignoreUnknownKeys = true }
+
     private fun serializePairs(map: Map<String, String>): String {
-        return map.entries.joinToString("|||") { "${it.key}:::${it.value}" }
+        return pairsJson.encodeToString(pairsMapSerializer, map)
     }
 
+    /** Reads JSON written by [serializePairs]. Also accepts the legacy pre-JSON
+     * "key:::value|||key2:::value2" format so data saved before this migration keeps loading —
+     * every write goes through [serializePairs] from here on, so a legacy entry self-heals into
+     * unambiguous JSON storage the next time it's saved. */
     private fun deserializePairs(raw: String): Map<String, String> {
         if (raw.isBlank()) return emptyMap()
+        if (raw.trimStart().startsWith("{")) {
+            return try {
+                pairsJson.decodeFromString(pairsMapSerializer, raw)
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        }
         val result = mutableMapOf<String, String>()
-        val pairs = raw.split("|||")
-        for (pair in pairs) {
-            val parts = pair.split(":::")
+        for (pair in raw.split("|||")) {
+            val parts = pair.split(":::", limit = 2)
             if (parts.size == 2 && parts[0].isNotBlank()) {
                 result[parts[0]] = parts[1]
             }

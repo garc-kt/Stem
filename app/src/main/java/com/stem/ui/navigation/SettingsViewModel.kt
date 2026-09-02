@@ -67,6 +67,12 @@ class SettingsViewModel : ViewModel() {
 
     fun saveClaudeSettings(apiKey: String, model: String) = viewModelScope.launch { repository.setClaudeSettings(apiKey, model) }
 
+    fun clearGeminiApiKey() = viewModelScope.launch { repository.clearGeminiApiKey() }
+
+    fun clearOpenAIApiKey() = viewModelScope.launch { repository.clearOpenAIApiKey() }
+
+    fun clearClaudeApiKey() = viewModelScope.launch { repository.clearClaudeApiKey() }
+
     fun saveSnippet(key: String, expansion: String) = viewModelScope.launch { repository.saveSnippet(key, expansion) }
 
     fun deleteSnippet(key: String) = viewModelScope.launch { repository.deleteSnippet(key) }

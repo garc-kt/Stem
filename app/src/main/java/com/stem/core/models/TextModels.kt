@@ -54,7 +54,7 @@ enum class EngineMode(
     CLAUDE_AI(
         id = "claude_ai",
         title = "Anthropic Claude",
-        description = "High-precision writing enhancement using Claude 4.5 Sonnet and newer.",
+        description = "High-precision writing enhancement using Claude Sonnet 5 and newer.",
         isCloud = true
     );
 
@@ -200,7 +200,11 @@ data class TransformResult(
     val transformedText: String,
     val preset: TransformPreset,
     val diffTokens: List<DiffToken> = emptyList(),
-    val summaryNote: String? = null
+    val summaryNote: String? = null,
+    /** Set only when the requested engine failed and this result is the local-rules fallback —
+     * lets callers tell the user their AI request didn't actually run instead of silently
+     * showing a successful-looking result. Null on every other path. */
+    val errorMessage: String? = null
 ) {
     val hasChanges: Boolean get() = originalText != transformedText
 

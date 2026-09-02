@@ -87,7 +87,7 @@ class ProcessTextActivity : ComponentActivity() {
                 isLoading = true
                 val payload = TextPayload(text = selectedText)
                 val engine = TextEngineProvider.getEngine(userSettings)
-                result = engine.transform(payload, activePreset)
+                result = engine.transform(payload, activePreset, userSettings.languagePreference)
                 isLoading = false
             }
 
@@ -186,6 +186,15 @@ class ProcessTextActivity : ComponentActivity() {
                                             text = "-${res.wordsSaved} words",
                                             style = StemMonoBadge,
                                             color = stemTheme.add
+                                        )
+                                    }
+
+                                    if (res.errorMessage != null) {
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = "Engine unavailable (${res.errorMessage}) — used local rules",
+                                            style = StemMonoBadge,
+                                            color = stemTheme.remove
                                         )
                                     }
                                 }

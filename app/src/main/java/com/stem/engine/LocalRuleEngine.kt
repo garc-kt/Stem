@@ -50,8 +50,6 @@ object LanguageDetector {
 
 object LocalRuleEngine : TextEngine {
 
-    var languagePreference: LanguagePreference = LanguagePreference.AUTO
-
     fun resolveRules(text: String, preference: LanguagePreference): LanguageRules {
         val effective = when (preference) {
             LanguagePreference.AUTO -> LanguageDetector.detect(text)
@@ -92,7 +90,11 @@ object LocalRuleEngine : TextEngine {
         }
     }
 
-    override suspend fun transform(payload: TextPayload, preset: TransformPreset): TransformResult {
+    override suspend fun transform(
+        payload: TextPayload,
+        preset: TransformPreset,
+        languagePreference: LanguagePreference
+    ): TransformResult {
         val preference = languagePreference
         return withContext(Dispatchers.Default) {
             val original = payload.text
@@ -171,7 +173,7 @@ object LocalRuleEngine : TextEngine {
 
         text = text.replace(Regex("[ \\t]+"), " ")
         text = text.replace(Regex("\\s+([,.:;?!])"), "$1")
-        text = capitalizeSentences(text)
+        text = capitalizeSentencesGuarded(text, rules)
 
         return text.trim()
     }
@@ -187,7 +189,7 @@ object LocalRuleEngine : TextEngine {
         text = text.replace(Regex("\\b(can you please)\\b", RegexOption.IGNORE_CASE), "Could you please")
         text = text.replace(Regex("\\b(give me a call)\\b", RegexOption.IGNORE_CASE), "reach out via phone")
 
-        text = capitalizeSentences(text)
+        text = capitalizeSentencesGuarded(text, rules)
         return text.trim()
     }
 
@@ -206,7 +208,7 @@ object LocalRuleEngine : TextEngine {
         text = text.replace(Regex("\\btry to\\b", RegexOption.IGNORE_CASE), "")
 
         text = text.replace(Regex("[ \\t]+"), " ")
-        text = capitalizeSentences(text)
+        text = capitalizeSentencesGuarded(text, rules)
         return text.trim()
     }
 
@@ -221,7 +223,7 @@ object LocalRuleEngine : TextEngine {
         text = text.replace(Regex("\\b(I regret to inform you)\\b", RegexOption.IGNORE_CASE), "I'm sorry to say")
         text = text.replace(Regex("\\b(is required)\\b", RegexOption.IGNORE_CASE), "is needed")
 
-        text = capitalizeSentences(text)
+        text = capitalizeSentencesGuarded(text, rules)
         return text.trim()
     }
 
@@ -285,6 +287,17 @@ object LocalRuleEngine : TextEngine {
         return Regex("(?<=[.!?])\\s+").split(text.trim())
             .map { it.trim() }
             .filter { it.isNotBlank() }
+    }
+
+    /** Capitalizes sentence starts without corrupting protected spans (URLs, emails, handles,
+     * decimals, abbreviations). Unlike [applyFixAndPolish], which capitalizes while its own
+     * protected placeholders are still in place, CONCISE/PROFESSIONAL/PUNCHY/FRIENDLY need a
+     * second capitalization pass *after* wordy-phrase/formality rewrites — by then
+     * applyFixAndPolish has already restored spans to plain text, so capitalizing directly would
+     * treat "example.com"'s dot as a sentence end and produce "example.Com". */
+    private fun capitalizeSentencesGuarded(text: String, rules: LanguageRules): String {
+        val (protectedText, saved) = protectSpans(text, rules)
+        return restoreSpans(capitalizeSentences(protectedText), saved)
     }
 
     private fun capitalizeSentences(text: String): String {

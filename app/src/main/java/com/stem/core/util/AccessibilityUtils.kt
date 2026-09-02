@@ -145,17 +145,20 @@ object AccessibilityUtils {
                     }
                 }
             }
-            clipboard.setPrimaryClip(clip)
 
-            val pasted = node.performAction(AccessibilityNodeInfoCompat.ACTION_PASTE)
-
-            if (previousClip != null) {
-                clipboard.setPrimaryClip(previousClip)
-            } else {
-                clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
+            // Restore the clipboard even if setPrimaryClip or the paste action throws —
+            // otherwise a mid-operation failure leaves the transformed text sitting in the
+            // user's clipboard indefinitely.
+            try {
+                clipboard.setPrimaryClip(clip)
+                node.performAction(AccessibilityNodeInfoCompat.ACTION_PASTE)
+            } finally {
+                if (previousClip != null) {
+                    clipboard.setPrimaryClip(previousClip)
+                } else {
+                    clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
+                }
             }
-
-            pasted
         } catch (_: Exception) {
             false
         }

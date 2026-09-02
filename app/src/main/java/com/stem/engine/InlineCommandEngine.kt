@@ -15,6 +15,11 @@ object InlineCommandEngine {
         data class RunAIPrompt(val body: String, val customPrompt: String, val summary: String) : CommandResult()
         data class SaveSnippet(val key: String, val expansion: String, val cleanedText: String) : CommandResult()
         data class SaveCustomCommand(val trigger: String, val prompt: String, val cleanedText: String) : CommandResult()
+        /** The `?undo`/`.undo` trigger matched and history has an entry to restore. Carries no
+         * popped value — evaluate() only reports availability (via the read-only
+         * [TransformHistory.canUndo]) so it stays a pure function; the caller pops exactly once,
+         * only when it actually commits to injecting the restored text. */
+        data class Undo(val nodeHashCode: Int) : CommandResult()
         object None : CommandResult()
     }
 
@@ -99,9 +104,8 @@ object InlineCommandEngine {
         }
 
         if (trimmed.endsWith("?undo", ignoreCase = true) || trimmed.endsWith(".undo", ignoreCase = true)) {
-            val previous = TransformHistory.popUndo(nodeHashCode) ?: TransformHistory.popUndo()
-            if (previous != null) {
-                return CommandResult.Replaced(previous, "?undo")
+            if (TransformHistory.canUndo(nodeHashCode) || TransformHistory.canUndo()) {
+                return CommandResult.Undo(nodeHashCode)
             }
         }
 

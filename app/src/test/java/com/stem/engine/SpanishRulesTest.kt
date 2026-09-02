@@ -7,10 +7,8 @@ import com.stem.core.models.LanguagePreference
 import com.stem.core.models.TextPayload
 import com.stem.core.models.TransformPreset
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 
 
@@ -21,16 +19,6 @@ import org.junit.Test
  * [com.stem.engine.SpanishRules] dictionaries.
  */
 class SpanishRulesTest {
-
-    @Before
-    fun setUp() {
-        LocalRuleEngine.languagePreference = LanguagePreference.SPANISH
-    }
-
-    @After
-    fun tearDown() {
-        LocalRuleEngine.languagePreference = LanguagePreference.AUTO
-    }
 
     @Test
     fun testDetectorRecognizesSpanishByAccentedCharacters() {
@@ -50,7 +38,7 @@ class SpanishRulesTest {
     @Test
     fun testFixAndPolishRestoresAccentsOnCommonWords() = runBlocking {
         val payload = TextPayload("aqui tambien esta el codigo")
-        val result = LocalRuleEngine.transform(payload, TransformPreset.FIX)
+        val result = LocalRuleEngine.transform(payload, TransformPreset.FIX, LanguagePreference.SPANISH)
 
         assertTrue(result.transformedText.contains("aquí", ignoreCase = true))
         assertTrue(result.transformedText.contains("también", ignoreCase = true))
@@ -60,7 +48,7 @@ class SpanishRulesTest {
     @Test
     fun testFixAndPolishAddsMissingInvertedQuestionMark() = runBlocking {
         val payload = TextPayload("Como estas hoy?")
-        val result = LocalRuleEngine.transform(payload, TransformPreset.FIX)
+        val result = LocalRuleEngine.transform(payload, TransformPreset.FIX, LanguagePreference.SPANISH)
 
         assertTrue(result.transformedText.contains("¿"))
     }
@@ -68,7 +56,7 @@ class SpanishRulesTest {
     @Test
     fun testProfessionalAppliesFormalRegister() = runBlocking {
         val payload = TextPayload("q tal, porfa avisame")
-        val result = LocalRuleEngine.transform(payload, TransformPreset.PROFESSIONAL)
+        val result = LocalRuleEngine.transform(payload, TransformPreset.PROFESSIONAL, LanguagePreference.SPANISH)
 
         assertTrue(result.transformedText.contains("por favor", ignoreCase = true))
     }

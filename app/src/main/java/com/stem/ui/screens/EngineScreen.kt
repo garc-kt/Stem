@@ -34,6 +34,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -53,6 +54,71 @@ import com.stem.core.models.StemUserSettings
 
 
 /**
+ * Returns an onFocusChanged callback that invokes [onSave] only on a genuine focused-to-
+ * unfocused transition — never on initial composition. Plain `onFocusChanged { if
+ * (!it.isFocused) save() }` also fires the moment the modifier attaches (its first reported
+ * state is unfocused), so a field re-entering composition — e.g. its LazyColumn item being
+ * recomposed after scrolling off/on screen — resaves its current value unprompted. If that
+ * value happens to be a blank/failed decrypt of a Keystore-encrypted API key, this used to
+ * overwrite the last-good ciphertext with an empty string.
+ */
+@Composable
+private fun rememberFocusLossSaver(onSave: () -> Unit): (FocusState) -> Unit {
+    var wasFocused by remember { mutableStateOf(false) }
+    return { focusState ->
+        if (wasFocused && !focusState.isFocused) {
+            onSave()
+        }
+        wasFocused = focusState.isFocused
+    }
+}
+
+/**
+ * Password-style API key field with an explicit "Clear key" action. Overwriting a stored key
+ * with a blank value is refused by [com.stem.core.models.PreferencesRepository] (a blind blur
+ * or a failed decrypt must never silently erase a working key) — clearing is only ever this
+ * deliberate action.
+ */
+@Composable
+private fun ApiKeyField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val stemTheme = LocalStemColors.current
+    val focusManager = LocalFocusManager.current
+
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text("API Key", style = MaterialTheme.typography.bodySmall) },
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onSave(); focusManager.clearFocus() }),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged(rememberFocusLossSaver(onSave)),
+            singleLine = true,
+            shape = StemSharpShape
+        )
+        if (value.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Clear key",
+                style = StemMonoBadge,
+                color = stemTheme.remove,
+                modifier = Modifier
+                    .clickable(role = Role.Button, onClick = onClear)
+                    .padding(vertical = 2.dp)
+            )
+        }
+    }
+}
+
+/**
  * Stem Settings / Engine Screen:
  * - AI Provider selector & inline API configurations
  * - Appearance segmented mode toggle (Light / Dark)
@@ -70,6 +136,9 @@ fun EngineScreen(
     onSaveGeminiSettings: (String, String) -> Unit = { _, _ -> },
     onSaveOpenAISettings: (String, String, String) -> Unit = { _, _, _ -> },
     onSaveClaudeSettings: (String, String) -> Unit = { _, _ -> },
+    onClearGeminiApiKey: () -> Unit = {},
+    onClearOpenAIApiKey: () -> Unit = {},
+    onClearClaudeApiKey: () -> Unit = {},
     onSaveCustomPromptInstruction: (String) -> Unit = {},
     onSelectThemeMode: (ThemeMode) -> Unit = {},
     onToggleHaptics: (Boolean) -> Unit = {},
@@ -143,7 +212,7 @@ fun EngineScreen(
                             keyboardActions = KeyboardActions(onDone = { onSaveOllamaUrl(ollamaUrlInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveOllamaUrl(ollamaUrlInput) },
+                                .onFocusChanged(rememberFocusLossSaver { onSaveOllamaUrl(ollamaUrlInput) }),
                             singleLine = true,
                             shape = StemSharpShape
                         )
@@ -156,7 +225,7 @@ fun EngineScreen(
                             keyboardActions = KeyboardActions(onDone = { onSaveOllamaModel(ollamaModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveOllamaModel(ollamaModelInput) },
+                                .onFocusChanged(rememberFocusLossSaver { onSaveOllamaModel(ollamaModelInput) }),
                             singleLine = true,
                             shape = StemSharpShape
                         )
@@ -176,18 +245,11 @@ fun EngineScreen(
                     onClick = { onSelectEngineMode(EngineMode.GEMINI_AI) }
                 ) {
                     Column(modifier = Modifier.padding(top = 10.dp)) {
-                        OutlinedTextField(
+                        ApiKeyField(
                             value = geminiKeyInput,
                             onValueChange = { geminiKeyInput = it },
-                            label = { Text("API Key", style = MaterialTheme.typography.bodySmall) },
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput); focusManager.clearFocus() }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveGeminiSettings(geminiKeyInput, geminiModelInput) },
-                            singleLine = true,
-                            shape = StemSharpShape
+                            onSave = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput) },
+                            onClear = { geminiKeyInput = ""; onClearGeminiApiKey() }
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
@@ -198,7 +260,7 @@ fun EngineScreen(
                             keyboardActions = KeyboardActions(onDone = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveGeminiSettings(geminiKeyInput, geminiModelInput) },
+                                .onFocusChanged(rememberFocusLossSaver { onSaveGeminiSettings(geminiKeyInput, geminiModelInput) }),
                             singleLine = true,
                             shape = StemSharpShape
                         )
@@ -226,23 +288,16 @@ fun EngineScreen(
                             keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
+                                .onFocusChanged(rememberFocusLossSaver { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) }),
                             singleLine = true,
                             shape = StemSharpShape
                         )
                         Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
+                        ApiKeyField(
                             value = openAiKeyInput,
                             onValueChange = { openAiKeyInput = it },
-                            label = { Text("API Key", style = MaterialTheme.typography.bodySmall) },
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
-                            singleLine = true,
-                            shape = StemSharpShape
+                            onSave = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
+                            onClear = { openAiKeyInput = ""; onClearOpenAIApiKey() }
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
@@ -253,7 +308,7 @@ fun EngineScreen(
                             keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
+                                .onFocusChanged(rememberFocusLossSaver { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) }),
                             singleLine = true,
                             shape = StemSharpShape
                         )
@@ -273,18 +328,11 @@ fun EngineScreen(
                     onClick = { onSelectEngineMode(EngineMode.CLAUDE_AI) }
                 ) {
                     Column(modifier = Modifier.padding(top = 10.dp)) {
-                        OutlinedTextField(
+                        ApiKeyField(
                             value = claudeKeyInput,
                             onValueChange = { claudeKeyInput = it },
-                            label = { Text("API Key", style = MaterialTheme.typography.bodySmall) },
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput); focusManager.clearFocus() }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveClaudeSettings(claudeKeyInput, claudeModelInput) },
-                            singleLine = true,
-                            shape = StemSharpShape
+                            onSave = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput) },
+                            onClear = { claudeKeyInput = ""; onClearClaudeApiKey() }
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
@@ -295,14 +343,13 @@ fun EngineScreen(
                             keyboardActions = KeyboardActions(onDone = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onFocusChanged { if (!it.isFocused) onSaveClaudeSettings(claudeKeyInput, claudeModelInput) },
+                                .onFocusChanged(rememberFocusLossSaver { onSaveClaudeSettings(claudeKeyInput, claudeModelInput) }),
                             singleLine = true,
                             shape = StemSharpShape
                         )
-                        TemperatureControl(
-                            temperature = userSettings.temperature,
-                            onSaveTemperature = onSaveTemperature
-                        )
+                        // No TemperatureControl here: current Claude models (Sonnet 5 / Opus 5 /
+                        // 4.7+) reject a temperature parameter with a 400, and ClaudeClient
+                        // never sends one — a slider that does nothing is worse than no slider.
                     }
                 }
             }

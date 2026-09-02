@@ -3,6 +3,7 @@ package com.stem.engine
 import com.stem.engine.InlineCommandEngine
 import com.stem.engine.TransformHistory
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -134,9 +135,23 @@ class InlineCommandEngineTest {
         val input = "new edited text ?undo"
         val result = InlineCommandEngine.evaluate(input, 123)
 
-        assertTrue(result is InlineCommandEngine.CommandResult.Replaced)
-        val replaced = (result as InlineCommandEngine.CommandResult.Replaced).newText
-        assertEquals("original text before edit", replaced)
+        assertTrue(result is InlineCommandEngine.CommandResult.Undo)
+        assertEquals(123, (result as InlineCommandEngine.CommandResult.Undo).nodeHashCode)
+        // evaluate() is pure: it must not have popped the history entry itself.
+        assertTrue(TransformHistory.canUndo(123))
+    }
+
+    @Test
+    fun testUndoTriggerDoesNotDoublePopOnRepeatedEvaluation() {
+        TransformHistory.recordChange(456, "before", "after")
+
+        InlineCommandEngine.evaluate("after ?undo", 456)
+        InlineCommandEngine.evaluate("after ?undo", 456)
+
+        // Calling evaluate() twice must not consume the history entry twice — it never pops.
+        assertTrue(TransformHistory.canUndo(456))
+        assertEquals("before", TransformHistory.popUndo(456))
+        assertFalse(TransformHistory.canUndo(456))
     }
 
     @Test
