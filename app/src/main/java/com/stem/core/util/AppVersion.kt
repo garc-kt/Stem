@@ -13,6 +13,7 @@ object AppVersion {
     val patch: Int get() = BuildConfig.VERSION_PATCH
     val buildCounter: Int get() = BuildConfig.BUILD_COUNTER
     val versionCode: Int get() = BuildConfig.STRUCTURED_VERSION_CODE
+    val versionName: String get() = BuildConfig.VERSION_NAME
 
-    val displayString: String get() = "Build $versionCode"
+    val displayString: String get() = "v$versionName (Build $versionCode)"
 }

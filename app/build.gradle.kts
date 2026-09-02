@@ -18,11 +18,13 @@ val versionProps = Properties().apply {
 val versionMajor = versionProps.getProperty("VERSION_MAJOR", "1").toInt()
 val versionMinor = versionProps.getProperty("VERSION_MINOR", "0").toInt()
 val versionPatch = versionProps.getProperty("VERSION_PATCH", "0").toInt()
+val versionPreRelease = versionProps.getProperty("VERSION_PRE_RELEASE", "").trim()
 val buildCounter = (System.getenv("GITHUB_RUN_NUMBER") ?: System.getenv("BUILD_NUMBER") ?: versionProps.getProperty("VERSION_BUILD", "1")).toIntOrNull() ?: 1
 
 // Structured Decimal Mask / CI Build Counter:
 // MAJOR (0-214) * 1,000,000 + MINOR (0-99) * 10,000 + PATCH (0-99) * 100 + BUILD (0-99)
 val structuredVersionCode = (versionMajor * 1_000_000) + (versionMinor * 10_000) + (versionPatch * 100) + (buildCounter % 100)
+val semanticVersionName = if (versionPreRelease.isNotEmpty()) "$versionMajor.$versionMinor.$versionPatch-$versionPreRelease" else "$versionMajor.$versionMinor.$versionPatch"
 
 // Release signing
 val keystorePropsFile = rootProject.file("keystore.properties")
@@ -33,7 +35,11 @@ val keystoreProps = Properties().apply {
 }
 fun keystoreProp(key: String): String? =
     keystoreProps.getProperty(key) ?: System.getenv(key)
-val hasReleaseSigning = keystoreProp("RELEASE_STORE_FILE") != null
+val releaseStoreFile = keystoreProp("RELEASE_STORE_FILE")?.let { 
+    val f = file(it)
+    if (f.exists()) f else rootProject.file(it)
+}
+val hasReleaseSigning = releaseStoreFile != null && releaseStoreFile.exists()
 
 android {
     namespace = "com.stem"
@@ -43,18 +49,20 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = structuredVersionCode
+        versionName = semanticVersionName
 
         buildConfigField("int", "VERSION_MAJOR", versionMajor.toString())
         buildConfigField("int", "VERSION_MINOR", versionMinor.toString())
         buildConfigField("int", "VERSION_PATCH", versionPatch.toString())
         buildConfigField("int", "BUILD_COUNTER", buildCounter.toString())
         buildConfigField("int", "STRUCTURED_VERSION_CODE", structuredVersionCode.toString())
+        buildConfigField("String", "VERSION_NAME", "\"$semanticVersionName\"")
     }
 
     signingConfigs {
         if (hasReleaseSigning) {
             create("release") {
-                storeFile = file(keystoreProp("RELEASE_STORE_FILE")!!)
+                storeFile = releaseStoreFile
                 storePassword = keystoreProp("RELEASE_STORE_PASSWORD")
                 keyAlias = keystoreProp("RELEASE_KEY_ALIAS")
                 keyPassword = keystoreProp("RELEASE_KEY_PASSWORD")

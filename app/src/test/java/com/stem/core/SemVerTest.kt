@@ -15,7 +15,7 @@ class StructuredVersionCodeTest {
                            (AppVersion.patch * 100) + 
                            (AppVersion.buildCounter % 100)
         assertEquals(expectedCode, AppVersion.versionCode)
-        assertEquals("Build ${AppVersion.versionCode}", AppVersion.displayString)
+        assertEquals("v${AppVersion.versionName} (Build ${AppVersion.versionCode})", AppVersion.displayString)
     }
 }
 
