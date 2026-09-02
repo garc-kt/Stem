@@ -1,19 +1,19 @@
+<p align="right">
+  <a href="https://ko-fi.com/X5R825DY4X" target="_blank">
+    <img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" height="32" style="border:0px;height:32px;" alt="Buy Me a Coffee at ko-fi.com" />
+  </a>
+  &nbsp;
+  <a href="https://github.com/sponsors/garc-kt" target="_blank">
+    <img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" height="32" alt="Sponsor on GitHub" />
+  </a>
+</p>
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/icon-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="assets/icon-light.png">
     <img alt="Stem" src="assets/icon-light.png" width="120">
   </picture>
-</p>
-
-<p align="center">
-  <a href="https://ko-fi.com/X5R825DY4X" target="_blank">
-    <img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" height="36" style="border:0px;height:36px;" alt="Buy Me a Coffee at ko-fi.com" />
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/sponsors/garc-kt" target="_blank">
-    <img src="https://img.shields.io/badge/Sponsor%20on%20GitHub-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" height="36" alt="Sponsor on GitHub" />
-  </a>
 </p>
 
 # Stem
