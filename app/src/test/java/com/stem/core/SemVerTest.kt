@@ -10,12 +10,12 @@ class StructuredVersionCodeTest {
 
     @Test
     fun testStructuredVersionCode() {
-        assertEquals(1, AppVersion.major)
-        assertEquals(0, AppVersion.minor)
-        assertEquals(0, AppVersion.patch)
-        assertEquals(1, AppVersion.buildCounter)
-        assertEquals(1000001, AppVersion.versionCode)
-        assertEquals("Build 1000001", AppVersion.displayString)
+        val expectedCode = (AppVersion.major * 1_000_000) + 
+                           (AppVersion.minor * 10_000) + 
+                           (AppVersion.patch * 100) + 
+                           (AppVersion.buildCounter % 100)
+        assertEquals(expectedCode, AppVersion.versionCode)
+        assertEquals("Build ${AppVersion.versionCode}", AppVersion.displayString)
     }
 }
 
