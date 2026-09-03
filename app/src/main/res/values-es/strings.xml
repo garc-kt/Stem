@@ -9,6 +9,8 @@
     <string name="action_copy">Copiar</string>
     <string name="action_copied">Copiado</string>
     <string name="action_replace">Reemplazar</string>
+    <string name="action_grant">CONCEDER</string>
+    <string name="action_delete">Eliminar</string>
 
     <!-- Bottom/top navigation -->
     <string name="nav_tab_home">Inicio</string>
@@ -34,6 +36,7 @@
 
     <plurals name="words_saved_count">
         <item quantity="one">-%1$d palabra</item>
+        <item quantity="many">-%1$d palabras</item>
         <item quantity="other">-%1$d palabras</item>
     </plurals>
 
@@ -102,6 +105,10 @@
     <string name="snippets_expansion_placeholder">Frase completa de expansión</string>
     <string name="snippets_save_snippet_button">Guardar fragmento</string>
     <string name="snippets_delete_snippet_description">Eliminar fragmento</string>
+    <string name="snippets_delete_confirm_title">¿Eliminar fragmento?</string>
+    <string name="snippets_delete_confirm_message">¿Estás seguro de que deseas eliminar \"%1$s\"?</string>
+    <string name="snippets_delete_command_confirm_title">¿Eliminar comando personalizado?</string>
+    <string name="snippets_delete_command_confirm_message">¿Estás seguro de que deseas eliminar \"?%1$s\"?</string>
 
     <!-- Engine (Settings) screen -->
     <string name="engine_api_key_label">Clave de API</string>
@@ -133,6 +140,7 @@
     <string name="engine_excluded_apps_none">Ninguna app excluida</string>
     <plurals name="engine_excluded_apps_count">
         <item quantity="one">%1$d app excluida</item>
+        <item quantity="many">%1$d apps excluidas</item>
         <item quantity="other">%1$d apps excluidas</item>
     </plurals>
     <string name="engine_manage_button">GESTIONAR</string>
@@ -179,4 +187,32 @@
     <string name="onboarding_demo_wrong">aver</string>
     <string name="onboarding_demo_right">a ver</string>
     <string name="onboarding_demo_suffix">" si podemos terminar hoy"</string>
+
+    <!-- Language & Preset Settings -->
+    <string name="engine_language_header">PREFERENCIA DE IDIOMA</string>
+    <string name="engine_language_description">Elige las reglas de diccionario para correcciones locales de gramática, ortografía y tono.</string>
+    <string name="engine_language_auto">Automático</string>
+    <string name="engine_language_english">English</string>
+    <string name="engine_language_spanish">Español</string>
+    <string name="engine_language_portuguese">Português</string>
+
+    <string name="engine_default_preset_header">PREAJUSTE PREDETERMINADO</string>
+    <string name="engine_default_preset_description">Preajuste inicial seleccionado al resaltar texto o iniciar transformaciones.</string>
+
+    <string name="engine_master_directive_header">DIRECTIVA MAESTRA DE IA</string>
+    <string name="engine_master_directive_description">Instrucciones globales añadidas automáticamente a cada reescritura de IA (tono, dialecto, exclusiones).</string>
+    <string name="engine_master_directive_placeholder">p. ej. Escribir siempre en español neutro, evitar frases largas…</string>
+    <string name="engine_master_directive_save">Guardar directiva</string>
+    <string name="engine_master_directive_saved">Guardado</string>
+
+    <!-- Sandbox / Playground -->
+    <string name="home_sandbox_header">PROBAR STEM (ZONA DE PRUEBAS)</string>
+    <string name="home_sandbox_description">Prueba transformaciones, disparadores (;;fix, ;;calc: 5*20) y fragmentos en vivo:</string>
+    <string name="home_sandbox_placeholder">Escribe o pega texto aquí para experimentar…</string>
+    <string name="home_sandbox_enhance_button">MEJORAR</string>
+    <string name="home_sandbox_reset_button">RESTABLECER</string>
+    <string name="home_sandbox_sample_text">creo que la reunion es mañna para tomar una decicion</string>
+
+    <!-- Process Text ad-hoc custom prompt -->
+    <string name="process_text_custom_prompt_placeholder">Introduce una instrucción de IA personalizada (p. ej. traducir al francés)…</string>
 </resources>

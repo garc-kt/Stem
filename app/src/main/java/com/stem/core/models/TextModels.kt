@@ -71,7 +71,8 @@ enum class EngineMode(
 enum class LanguagePreference(val id: String, val label: String) {
     AUTO(id = "auto", label = "Auto-detect"),
     ENGLISH(id = "english", label = "English"),
-    SPANISH(id = "spanish", label = "Español");
+    SPANISH(id = "spanish", label = "Español"),
+    PORTUGUESE(id = "portuguese", label = "Português");
 
     companion object {
         fun fromId(id: String): LanguagePreference =

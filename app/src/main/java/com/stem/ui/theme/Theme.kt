@@ -40,7 +40,7 @@ private val StemLightColorScheme = lightColorScheme(
     surfaceContainerHigh = StemLightSurface3,
     surfaceContainerHighest = StemLightBorder,
     outline = StemLightBorder,
-    outlineVariant = StemLightBorder
+    outlineVariant = StemLightBorderSubtle
 )
 
 private val StemDarkColorScheme = darkColorScheme(
@@ -71,7 +71,7 @@ private val StemDarkColorScheme = darkColorScheme(
     surfaceContainerHigh = StemDarkSurface3,
     surfaceContainerHighest = StemDarkBorder,
     outline = StemDarkBorder,
-    outlineVariant = StemDarkBorder
+    outlineVariant = StemDarkBorderSubtle
 )
 
 @Composable

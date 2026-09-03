@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.stem.R
 import com.stem.ui.theme.LocalStemColors
+import com.stem.ui.theme.StemCardShape
 import com.stem.ui.theme.StemMonoBadge
 import com.stem.ui.theme.StemSharpShape
 
@@ -50,9 +51,9 @@ import com.stem.ui.theme.StemSharpShape
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ThinkingWordSkeleton(
+    modifier: Modifier = Modifier,
     text: String = "",
-    label: String = stringResource(R.string.thinking_default_label),
-    modifier: Modifier = Modifier
+    label: String = stringResource(R.string.thinking_default_label)
 ) {
     val stemTheme = LocalStemColors.current
     val infiniteTransition = rememberInfiniteTransition(label = "thinkingWordSkeleton")
@@ -70,7 +71,7 @@ fun ThinkingWordSkeleton(
     val shimmerBrush = Brush.horizontalGradient(
         colors = listOf(
             stemTheme.surface2.copy(alpha = 0.5f),
-            stemTheme.border.copy(alpha = 0.95f),
+            stemTheme.borderSubtle.copy(alpha = 0.95f),
             stemTheme.surface2.copy(alpha = 0.5f)
         ),
         startX = shimmerTranslate - 250f,
@@ -85,9 +86,9 @@ fun ThinkingWordSkeleton(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(StemSharpShape)
+            .clip(StemCardShape)
             .background(stemTheme.surface)
-            .border(1.dp, stemTheme.border, StemSharpShape)
+            .border(1.dp, stemTheme.borderSubtle, StemCardShape)
             .padding(12.dp)
     ) {
         Column {

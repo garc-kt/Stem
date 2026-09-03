@@ -6,8 +6,10 @@ import com.stem.app.StemApplication
 import com.stem.ui.theme.ThemeMode
 import com.stem.engine.TransformHistory
 import com.stem.core.models.EngineMode
+import com.stem.core.models.LanguagePreference
 import com.stem.core.models.PreferencesRepository
 import com.stem.core.models.StemUserSettings
+import com.stem.core.models.TransformPreset
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -69,6 +71,10 @@ class SettingsViewModel : ViewModel() {
     fun selectEngineMode(mode: EngineMode) = viewModelScope.launch { repository.setEngineMode(mode) }
 
     fun selectThemeMode(mode: ThemeMode) = viewModelScope.launch { repository.setThemeMode(mode) }
+
+    fun selectLanguagePreference(preference: LanguagePreference) = viewModelScope.launch { repository.setLanguagePreference(preference) }
+
+    fun selectDefaultPreset(preset: TransformPreset) = viewModelScope.launch { repository.setDefaultPreset(preset) }
 
     fun saveTemperature(temperature: Float) = viewModelScope.launch { repository.setTemperature(temperature) }
 

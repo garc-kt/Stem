@@ -159,7 +159,7 @@ cd Stem
 ```
 
 Compiled APKs will be located in:  
-`app/build/outputs/apk/release/Stem-v1.0.3.apk`
+`app/build/outputs/apk/release/Stem-v1.0.4.apk`
 
 ---
 

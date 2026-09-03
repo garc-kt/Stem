@@ -45,10 +45,11 @@ import com.stem.ui.theme.StemIconType
 import com.stem.ui.theme.StemIndicatorShape
 import com.stem.ui.theme.StemLogoMark
 import com.stem.ui.theme.StemMonoBadge
-import com.stem.ui.theme.StemSharpShape
 import com.stem.core.models.DiffToken
 import com.stem.core.models.DiffType
 import com.stem.ui.components.DiffViewer
+import com.stem.ui.components.StemButton
+import com.stem.ui.components.StemCard
 
 
 
@@ -146,32 +147,19 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         // Bottom CTA Button
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(StemSharpShape)
-                .background(stemTheme.ink)
-                .clickable(
-                    role = Role.Button,
-                    onClick = {
-                        if (step < totalSteps - 1) step++ else onFinish()
-                    }
-                )
-                .padding(vertical = 12.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(
-                    when (step) {
-                        0 -> R.string.onboarding_cta_get_started
-                        1 -> if (hasAccessibilityPermission) R.string.onboarding_cta_continue else R.string.onboarding_cta_next
-                        else -> R.string.onboarding_cta_open_stem
-                    }
-                ),
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                color = stemTheme.onInk
-            )
-        }
+        StemButton(
+            text = stringResource(
+                when (step) {
+                    0 -> R.string.onboarding_cta_get_started
+                    1 -> if (hasAccessibilityPermission) R.string.onboarding_cta_continue else R.string.onboarding_cta_next
+                    else -> R.string.onboarding_cta_open_stem
+                }
+            ),
+            onClick = {
+                if (step < totalSteps - 1) step++ else onFinish()
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -204,14 +192,7 @@ private fun WelcomeStep() {
         Spacer(modifier = Modifier.height(28.dp))
 
         // Feature Card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(StemCardShape)
-                .background(stemTheme.surface)
-                .border(1.dp, stemTheme.border, StemCardShape)
-                .padding(16.dp)
-        ) {
+        StemCard {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 FeatureRow(
                     iconType = StemIconType.SQUARE_OUTLINE,
@@ -286,61 +267,42 @@ private fun AccessibilityStep(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Permission Card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(StemCardShape)
-                .background(stemTheme.surface)
-                .border(1.dp, stemTheme.border, StemCardShape)
-                .padding(16.dp)
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = stringResource(R.string.onboarding_accessibility_card_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = stemTheme.ink
-                    )
-                    if (isGranted) {
-                        Text(
-                            text = stringResource(R.string.onboarding_accessibility_granted),
-                            style = StemMonoBadge,
-                            color = stemTheme.add
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
+        StemCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
-                    text = stringResource(R.string.onboarding_accessibility_card_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = stemTheme.inkMuted
+                    text = stringResource(R.string.onboarding_accessibility_card_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = stemTheme.ink
                 )
-
-                if (!isGranted) {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(StemSharpShape)
-                            .background(stemTheme.surface2)
-                            .border(1.dp, stemTheme.border, StemSharpShape)
-                            .clickable(role = Role.Button, onClick = onGrant)
-                            .padding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.onboarding_enable_in_settings_button),
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = stemTheme.ink
-                        )
-                    }
+                if (isGranted) {
+                    Text(
+                        text = stringResource(R.string.onboarding_accessibility_granted),
+                        style = StemMonoBadge,
+                        color = stemTheme.add
+                    )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = stringResource(R.string.onboarding_accessibility_card_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = stemTheme.inkMuted
+            )
+
+            if (!isGranted) {
+                Spacer(modifier = Modifier.height(14.dp))
+                StemButton(
+                    text = stringResource(R.string.onboarding_enable_in_settings_button),
+                    onClick = onGrant,
+                    isPrimary = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
@@ -376,32 +338,23 @@ private fun DoneStep() {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Simulation Demo Box
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(StemCardShape)
-                .background(stemTheme.surface)
-                .border(1.dp, stemTheme.border, StemCardShape)
-                .padding(16.dp)
-        ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.onboarding_try_it_out_badge),
-                    style = StemMonoBadge,
-                    color = stemTheme.inkFaint
-                )
+        StemCard {
+            Text(
+                text = stringResource(R.string.onboarding_try_it_out_badge),
+                style = StemMonoBadge,
+                color = stemTheme.inkFaint
+            )
 
-                Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                DiffViewer(
-                    diffTokens = listOf(
-                        DiffToken(stringResource(R.string.onboarding_demo_prefix), DiffType.UNMODIFIED),
-                        DiffToken(stringResource(R.string.onboarding_demo_wrong), DiffType.DELETED),
-                        DiffToken(stringResource(R.string.onboarding_demo_right), DiffType.ADDED),
-                        DiffToken(stringResource(R.string.onboarding_demo_suffix), DiffType.UNMODIFIED)
-                    )
+            DiffViewer(
+                diffTokens = listOf(
+                    DiffToken(stringResource(R.string.onboarding_demo_prefix), DiffType.UNMODIFIED),
+                    DiffToken(stringResource(R.string.onboarding_demo_wrong), DiffType.DELETED),
+                    DiffToken(stringResource(R.string.onboarding_demo_right), DiffType.ADDED),
+                    DiffToken(stringResource(R.string.onboarding_demo_suffix), DiffType.UNMODIFIED)
                 )
-            }
+            )
         }
     }
 }

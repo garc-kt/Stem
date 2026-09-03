@@ -17,12 +17,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,33 +39,46 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.stem.R
-import com.stem.ui.theme.LocalStemColors
-import com.stem.ui.theme.StemCardShape
-import com.stem.ui.theme.StemMonoBadge
-import com.stem.ui.theme.StemSharpShape
-import com.stem.engine.TransformHistory
-import com.stem.core.models.EngineMode
 import com.stem.core.models.StemUserSettings
-
-
+import com.stem.core.models.TextPayload
+import com.stem.core.models.TransformPreset
+import com.stem.core.models.TransformResult
+import com.stem.engine.DiffCalculator
+import com.stem.engine.InlineCommandEngine
+import com.stem.engine.LocalRuleEngine
+import com.stem.engine.TextEngineProvider
+import com.stem.engine.TransformHistory
+import com.stem.ui.components.BeforeAfterDiffBlock
+import com.stem.ui.components.DiffViewer
+import com.stem.ui.components.PresetChipsRow
+import com.stem.ui.components.StemButton
+import com.stem.ui.components.StemCard
+import com.stem.ui.components.StemSectionHeader
+import com.stem.ui.components.StemStatusPill
+import com.stem.ui.theme.LocalStemColors
+import com.stem.ui.theme.StemMonoBadge
+import com.stem.ui.theme.StemPillShape
+import com.stem.ui.theme.StemSharpShape
+import kotlinx.coroutines.launch
 
 /**
  * Stem Home Screen:
- * - Clean status card (Active / Paused)
- * - Active AI Engine summary card
- * - Recent Transformations list
+ * Clean, minimalist dashboard featuring:
+ * - Unified Status Hero (Pulsing live status, active engine pill, switch)
+ * - Interactive Try Stem Sandbox (Instant keystroke testing & live diff)
+ * - Compact Recent Activity
  */
 @Composable
 fun HomeScreen(
     userSettings: StemUserSettings,
     hasAccessibilityPermission: Boolean,
+    modifier: Modifier = Modifier,
     recentHistory: List<TransformHistory.Snapshot> = emptyList(),
     onRequestAccessibilityPermission: () -> Unit = {},
     onToggleService: (Boolean) -> Unit = {},
     onNavigateToSnippets: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onNavigateToSettings: () -> Unit = {}
 ) {
     val stemTheme = LocalStemColors.current
     val isFullyEnabled = userSettings.serviceEnabled && hasAccessibilityPermission
@@ -71,295 +90,288 @@ fun HomeScreen(
             .fillMaxSize()
             .background(stemTheme.bg)
     ) {
-        // 1. Stem Active / Paused Card
+        // 1. Unified Hero Status Card (Status + Engine + Master Switch)
         item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(StemCardShape)
-                    .background(stemTheme.surface)
-                    .border(1.dp, stemTheme.border, StemCardShape)
-                    .padding(18.dp)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(9.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isFullyEnabled) stemTheme.add else stemTheme.remove)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = stringResource(if (isFullyEnabled) R.string.home_status_active else R.string.home_status_paused),
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = stemTheme.ink
-                            )
-                        }
+            StemCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        StemStatusPill(
+                            text = stringResource(if (isFullyEnabled) R.string.home_status_active else R.string.home_status_paused),
+                            dotColor = if (isFullyEnabled) stemTheme.add else stemTheme.remove,
+                            isPulsing = isFullyEnabled,
+                            backgroundColor = stemTheme.surface2
+                        )
 
-                        Switch(
-                            checked = userSettings.serviceEnabled,
-                            onCheckedChange = { enabled ->
-                                if (enabled && !hasAccessibilityPermission) onRequestAccessibilityPermission()
-                                onToggleService(enabled)
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = stemTheme.onInk,
-                                checkedTrackColor = stemTheme.ink,
-                                uncheckedThumbColor = stemTheme.inkMuted,
-                                uncheckedTrackColor = stemTheme.surface2
-                            )
+                        // Active engine badge with navigation affordance
+                        StemStatusPill(
+                            text = userSettings.engineMode.title,
+                            dotColor = if (userSettings.engineMode.isCloud) stemTheme.inkMuted else stemTheme.add,
+                            trailingText = "→",
+                            onClick = onNavigateToSettings,
+                            backgroundColor = stemTheme.surface2
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = stringResource(if (isFullyEnabled) R.string.home_status_active_description else R.string.home_status_paused_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = stemTheme.inkMuted
+                    Switch(
+                        checked = userSettings.serviceEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled && !hasAccessibilityPermission) onRequestAccessibilityPermission()
+                            onToggleService(enabled)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = stemTheme.onInk,
+                            checkedTrackColor = stemTheme.ink,
+                            uncheckedThumbColor = stemTheme.inkMuted,
+                            uncheckedTrackColor = stemTheme.surface2,
+                            uncheckedBorderColor = stemTheme.borderSubtle
+                        )
                     )
+                }
 
-                    if (!hasAccessibilityPermission) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(StemSharpShape)
-                                .background(stemTheme.ink)
-                                .clickable(role = Role.Button, onClick = onRequestAccessibilityPermission)
-                                .padding(horizontal = 14.dp, vertical = 8.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.home_enable_accessibility_button),
-                                style = StemMonoBadge,
-                                color = stemTheme.onInk
-                            )
-                        }
+                if (!hasAccessibilityPermission) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(StemSharpShape)
+                            .background(stemTheme.surface2)
+                            .border(1.dp, stemTheme.borderSubtle, StemSharpShape)
+                            .clickable(role = Role.Button, onClick = onRequestAccessibilityPermission)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.home_enable_accessibility_button),
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                            color = stemTheme.ink
+                        )
+                        Text(
+                            text = stringResource(R.string.action_grant) + " →",
+                            style = StemMonoBadge.copy(fontWeight = FontWeight.Bold),
+                            color = stemTheme.ink
+                        )
                     }
                 }
             }
         }
 
-        // 2. Active AI Provider Overview Card
+        // 2. Interactive Transformation Sandbox (Clean & Minimalist)
         item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(StemCardShape)
-                    .background(stemTheme.surface)
-                    .border(1.dp, stemTheme.border, StemCardShape)
-                    .clickable(role = Role.Button, onClick = onNavigateToSettings)
-                    .padding(16.dp)
-            ) {
-                Column {
+            val scope = rememberCoroutineScope()
+            val sampleText = stringResource(R.string.home_sandbox_sample_text)
+            var inputText by remember { mutableStateOf(sampleText) }
+            var selectedPreset by remember(userSettings.defaultPreset) { mutableStateOf(userSettings.defaultPreset) }
+            var transformResult by remember { mutableStateOf<TransformResult?>(null) }
+            var isRunning by remember { mutableStateOf(false) }
+
+            fun runTransformation(preset: TransformPreset = selectedPreset) {
+                if (inputText.isBlank() || isRunning) return
+                isRunning = true
+                scope.launch {
+                    try {
+                        val engine = TextEngineProvider.getEngine(userSettings)
+                        val payload = TextPayload(inputText)
+                        val res = engine.transform(
+                            payload = payload,
+                            preset = preset,
+                            languagePreference = userSettings.languagePreference
+                        )
+                        transformResult = res
+                    } catch (e: Exception) {
+                        val res = LocalRuleEngine.transform(
+                            payload = TextPayload(inputText),
+                            preset = preset,
+                            languagePreference = userSettings.languagePreference
+                        )
+                        transformResult = res
+                    } finally {
+                        isRunning = false
+                    }
+                }
+            }
+
+            StemCard {
+                StemSectionHeader(
+                    title = stringResource(R.string.home_sandbox_header),
+                    action = {
+                        if (inputText != sampleText || transformResult != null) {
+                            Text(
+                                text = stringResource(R.string.home_sandbox_reset_button),
+                                style = StemMonoBadge,
+                                color = stemTheme.remove,
+                                modifier = Modifier
+                                    .clickable(role = Role.Button, onClick = {
+                                        inputText = sampleText
+                                        transformResult = null
+                                    })
+                                    .padding(vertical = 2.dp)
+                            )
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { newText ->
+                        inputText = newText
+                        val cmd = InlineCommandEngine.evaluate(
+                            text = newText,
+                            nodeHashCode = 0,
+                            snippets = userSettings.snippets,
+                            customCommands = userSettings.customCommands
+                        )
+                        when (cmd) {
+                            is InlineCommandEngine.CommandResult.Replaced -> {
+                                inputText = cmd.newText
+                                transformResult = null
+                            }
+                            is InlineCommandEngine.CommandResult.RunAIPreset -> {
+                                selectedPreset = cmd.preset
+                                inputText = cmd.body
+                                runTransformation(cmd.preset)
+                            }
+                            else -> {}
+                        }
+                    },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.home_sandbox_placeholder),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = stemTheme.inkFaint
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = StemSharpShape,
+                    minLines = 2,
+                    maxLines = 4,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = stemTheme.bg,
+                        unfocusedContainerColor = stemTheme.bg,
+                        focusedBorderColor = stemTheme.ink,
+                        unfocusedBorderColor = stemTheme.borderSubtle,
+                        cursorColor = stemTheme.ink
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                PresetChipsRow(
+                    selectedPreset = selectedPreset,
+                    onPresetSelected = { preset ->
+                        selectedPreset = preset
+                        runTransformation(preset)
+                    },
+                    compact = true,
+                    presets = listOf(
+                        TransformPreset.FIX,
+                        TransformPreset.CONCISE,
+                        TransformPreset.PROFESSIONAL,
+                        TransformPreset.PUNCHY,
+                        TransformPreset.FRIENDLY,
+                        TransformPreset.SUMMARIZE,
+                        TransformPreset.BULLETIZE
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    StemButton(
+                        text = stringResource(R.string.home_sandbox_enhance_button),
+                        onClick = { runTransformation(selectedPreset) },
+                        enabled = inputText.isNotBlank(),
+                        isLoading = isRunning,
+                        loadingText = stringResource(R.string.thinking_default_label)
+                    )
+                }
+
+                transformResult?.let { result ->
+                    Spacer(modifier = Modifier.height(12.dp))
+                    if (selectedPreset == TransformPreset.SUMMARIZE || selectedPreset == TransformPreset.BULLETIZE || selectedPreset == TransformPreset.EXPAND) {
+                        BeforeAfterDiffBlock(
+                            beforeText = inputText,
+                            afterText = result.transformedText
+                        )
+                    } else {
+                        val tokens = remember(result) {
+                            if (result.diffTokens.isNotEmpty()) {
+                                result.diffTokens
+                            } else {
+                                DiffCalculator.calculateDiff(inputText, result.transformedText)
+                            }
+                        }
+                        DiffViewer(diffTokens = tokens)
+                    }
+                }
+            }
+        }
+
+        // 3. Recent Activity (Clean & Compact)
+        if (recentHistory.isNotEmpty()) {
+            item {
+                StemSectionHeader(
+                    title = stringResource(R.string.home_recent_transforms_header),
+                    action = {
+                        Text(
+                            text = stringResource(R.string.home_see_all_button),
+                            style = StemMonoBadge,
+                            color = stemTheme.inkMuted,
+                            modifier = Modifier
+                                .clickable(role = Role.Button, onClick = onNavigateToHistory)
+                                .padding(4.dp)
+                        )
+                    }
+                )
+            }
+
+            items(recentHistory.take(3), key = { it.id }) { entry ->
+                StemCard(contentPadding = PaddingValues(12.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = stringResource(R.string.home_active_engine_badge),
+                            text = entry.presetName.uppercase(),
+                            style = StemMonoBadge.copy(fontWeight = FontWeight.Bold),
+                            color = stemTheme.ink
+                        )
+                        Text(
+                            text = stringResource(R.string.home_recent_badge),
                             style = StemMonoBadge,
                             color = stemTheme.inkFaint
                         )
-
-                        Box(
-                            modifier = Modifier
-                                .clip(StemSharpShape)
-                                .background(stemTheme.surface2)
-                                .border(1.dp, stemTheme.border, StemSharpShape)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    when (userSettings.engineMode) {
-                                        EngineMode.LOCAL_RULES -> R.string.home_engine_scope_local
-                                        EngineMode.OLLAMA_AI -> R.string.home_engine_scope_lan
-                                        else -> R.string.home_engine_scope_cloud
-                                    }
-                                ),
-                                style = StemMonoBadge,
-                                color = stemTheme.ink
-                            )
-                        }
                     }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = when (userSettings.engineMode) {
-                            EngineMode.LOCAL_RULES -> stringResource(R.string.home_engine_summary_local)
-                            EngineMode.OLLAMA_AI -> stringResource(R.string.home_engine_summary_ollama, userSettings.ollamaModel)
-                            EngineMode.GEMINI_AI -> stringResource(R.string.home_engine_summary_gemini, userSettings.geminiModel)
-                            EngineMode.OPENAI_COMPATIBLE -> stringResource(R.string.home_engine_summary_openai, userSettings.openaiModel)
-                            EngineMode.CLAUDE_AI -> stringResource(R.string.home_engine_summary_claude, userSettings.claudeModel)
-                        },
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = stemTheme.ink
+                        text = entry.originalText,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = stemTheme.remove,
+                            textDecoration = TextDecoration.LineThrough
+                        ),
+                        maxLines = 1
                     )
-
                     Spacer(modifier = Modifier.height(2.dp))
-
                     Text(
-                        text = stringResource(R.string.home_engine_tap_to_configure),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = stemTheme.inkMuted
+                        text = entry.replacedText,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = stemTheme.add,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        maxLines = 2
                     )
-                }
-            }
-        }
-
-        // 3. Quick Action Tiles (Snippets & History)
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(StemCardShape)
-                        .background(stemTheme.surface)
-                        .border(1.dp, stemTheme.border, StemCardShape)
-                        .clickable(role = Role.Button, onClick = onNavigateToSnippets)
-                        .padding(14.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.nav_tab_snippets).uppercase(),
-                            style = StemMonoBadge,
-                            color = stemTheme.ink
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.home_snippets_tile_description),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = stemTheme.inkMuted,
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(StemCardShape)
-                        .background(stemTheme.surface)
-                        .border(1.dp, stemTheme.border, StemCardShape)
-                        .clickable(role = Role.Button, onClick = onNavigateToHistory)
-                        .padding(14.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.nav_tab_history).uppercase(),
-                            style = StemMonoBadge,
-                            color = stemTheme.ink
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.home_history_tile_description),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = stemTheme.inkMuted,
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-            }
-        }
-
-        // 4. Recent Transformations Header
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(R.string.home_recent_transforms_header),
-                    style = StemMonoBadge,
-                    color = stemTheme.inkFaint
-                )
-
-                Text(
-                    text = stringResource(R.string.home_see_all_button),
-                    style = StemMonoBadge,
-                    color = stemTheme.inkMuted,
-                    modifier = Modifier
-                        .clickable(role = Role.Button, onClick = onNavigateToHistory)
-                        .padding(4.dp)
-                )
-            }
-        }
-
-        if (recentHistory.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(StemCardShape)
-                        .background(stemTheme.surface)
-                        .border(1.dp, stemTheme.border, StemCardShape)
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.home_recent_transforms_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = stemTheme.inkMuted
-                    )
-                }
-            }
-        } else {
-            items(recentHistory.take(4), key = { it.id }) { entry ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(StemCardShape)
-                        .background(stemTheme.surface)
-                        .border(1.dp, stemTheme.border, StemCardShape)
-                        .padding(14.dp)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = formatHistoryCommand(entry.presetName),
-                                style = StemMonoBadge,
-                                color = stemTheme.ink
-                            )
-                            Text(
-                                text = stringResource(R.string.home_recent_badge),
-                                style = StemMonoBadge,
-                                color = stemTheme.inkFaint
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = entry.originalText,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = stemTheme.remove,
-                                textDecoration = TextDecoration.LineThrough
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = entry.replacedText,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = stemTheme.add,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                    }
                 }
             }
         }
     }
 }
-

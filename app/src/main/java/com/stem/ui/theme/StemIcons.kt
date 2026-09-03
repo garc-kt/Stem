@@ -263,8 +263,8 @@ enum class StemTab(@param:StringRes val titleRes: Int) {
  */
 @Composable
 fun KoFiIcon(
-    color: Color = Color(0xFF72A4F2),
     modifier: Modifier = Modifier,
+    color: Color = Color(0xFF72A4F2),
     size: Dp = 16.dp
 ) {
     Canvas(modifier = modifier.size(size)) {
@@ -320,8 +320,8 @@ fun KoFiIcon(
  */
 @Composable
 fun GitHubSponsorHeartIcon(
-    color: Color = Color(0xFFEA4AAA),
     modifier: Modifier = Modifier,
+    color: Color = Color(0xFFEA4AAA),
     size: Dp = 16.dp
 ) {
     Canvas(modifier = modifier.size(size)) {

@@ -248,6 +248,18 @@ class PreferencesRepository(private val context: Context) {
         }
     }
 
+    suspend fun setLanguagePreference(preference: LanguagePreference) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LANGUAGE_PREFERENCE] = preference.id
+        }
+    }
+
+    suspend fun setDefaultPreset(preset: TransformPreset) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.DEFAULT_PRESET] = preset.id
+        }
+    }
+
     suspend fun setTemperature(temperature: Float) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.TEMPERATURE] = temperature.coerceIn(0.0f, 1.0f)

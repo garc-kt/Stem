@@ -225,5 +225,127 @@ class InlineCommandEngineTest {
         val result = InlineCommandEngine.evaluate("This is a normal sentence with a period.", 123)
         assertTrue(result is InlineCommandEngine.CommandResult.None)
     }
+
+    @Test
+    fun testSemicolonPrefixPresets() {
+        val tests = listOf(
+            "Draft ;;fix" to com.stem.core.models.TransformPreset.FIX,
+            "Draft ;;concise" to com.stem.core.models.TransformPreset.CONCISE,
+            "Draft ;;formal" to com.stem.core.models.TransformPreset.PROFESSIONAL,
+            "Draft ;;punchy" to com.stem.core.models.TransformPreset.PUNCHY,
+            "Draft ;;friendly" to com.stem.core.models.TransformPreset.FRIENDLY,
+            "Draft ;;bullets" to com.stem.core.models.TransformPreset.BULLETIZE,
+            "Draft ;;summarize" to com.stem.core.models.TransformPreset.SUMMARIZE,
+            "Draft ;;expand" to com.stem.core.models.TransformPreset.EXPAND
+        )
+
+        for ((input, expectedPreset) in tests) {
+            val result = InlineCommandEngine.evaluate(input, 123)
+            assertTrue("Expected $expectedPreset for '$input'", result is InlineCommandEngine.CommandResult.RunAIPreset)
+            assertEquals(expectedPreset, (result as InlineCommandEngine.CommandResult.RunAIPreset).preset)
+            assertEquals("Draft", result.body)
+        }
+    }
+
+    @Test
+    fun testSemicolonPrefixCalcAndSnippetsAndCustomCommands() {
+        // Calc with ;;calc:
+        val calcResult = InlineCommandEngine.evaluate("Total: ;;calc: 50 * 2 + 5", 123)
+        assertTrue(calcResult is InlineCommandEngine.CommandResult.Replaced)
+        assertEquals("Total: 105", (calcResult as InlineCommandEngine.CommandResult.Replaced).newText)
+
+        // Snippet with ;;email
+        val snippets = mapOf("email" to "contact@stem.ai")
+        val snipResult = InlineCommandEngine.evaluate("Reach me at ;;email", 123, snippets = snippets)
+        assertTrue(snipResult is InlineCommandEngine.CommandResult.Replaced)
+        assertEquals("Reach me at contact@stem.ai", (snipResult as InlineCommandEngine.CommandResult.Replaced).newText)
+
+        // Custom command with ;;roast
+        val custom = mapOf("roast" to "Roast this aggressively")
+        val customResult = InlineCommandEngine.evaluate("Check my outfit ;;roast", 123, customCommands = custom)
+        assertTrue(customResult is InlineCommandEngine.CommandResult.RunAIPrompt)
+        assertEquals("Check my outfit", (customResult as InlineCommandEngine.CommandResult.RunAIPrompt).body)
+        assertEquals("Roast this aggressively", customResult.customPrompt)
+
+        // Undo with ;;undo
+        TransformHistory.recordChange(999, "old text", "new text")
+        val undoResult = InlineCommandEngine.evaluate("new text ;;undo", 999)
+        assertTrue(undoResult is InlineCommandEngine.CommandResult.Undo)
+
+        // Now & date with ;;now and ;;date
+        val nowRes = InlineCommandEngine.evaluate("Done at ;;now", 123)
+        assertTrue(nowRes is InlineCommandEngine.CommandResult.Replaced)
+        assertTrue((nowRes as InlineCommandEngine.CommandResult.Replaced).newText.startsWith("Done at "))
+
+        val dateRes = InlineCommandEngine.evaluate("Deadline: ;;date", 123)
+        assertTrue(dateRes is InlineCommandEngine.CommandResult.Replaced)
+        assertTrue((dateRes as InlineCommandEngine.CommandResult.Replaced).newText.startsWith("Deadline: "))
+    }
+
+    @Test
+    fun testSingleDotDoesNotFalseTriggerOnDomainsOrFilenamesOrWords() {
+        val snippets = mapOf("com" to "commercial", "sh" to "shell script", "py" to "python")
+        val customCommands = mapOf("roast" to "Roast prompt")
+
+        // URL / domain
+        val urlResult = InlineCommandEngine.evaluate("Visit https://google.com", 123, snippets = snippets)
+        assertTrue("Expected None for google.com, got $urlResult", urlResult is InlineCommandEngine.CommandResult.None)
+
+        // Filename
+        val fileResult = InlineCommandEngine.evaluate("Execute script.sh", 123, snippets = snippets)
+        assertTrue("Expected None for script.sh, got $fileResult", fileResult is InlineCommandEngine.CommandResult.None)
+
+        // Preset command attached to word
+        val fixResult = InlineCommandEngine.evaluate("We deployed a hot.fix", 123)
+        assertTrue("Expected None for hot.fix, got $fixResult", fixResult is InlineCommandEngine.CommandResult.None)
+
+        // Built-in .now attached to word
+        val nowResult = InlineCommandEngine.evaluate("Need it right.now", 123)
+        assertTrue("Expected None for right.now, got $nowResult", nowResult is InlineCommandEngine.CommandResult.None)
+
+        // Built-in .date attached to word
+        val dateResult = InlineCommandEngine.evaluate("Check the due.date", 123)
+        assertTrue("Expected None for due.date, got $dateResult", dateResult is InlineCommandEngine.CommandResult.None)
+
+        // Custom command attached to word
+        val customResult = InlineCommandEngine.evaluate("Review app.roast", 123, customCommands = customCommands)
+        assertTrue("Expected None for app.roast, got $customResult", customResult is InlineCommandEngine.CommandResult.None)
+    }
+
+    @Test
+    fun testSingleDotTriggersCorrectlyWhenPrecededByWhitespaceOrStart() {
+        val snippets = mapOf("email" to "hello@stem.ai")
+        val customCommands = mapOf("roast" to "Roast prompt")
+
+        // Preceded by space: Snippet
+        val snipRes = InlineCommandEngine.evaluate("Reach out at .email", 123, snippets = snippets)
+        assertTrue(snipRes is InlineCommandEngine.CommandResult.Replaced)
+        assertEquals("Reach out at hello@stem.ai", (snipRes as InlineCommandEngine.CommandResult.Replaced).newText)
+
+        // At start of string: Snippet
+        val startSnip = InlineCommandEngine.evaluate(".email", 123, snippets = snippets)
+        assertTrue(startSnip is InlineCommandEngine.CommandResult.Replaced)
+        assertEquals("hello@stem.ai", (startSnip as InlineCommandEngine.CommandResult.Replaced).newText)
+
+        // Preceded by space: Preset
+        val presetRes = InlineCommandEngine.evaluate("Please polish this sentence .fix", 123)
+        assertTrue(presetRes is InlineCommandEngine.CommandResult.RunAIPreset)
+        assertEquals("Please polish this sentence", (presetRes as InlineCommandEngine.CommandResult.RunAIPreset).body)
+
+        // Preceded by space: Custom Command
+        val customRes = InlineCommandEngine.evaluate("Review my resume .roast", 123, customCommands = customCommands)
+        assertTrue(customRes is InlineCommandEngine.CommandResult.RunAIPrompt)
+        assertEquals("Review my resume", (customRes as InlineCommandEngine.CommandResult.RunAIPrompt).body)
+    }
+
+    @Test
+    fun testFormatHistoryCommand() {
+        assertEquals(";;fix", com.stem.ui.screens.formatHistoryCommand(";;fix"))
+        assertEquals("..expand", com.stem.ui.screens.formatHistoryCommand("..expand"))
+        assertEquals(".fix", com.stem.ui.screens.formatHistoryCommand(".fix"))
+        assertEquals("?formal", com.stem.ui.screens.formatHistoryCommand("?formal"))
+        assertEquals("?custom", com.stem.ui.screens.formatHistoryCommand("custom"))
+        assertEquals("?enhance", com.stem.ui.screens.formatHistoryCommand(""))
+    }
 }
 

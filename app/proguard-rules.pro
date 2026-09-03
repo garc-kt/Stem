@@ -29,3 +29,29 @@
 -keepclasseswithmembers class * {
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+# -----------------------------------------------------------------------------
+# R8 Aggressive Optimizations & Minification
+# -----------------------------------------------------------------------------
+-optimizationpasses 5
+-allowaccessmodification
+-repackageclasses ''
+
+# Strip Android logging in release builds to eliminate dead strings and method calls
+-assumenosideeffects class android.util.Log {
+    public static boolean isLoggable(java.lang.String, int);
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+    public static int w(...);
+    public static int e(...);
+}
+
+# Strip Kotlin runtime null check assertion intrinsics for smaller dex size
+-assumenosideeffects class kotlin.jvm.internal.Intrinsics {
+    public static void checkNotNullParameter(...);
+    public static void checkParameterIsNotNull(...);
+    public static void checkNotNull(...);
+    public static void checkExpressionValueIsNotNull(...);
+}
+

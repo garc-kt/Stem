@@ -29,6 +29,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +51,7 @@ import com.stem.R
 import com.stem.app.StemApplication
 import com.stem.core.models.StemUserSettings
 import com.stem.core.models.TextPayload
+import com.stem.core.models.TransformPreset
 import com.stem.core.models.TransformResult
 import com.stem.engine.TextEngineProvider
 import com.stem.ui.components.BeforeAfterDiffBlock
@@ -83,13 +85,20 @@ class ProcessTextActivity : ComponentActivity() {
                 .collectAsStateWithLifecycle(initialValue = StemUserSettings())
 
             var activePreset by remember(userSettings.defaultPreset) { mutableStateOf(userSettings.defaultPreset) }
+            var customInstructionInput by remember { mutableStateOf("") }
             var result by remember { mutableStateOf<TransformResult?>(null) }
             var isLoading by remember { mutableStateOf(false) }
 
-            LaunchedEffect(selectedText, activePreset, userSettings.engineMode) {
+            LaunchedEffect(selectedText, activePreset, userSettings.engineMode, customInstructionInput) {
+                if (activePreset == TransformPreset.CUSTOM && customInstructionInput.isBlank()) {
+                    return@LaunchedEffect
+                }
                 isLoading = true
                 val payload = TextPayload(text = selectedText)
-                val engine = TextEngineProvider.getEngine(userSettings)
+                val effectiveSettings = if (activePreset == TransformPreset.CUSTOM && customInstructionInput.isNotBlank()) {
+                    userSettings.copy(customPromptInstruction = customInstructionInput)
+                } else userSettings
+                val engine = TextEngineProvider.getEngine(effectiveSettings)
                 result = engine.transform(payload, activePreset, userSettings.languagePreference)
                 isLoading = false
             }
@@ -104,9 +113,9 @@ class ProcessTextActivity : ComponentActivity() {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth(0.92f)
-                            .shadow(24.dp, StemOverlayShape)
+                            .shadow(12.dp, StemOverlayShape)
                             .clip(StemOverlayShape)
-                            .border(1.dp, stemTheme.border, StemOverlayShape),
+                            .border(1.dp, stemTheme.borderSubtle, StemOverlayShape),
                         shape = StemOverlayShape,
                         color = stemTheme.surface
                     ) {
@@ -117,7 +126,7 @@ class ProcessTextActivity : ComponentActivity() {
                                     .align(Alignment.CenterHorizontally)
                                     .size(width = 36.dp, height = 3.dp)
                                     .clip(StemIndicatorShape)
-                                    .background(stemTheme.border)
+                                    .background(stemTheme.borderSubtle)
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -131,7 +140,7 @@ class ProcessTextActivity : ComponentActivity() {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = stringResource(R.string.process_text_selection_badge),
-                                        style = StemMonoBadge,
+                                        style = StemMonoBadge.copy(fontWeight = FontWeight.Bold),
                                         color = stemTheme.inkMuted
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -163,6 +172,31 @@ class ProcessTextActivity : ComponentActivity() {
                                 onPresetSelected = { activePreset = it },
                                 compact = true
                             )
+
+                            if (activePreset == TransformPreset.CUSTOM) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                OutlinedTextField(
+                                    value = customInstructionInput,
+                                    onValueChange = { customInstructionInput = it },
+                                    placeholder = {
+                                        Text(
+                                            stringResource(R.string.process_text_custom_prompt_placeholder),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = stemTheme.inkFaint
+                                        )
+                                    },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = StemSharpShape,
+                                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = stemTheme.bg,
+                                        unfocusedContainerColor = stemTheme.bg,
+                                        focusedBorderColor = stemTheme.ink,
+                                        unfocusedBorderColor = stemTheme.borderSubtle,
+                                        cursorColor = stemTheme.ink
+                                    )
+                                )
+                            }
 
                             Spacer(modifier = Modifier.height(12.dp))
 
@@ -217,7 +251,8 @@ class ProcessTextActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .weight(1f)
                                         .clip(StemSharpShape)
-                                        .border(1.dp, stemTheme.border, StemSharpShape)
+                                        .background(stemTheme.surface2)
+                                        .border(1.dp, stemTheme.borderSubtle, StemSharpShape)
                                         .clickable(
                                             role = Role.Button,
                                             onClick = {

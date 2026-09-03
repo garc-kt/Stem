@@ -192,3 +192,74 @@ object SpanishRules : LanguageRules {
         }
     }
 }
+
+object PortugueseRules : LanguageRules {
+    override val typoDictionary = mapOf(
+        "vc" to "você", "vcs" to "vocês", "tbm" to "também", "tb" to "também",
+        "pq" to "porque", "q" to "que", "agr" to "agora", "cmg" to "comigo",
+        "ctg" to "contigo", "msm" to "mesmo", "obg" to "obrigado", "blz" to "beleza",
+        "bjs" to "beijos", "bj" to "beijo", "flw" to "falou", "tmj" to "estamos juntos",
+        "fds" to "fim de semana", "pfv" to "por favor", "pfvr" to "por favor",
+        "voce" to "você", "voces" to "vocês", "nao" to "não", "estao" to "estão",
+        "tambem" to "também", "ja" to "já", "ate" to "até", "so" to "só",
+        "entao" to "então", "irmao" to "irmão", "irmaos" to "irmãos",
+        "situacao" to "situação", "atencao" to "atenção", "informacao" to "informação",
+        "producao" to "produção", "funcao" to "função", "direcao" to "direção",
+        "solucao" to "solução", "comunicacao" to "comunicação", "decisao" to "decisão",
+        "reuniao" to "reunião", "opiniao" to "opinião", "facil" to "fácil",
+        "dificil" to "difícil", "rapido" to "rápido", "ultimo" to "último",
+        "proximo" to "próximo", "codigo" to "código", "numero" to "número",
+        "pagina" to "página", "duvida" to "dúvida", "publico" to "público",
+        "medico" to "médico", "saude" to "saúde", "horario" to "horário",
+        "revisao" to "revisão", "concerteza" to "com certeza",
+        "derrepente" to "de repente", "porisso" to "por isso"
+    )
+
+    override val wordyPhrases = mapOf(
+        "com o objetivo de" to "para", "com a finalidade de" to "para",
+        "no sentido de" to "para", "a fim de que" to "para que", "a fim de" to "para",
+        "devido ao fato de que" to "porque", "em virtude de" to "por causa de",
+        "por motivo de" to "por", "no caso de que" to "se", "no caso de" to "se",
+        "no presente momento" to "agora", "no momento presente" to "agora",
+        "nos dias de hoje" to "hoje", "na atualidade" to "atualmente",
+        "com relação a" to "sobre", "no que diz respeito a" to "sobre",
+        "em relação a" to "sobre", "com o intuito de" to "para",
+        "fazer uma análise" to "analisar", "tomar uma decisão" to "decidir",
+        "chegar a um acordo" to "concordar", "com a maior brevidade possível" to "o quanto antes"
+    )
+
+    override val formalReplacements = mapOf(
+        "pra" to "para", "pro" to "para o", "pras" to "para as", "pros" to "para os",
+        "tá" to "está", "tão" to "estão", "tô" to "estou", "tava" to "estava",
+        "né" to "não é", "valeu" to "obrigado", "beleza" to "de acordo",
+        "da hora" to "excelente", "massa" to "excelente", "legal" to "interessante",
+        "avisa" to "por favor informe", "olha só" to "observe", "tipo" to "por exemplo"
+    )
+
+    override val friendlyReplacements = mapOf(
+        "solicito" to "peço", "prezado" to "olá", "atenciosamente" to "um abraço",
+        "cordialmente" to "abraços", "encaminho" to "envio", "necessita" to "precisa",
+        "informo que" to "só para avisar que", "esclareço que" to "vale lembrar que",
+        "grato" to "obrigado"
+    )
+
+    override val punchyStarters = mapOf(
+        "eu estava pensando que talvez pudéssemos" to "Vamos",
+        "seria ótimo se pudéssemos" to "Vamos",
+        "gostaria de avisar que" to "Aviso:",
+        "na minha opinião pessoal" to "Sinceramente,",
+        "venho por meio desta informar que" to "Atualização:",
+        "só queria confirmar se" to "Confirmando:"
+    )
+
+    override val punchyWords = mapOf(
+        "bom" to "excelente", "ruim" to "crítico", "rápido" to "veloz",
+        "grande" to "enorme", "importante" to "vital", "difícil" to "desafiador",
+        "muito bom" to "excepcional", "melhorar" to "potencializar"
+    )
+
+    override val phrasalVerbGuards: Map<String, Set<String>> = emptyMap()
+
+    override val abbreviationPattern =
+        Regex("\\b(?:Sr\\.|Sra\\.|Srta\\.|Dr\\.|Dra\\.|Prof\\.|Profa\\.|p\\.\\s?ex\\.|etc\\.|obs\\.|av\\.|apto\\.)", RegexOption.IGNORE_CASE)
+}

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Stem</string>
     <string name="assistant_label">Stem Assistant</string>
     <string name="accessibility_service_label">Stem Text Assistant</string>
@@ -9,6 +9,8 @@
     <string name="action_copy">Copy</string>
     <string name="action_copied">Copied</string>
     <string name="action_replace">Replace</string>
+    <string name="action_grant">GRANT</string>
+    <string name="action_delete">Delete</string>
 
     <!-- Bottom/top navigation -->
     <string name="nav_tab_home">Home</string>
@@ -102,6 +104,10 @@
     <string name="snippets_expansion_placeholder">Full phrase expansion</string>
     <string name="snippets_save_snippet_button">Save snippet</string>
     <string name="snippets_delete_snippet_description">Delete snippet</string>
+    <string name="snippets_delete_confirm_title">Delete snippet?</string>
+    <string name="snippets_delete_confirm_message">Are you sure you want to delete \"%1$s\"?</string>
+    <string name="snippets_delete_command_confirm_title">Delete custom command?</string>
+    <string name="snippets_delete_command_confirm_message">Are you sure you want to delete \"?%1$s\"?</string>
 
     <!-- Engine (Settings) screen -->
     <string name="engine_api_key_label">API Key</string>
@@ -150,8 +156,8 @@
     <string name="engine_test_connection_success">✓ %1$s</string>
     <string name="engine_test_connection_failure">✗ %1$s</string>
     <string name="engine_test_connection_connected">Connected</string>
-    <string name="engine_ollama_models_found_one">%1$d model found</string>
-    <string name="engine_ollama_models_found_other">%1$d models found</string>
+    <string name="engine_ollama_models_found_one" tools:ignore="PluralsCandidate">%1$d model found</string>
+    <string name="engine_ollama_models_found_other" tools:ignore="PluralsCandidate">%1$d models found</string>
 
     <!-- Onboarding screen -->
     <string name="onboarding_step_indicator">Step %1$d of %2$d</string>
@@ -176,7 +182,35 @@
     <string name="onboarding_ready_description">Type any text followed by ?fix, ?concise, ?formal or ..snippet to transform inline instantly.</string>
     <string name="onboarding_try_it_out_badge">TRY IT OUT</string>
     <string name="onboarding_demo_prefix">"Fix: "</string>
-    <string name="onboarding_demo_wrong">thier</string>
+    <string name="onboarding_demo_wrong" tools:ignore="Typos">thier</string>
     <string name="onboarding_demo_right">there</string>
     <string name="onboarding_demo_suffix">" was no problem with the presentation"</string>
+
+    <!-- Language & Preset Settings -->
+    <string name="engine_language_header">LANGUAGE PREFERENCE</string>
+    <string name="engine_language_description">Choose dictionary rules for local grammar, spelling, and tone transformations.</string>
+    <string name="engine_language_auto">Auto</string>
+    <string name="engine_language_english">English</string>
+    <string name="engine_language_spanish">Español</string>
+    <string name="engine_language_portuguese">Português</string>
+
+    <string name="engine_default_preset_header">DEFAULT PRESET</string>
+    <string name="engine_default_preset_description">Initial rewrite preset selected when highlighting text or triggering transforms.</string>
+
+    <string name="engine_master_directive_header">MASTER AI DIRECTIVE</string>
+    <string name="engine_master_directive_description">Global instructions automatically appended to every AI rewrite (e.g. tone, dialect, exclusions).</string>
+    <string name="engine_master_directive_placeholder">e.g. Always write in British English, never use exclamation marks…</string>
+    <string name="engine_master_directive_save">Save Directive</string>
+    <string name="engine_master_directive_saved">Saved</string>
+
+    <!-- Sandbox / Playground -->
+    <string name="home_sandbox_header">TRY STEM (SANDBOX)</string>
+    <string name="home_sandbox_description">Test transformations, triggers (;;fix, ;;calc: 5*20), and snippets live:</string>
+    <string name="home_sandbox_placeholder">Type or paste text here to experiment…</string>
+    <string name="home_sandbox_enhance_button">ENHANCE</string>
+    <string name="home_sandbox_reset_button">RESET</string>
+    <string name="home_sandbox_sample_text" tools:ignore="Typos">i think teh meeting is tommorow in order to make a decision</string>
+
+    <!-- Process Text ad-hoc custom prompt -->
+    <string name="process_text_custom_prompt_placeholder">Enter custom AI instruction (e.g. translate to French)…</string>
 </resources>

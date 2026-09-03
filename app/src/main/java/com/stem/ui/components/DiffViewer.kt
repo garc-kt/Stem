@@ -32,9 +32,11 @@ import com.stem.core.models.DiffType
 
 
 
+import com.stem.ui.theme.StemCardShape
+
 /**
  * Stem Visual Diff Viewer rendering inline additions and deletions.
- * Matches Stem.dc.html wordDiff styling.
+ * Uses subtle tinted highlights and clean typography for a refined minimalist look.
  */
 @Composable
 fun DiffViewer(
@@ -63,8 +65,8 @@ fun DiffViewer(
                         pushStyle(
                             SpanStyle(
                                 color = stemTheme.add,
-                                textDecoration = TextDecoration.Underline,
-                                fontWeight = FontWeight.Bold
+                                background = stemTheme.addBg,
+                                fontWeight = FontWeight.SemiBold
                             )
                         )
                         append(token.text)
@@ -74,8 +76,9 @@ fun DiffViewer(
                         pushStyle(
                             SpanStyle(
                                 color = stemTheme.remove,
+                                background = stemTheme.removeBg,
                                 textDecoration = TextDecoration.LineThrough,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Normal
                             )
                         )
                         append(token.text)
@@ -101,10 +104,10 @@ fun DiffViewer(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(StemSharpShape)
+            .clip(StemCardShape)
             .background(stemTheme.surface)
-            .border(1.dp, stemTheme.border, StemSharpShape)
-            .padding(12.dp)
+            .border(1.dp, stemTheme.borderSubtle, StemCardShape)
+            .padding(14.dp)
             .clearAndSetSemantics { contentDescription = accessibilitySummary }
     ) {
         Text(
@@ -130,10 +133,10 @@ fun BeforeAfterDiffBlock(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(StemSharpShape)
+            .clip(StemCardShape)
             .background(stemTheme.surface)
-            .border(1.dp, stemTheme.border, StemSharpShape)
-            .padding(12.dp)
+            .border(1.dp, stemTheme.borderSubtle, StemCardShape)
+            .padding(14.dp)
     ) {
         Column {
             Text(
@@ -141,24 +144,34 @@ fun BeforeAfterDiffBlock(
                 style = StemMonoBadge,
                 color = stemTheme.inkFaint
             )
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = beforeText,
                 style = MaterialTheme.typography.bodySmall.copy(lineHeight = 18.sp),
                 color = stemTheme.inkMuted
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(stemTheme.borderSubtle)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = stringResource(R.string.diff_after),
                 style = StemMonoBadge,
                 color = stemTheme.inkFaint
             )
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = afterText,
-                style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    lineHeight = 22.sp,
+                    fontWeight = FontWeight.Medium
+                ),
                 color = stemTheme.ink
             )
         }

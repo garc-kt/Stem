@@ -10,10 +10,12 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 
-enum class DetectedLanguage { ENGLISH, SPANISH }
+enum class DetectedLanguage { ENGLISH, SPANISH, PORTUGUESE }
 
 object LanguageDetector {
-    private val spanishAccentedChars = "áéíóúñÁÉÍÓÚÑ¿¡"
+    private val portugueseDistinctAccents = "ãõçêôàÃÕÇÊÔÀ"
+    private val spanishDistinctAccents = "ñÑ¿¡"
+    private val sharedLatinAccents = "áéíóúÁÉÍÓÚ"
 
     private val spanishStopwords = setOf(
         "el", "la", "los", "las", "de", "que", "y", "en", "un", "una", "es", "por", "con",
@@ -24,6 +26,15 @@ object LanguageDetector {
         "esto", "mi", "mí", "antes", "algunos", "unos", "yo", "otro", "otras", "otra",
         "tanto", "esa", "estos", "mucho", "quienes", "nada", "muchos", "cual", "poco",
         "ella", "estar", "estas", "algunas", "algo", "nosotros"
+    )
+
+    private val portugueseStopwords = setOf(
+        "o", "a", "os", "as", "um", "uma", "uns", "umas", "de", "do", "da", "dos", "das",
+        "em", "no", "na", "nos", "nas", "por", "pelo", "pela", "pelos", "pelas", "pra", "pro",
+        "para", "com", "sem", "que", "e", "ou", "mas", "se", "como", "quando", "muito",
+        "mais", "já", "também", "tambem", "você", "voce", "vc", "ele", "ela", "eles", "elas",
+        "nós", "eu", "isso", "esse", "essa", "este", "esta", "foi", "são", "ser", "ter",
+        "está", "estou", "não", "nao", "porque", "pq", "tbm", "agora", "agr", "beleza", "obrigado"
     )
 
     private val englishStopwords = setOf(
@@ -38,16 +49,29 @@ object LanguageDetector {
     fun detect(text: String): DetectedLanguage {
         if (text.isBlank()) return DetectedLanguage.ENGLISH
 
-        val accentDensity = text.count { it in spanishAccentedChars }.toDouble() / text.length
-        if (accentDensity > 0.01) return DetectedLanguage.SPANISH
+        val length = text.length.toDouble()
+        val ptDistinctDensity = text.count { it in portugueseDistinctAccents } / length
+        if (ptDistinctDensity > 0.005) return DetectedLanguage.PORTUGUESE
+
+        val esDistinctDensity = text.count { it in spanishDistinctAccents } / length
+        if (esDistinctDensity > 0.005) return DetectedLanguage.SPANISH
 
         val words = text.lowercase().split(wordSplitRegex).filter { it.isNotBlank() }
         if (words.isEmpty()) return DetectedLanguage.ENGLISH
 
+        val portugueseHits = words.count { it in portugueseStopwords }
         val spanishHits = words.count { it in spanishStopwords }
         val englishHits = words.count { it in englishStopwords }
 
-        return if (spanishHits > englishHits) DetectedLanguage.SPANISH else DetectedLanguage.ENGLISH
+        if (portugueseHits > englishHits && portugueseHits >= spanishHits) return DetectedLanguage.PORTUGUESE
+        if (spanishHits > englishHits && spanishHits > portugueseHits) return DetectedLanguage.SPANISH
+
+        val accentDensity = text.count { it in sharedLatinAccents } / length
+        if (accentDensity > 0.01) {
+            return if (portugueseHits >= spanishHits) DetectedLanguage.PORTUGUESE else DetectedLanguage.SPANISH
+        }
+
+        return DetectedLanguage.ENGLISH
     }
 }
 
@@ -58,8 +82,13 @@ object LocalRuleEngine : TextEngine {
             LanguagePreference.AUTO -> LanguageDetector.detect(text)
             LanguagePreference.ENGLISH -> DetectedLanguage.ENGLISH
             LanguagePreference.SPANISH -> DetectedLanguage.SPANISH
+            LanguagePreference.PORTUGUESE -> DetectedLanguage.PORTUGUESE
         }
-        return if (effective == DetectedLanguage.SPANISH) SpanishRules else EnglishRules
+        return when (effective) {
+            DetectedLanguage.SPANISH -> SpanishRules
+            DetectedLanguage.PORTUGUESE -> PortugueseRules
+            DetectedLanguage.ENGLISH -> EnglishRules
+        }
     }
 
     private const val PROTECT_OPEN = '\uE000'

@@ -46,7 +46,7 @@ fun <T> StemSegmentedGroup(
             .fillMaxWidth()
             .clip(StemSharpShape)
             .background(stemTheme.surface2)
-            .border(1.dp, stemTheme.border, StemSharpShape)
+            .border(1.dp, stemTheme.borderSubtle, StemSharpShape)
             .padding(3.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {

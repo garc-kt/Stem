@@ -11,8 +11,8 @@
   code in OllamaClient before any request leaves the device. Gemini, OpenAI-compatible, and
   Claude always use fixed https:// endpoints and are unaffected either way.
 -->
-<network-security-config>
-    <base-config cleartextTrafficPermitted="true">
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

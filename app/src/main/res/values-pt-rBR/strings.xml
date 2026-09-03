@@ -1,0 +1,218 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Stem</string>
+    <string name="assistant_label">Assistente Stem</string>
+    <string name="accessibility_service_label">Assistente de Texto Stem</string>
+    <string name="accessibility_service_description">O Stem detecta campos de texto ativos para fornecer aprimoramentos de escrita integrados e no dispositivo, correções gramaticais e ajustes de tom instantâneos sem sair do seu aplicativo.</string>
+
+    <!-- Shared actions -->
+    <string name="action_close">Fechar</string>
+    <string name="action_copy">Copiar</string>
+    <string name="action_copied">Copiado</string>
+    <string name="action_replace">Substituir</string>
+    <string name="action_grant">CONCEDER</string>
+    <string name="action_delete">Excluir</string>
+
+    <!-- Bottom/top navigation -->
+    <string name="nav_tab_home">Início</string>
+    <string name="nav_tab_snippets">Atalhos</string>
+    <string name="nav_tab_history">Histórico</string>
+    <string name="nav_tab_settings">Ajustes</string>
+    <string name="nav_sponsor_button">APOIAR</string>
+
+    <!-- Diff viewer -->
+    <string name="diff_before">ANTES</string>
+    <string name="diff_after">DEPOIS</string>
+    <string name="diff_added_announcement">" adicionado: %1$s "</string>
+    <string name="diff_removed_announcement">" removido: %1$s "</string>
+
+    <!-- Thinking / loading indicator -->
+    <string name="thinking_default_label">Pensando…</string>
+    <string name="thinking_rewriting_badge">REESCREVENDO</string>
+    <string name="thinking_applying_preset">Aplicando %1$s…</string>
+
+    <!-- Process Text (share-menu) dialog -->
+    <string name="process_text_selection_badge">SELEÇÃO STEM</string>
+    <string name="engine_unavailable_fallback_message">Motor indisponível (%1$s) — regras locais usadas</string>
+
+    <plurals name="words_saved_count">
+        <item quantity="one">-%1$d palavra</item>
+        <item quantity="many">-%1$d palavras</item>
+        <item quantity="other">-%1$d palavras</item>
+    </plurals>
+
+    <!-- History screen -->
+    <string name="history_subtitle">Suas transformações recentes.</string>
+    <string name="history_clear_button">LIMPAR</string>
+    <string name="history_empty_title">Nenhum histórico de transformação ainda.</string>
+    <string name="history_empty_subtitle">Reescritas aplicadas via Stem aparecerão aqui.</string>
+    <string name="history_copy_button">COPIAR</string>
+    <string name="history_time_just_now">AGORA MESMO</string>
+    <string name="history_time_minutes_ago">HÁ %1$dM</string>
+    <string name="history_time_hours_ago">HÁ %1$dH</string>
+    <string name="history_time_days_ago">HÁ %1$dD</string>
+
+    <!-- Home screen -->
+    <string name="home_status_active">O Stem está ativo</string>
+    <string name="home_status_paused">O Stem está pausado</string>
+    <string name="home_status_active_description">O assistente de texto integrado está pronto em todos os apps.</string>
+    <string name="home_status_paused_description">Ative o serviço de acessibilidade para começar a transformar textos.</string>
+    <string name="home_enable_accessibility_button">Ativar Acessibilidade</string>
+    <string name="home_active_engine_badge">MOTOR ATIVO</string>
+    <string name="home_engine_scope_local">LOCAL</string>
+    <string name="home_engine_scope_lan">LAN</string>
+    <string name="home_engine_scope_cloud">NUVEM</string>
+    <string name="home_engine_summary_local">Motor de Regras no Dispositivo (Instantâneo)</string>
+    <string name="home_engine_summary_ollama">Ollama IA Local (%1$s)</string>
+    <string name="home_engine_summary_gemini">Google Gemini (%1$s)</string>
+    <string name="home_engine_summary_openai">Compatível com OpenAI (%1$s)</string>
+    <string name="home_engine_summary_claude">Anthropic Claude (%1$s)</string>
+    <string name="home_engine_tap_to_configure">Toque para configurar chaves e regras do modelo em Ajustes →</string>
+    <string name="home_snippets_tile_description">Cálculos, datas e atalhos personalizados →</string>
+    <string name="home_history_tile_description">Diferenças visuais e registro de desfazer →</string>
+    <string name="home_recent_transforms_header">TRANSFORMAÇÕES RECENTES</string>
+    <string name="home_see_all_button">Ver tudo →</string>
+    <string name="home_recent_transforms_empty">Nenhuma transformação recente ainda. Digite em qualquer app (ex: texto + ;;fix ou ;;concise) para ver os resultados aqui.</string>
+    <string name="home_recent_badge">recente</string>
+
+    <!-- Snippets screen -->
+    <string name="snippets_builtin_fix">Corrige gramática, ortografia e pontuação</string>
+    <string name="snippets_builtin_concise">Remove prolixidade e excessos</string>
+    <string name="snippets_builtin_formal">Eleva para tom profissional claro</string>
+    <string name="snippets_builtin_punchy">Direto, impactante e com voz ativa</string>
+    <string name="snippets_builtin_friendly">Caloroso, aberto e acolhedor</string>
+    <string name="snippets_builtin_bullets">Converte parágrafos em tópicos claros</string>
+    <string name="snippets_builtin_summarize">Resume os pontos principais</string>
+    <string name="snippets_builtin_expand">Elabora com mais detalhes e profundidade</string>
+    <string name="snippets_builtin_ai">Executa instrução de IA pontual (ex: ;;ai: traduzir para espanhol)</string>
+    <string name="snippets_builtin_calc">Calcula matemática em linha (ex: ;;calc: 25 * 4 + 10)</string>
+    <string name="snippets_builtin_now_date">Insere data ou hora atual formatada</string>
+    <string name="snippets_builtin_undo">Reverte a última transformação no campo ativo</string>
+    <string name="snippets_builtin_cmd">Salva rapidamente um comando de IA personalizado ao digitar</string>
+    <string name="snippets_builtin_save">Salva rapidamente uma nova expansão de atalho ao digitar</string>
+    <string name="snippets_inline_commands_header">COMANDOS EM LINHA</string>
+    <string name="snippets_inline_commands_description">Digite qualquer comando ao final do seu texto em qualquer app para transformar ou calcular instantaneamente.</string>
+    <string name="snippets_custom_commands_header">COMANDOS PERSONALIZADOS (%1$d)</string>
+    <string name="snippets_custom_commands_description">Defina atalhos de instrução de IA. Digite ;;disparador ou ?disparador em qualquer campo para chamar.</string>
+    <string name="snippets_add_custom_command_header">ADICIONAR NOVO COMANDO</string>
+    <string name="snippets_command_trigger_placeholder">Disparador (ex: roast, traduzir, resposta)</string>
+    <string name="snippets_command_prompt_placeholder">Instrução de IA (ex: Reescreva em tom bem-humorado e inteligente)</string>
+    <string name="snippets_save_command_button">Salvar comando personalizado</string>
+    <string name="snippets_delete_command_description">Excluir comando</string>
+    <string name="snippets_expansions_header">EXPANSÕES DE ATALHOS (%1$d)</string>
+    <string name="snippets_expansions_description">Expanda atalhos curtos em frases completas. Digite ;;atalho, ..atalho ou .atalho para expandir.</string>
+    <string name="snippets_add_snippet_header">ADICIONAR NOVO ATALHO</string>
+    <string name="snippets_trigger_placeholder">Atalho (ex: email, end, abr)</string>
+    <string name="snippets_expansion_placeholder">Frase de expansão completa</string>
+    <string name="snippets_save_snippet_button">Salvar atalho</string>
+    <string name="snippets_delete_snippet_description">Excluir atalho</string>
+    <string name="snippets_delete_confirm_title">Excluir atalho?</string>
+    <string name="snippets_delete_confirm_message">Tem certeza de que deseja excluir \"%1$s\"?</string>
+    <string name="snippets_delete_command_confirm_title">Excluir comando personalizado?</string>
+    <string name="snippets_delete_command_confirm_message">Tem certeza de que deseja excluir \"?%1$s\"?</string>
+
+    <!-- Engine (Settings) screen -->
+    <string name="engine_api_key_label">Chave de API</string>
+    <string name="engine_clear_key_button">Limpar chave</string>
+    <string name="engine_ai_provider_header">PROVEDOR DE IA</string>
+    <string name="engine_ai_provider_description">Escolha como o Stem processa o texto. As regras no dispositivo funcionam offline com latência zero.</string>
+    <string name="engine_provider_local_title">Regras no dispositivo</string>
+    <string name="engine_provider_local_subtitle">Rápido, privado, sem configuração. Mais de 40 regras de gramática e estilo.</string>
+    <string name="engine_provider_ollama_title">Ollama (Rede Local)</string>
+    <string name="engine_provider_ollama_subtitle">Llama, Mistral, Gemma, modelos locais</string>
+    <string name="engine_provider_gemini_title">Google Gemini</string>
+    <string name="engine_provider_gemini_subtitle">Modelos Gemini (Flash, Pro)</string>
+    <string name="engine_provider_openai_title">Compatível com OpenAI</string>
+    <string name="engine_provider_openai_subtitle">Modelos ChatGPT, DeepSeek, Groq, OpenRouter</string>
+    <string name="engine_provider_claude_title">Anthropic Claude</string>
+    <string name="engine_provider_claude_subtitle">Modelos Claude (Sonnet, Haiku)</string>
+    <string name="engine_server_url_label">URL do Servidor</string>
+    <string name="engine_model_name_label">Nome do Modelo</string>
+    <string name="engine_model_label">Modelo</string>
+    <string name="engine_base_url_label">URL Base</string>
+    <string name="engine_appearance_header">APARÊNCIA</string>
+    <string name="engine_theme_light">Claro</string>
+    <string name="engine_theme_dark">Escuro</string>
+    <string name="engine_theme_system">Sistema</string>
+    <string name="engine_haptic_feedback_title">Resposta tátil</string>
+    <string name="engine_haptic_feedback_description">Vibração suave ao substituir texto</string>
+    <string name="engine_excluded_apps_header">APPS EXCLUÍDOS</string>
+    <string name="engine_excluded_apps_description">O Stem lê texto de todos os apps por padrão. Exclua apps em que você não queira atividade — gerenciadores de senhas e bancos são bons exemplos.</string>
+    <string name="engine_excluded_apps_none">Nenhum app excluído</string>
+    <plurals name="engine_excluded_apps_count">
+        <item quantity="one">%1$d app excluído</item>
+        <item quantity="many">%1$d apps excluídos</item>
+        <item quantity="other">%1$d apps excluídos</item>
+    </plurals>
+    <string name="engine_manage_button">GERENCIAR</string>
+    <string name="engine_privacy_guarantee_header">GARANTIA DE PRIVACIDADE</string>
+    <string name="engine_privacy_guarantee_description">O texto só é enviado para o provedor selecionado. Digitações nunca são registradas ou salvas fora do dispositivo.</string>
+    <string name="engine_temperature_label">Temperatura</string>
+    <string name="engine_temperature_precise">(Preciso)</string>
+    <string name="engine_temperature_balanced">(Equilibrado)</string>
+    <string name="engine_temperature_creative">(Criativo)</string>
+    <string name="engine_temperature_experimental">(Experimental)</string>
+    <string name="engine_no_apps_found">Nenhum outro app encontrado neste dispositivo.</string>
+    <string name="engine_test_connection_failed">Falha na conexão</string>
+    <string name="engine_test_connection_testing">TESTANDO…</string>
+    <string name="engine_test_connection_button">TESTAR CONEXÃO</string>
+    <string name="engine_test_connection_success">✓ %1$s</string>
+    <string name="engine_test_connection_failure">✗ %1$s</string>
+    <string name="engine_test_connection_connected">Conectado</string>
+    <string name="engine_ollama_models_found_one">%1$d modelo encontrado</string>
+    <string name="engine_ollama_models_found_other">%1$d modelos encontrados</string>
+
+    <!-- Onboarding screen -->
+    <string name="onboarding_step_indicator">Passo %1$d de %2$d</string>
+    <string name="onboarding_skip_button">PULAR</string>
+    <string name="onboarding_cta_get_started">Começar</string>
+    <string name="onboarding_cta_continue">Continuar</string>
+    <string name="onboarding_cta_next">Avançar</string>
+    <string name="onboarding_cta_open_stem">Abrir Stem</string>
+    <string name="onboarding_tagline">Ajuda de escrita ambiente, onde você digitar.</string>
+    <string name="onboarding_feature_fix">Corrige erros e gramática em tempo real</string>
+    <string name="onboarding_feature_tone">Transforme o tom: direto, formal, caloroso</string>
+    <string name="onboarding_feature_privacy">Nunca sai do dispositivo (a menos que solicitado)</string>
+    <string name="onboarding_accessibility_step_badge">PASSO 1 DE 2</string>
+    <string name="onboarding_accessibility_headline">Ler e substituir texto</string>
+    <string name="onboarding_accessibility_description">O Stem precisa da permissão de Acessibilidade para detectar quando você digita e oferecer reescritas instantâneas.</string>
+    <string name="onboarding_accessibility_card_title">Serviço de Acessibilidade Android</string>
+    <string name="onboarding_accessibility_granted">Concedido ✓</string>
+    <string name="onboarding_accessibility_card_description">Lê apenas o campo de entrada ativo. Nunca envia teclas digitadas fora do dispositivo.</string>
+    <string name="onboarding_enable_in_settings_button">Ativar em Ajustes</string>
+    <string name="onboarding_ready_badge">PRONTO</string>
+    <string name="onboarding_ready_headline">Tudo pronto.</string>
+    <string name="onboarding_ready_description">Digite qualquer texto seguido de ;;fix, ;;concise, ;;formal ou ..atalho para transformar instantaneamente.</string>
+    <string name="onboarding_try_it_out_badge">EXPERIMENTE</string>
+    <string name="onboarding_demo_prefix">"Corrigir: "</string>
+    <string name="onboarding_demo_wrong" tools:ignore="Typos">concerteza</string>
+    <string name="onboarding_demo_right">com certeza</string>
+    <string name="onboarding_demo_suffix">" vamos entregar o projeto no prazo"</string>
+
+    <!-- Language & Preset Settings -->
+    <string name="engine_language_header">PREFERÊNCIA DE IDIOMA</string>
+    <string name="engine_language_description">Escolha as regras de dicionário para correções locais de gramática, ortografia e tom.</string>
+    <string name="engine_language_auto">Automático</string>
+    <string name="engine_language_english">English</string>
+    <string name="engine_language_spanish">Español</string>
+    <string name="engine_language_portuguese">Português</string>
+
+    <string name="engine_default_preset_header">PREDEFINIÇÃO PADRÃO</string>
+    <string name="engine_default_preset_description">Predefinição inicial selecionada ao destacar texto ou acionar transformações.</string>
+
+    <string name="engine_master_directive_header">DIRETRIZ MESTRA DE IA</string>
+    <string name="engine_master_directive_description">Instruções globais anexadas automaticamente a cada reescrita de IA (tom, dialeto, exclusões).</string>
+    <string name="engine_master_directive_placeholder">ex: Sempre escrever em português do Brasil, manter respostas concisas…</string>
+    <string name="engine_master_directive_save">Salvar diretriz</string>
+    <string name="engine_master_directive_saved">Salvo</string>
+
+    <!-- Sandbox / Playground -->
+    <string name="home_sandbox_header">TESTAR STEM (SANDBOX)</string>
+    <string name="home_sandbox_description">Teste transformações, atalhos (;;fix, ;;calc: 5*20) e snippets ao vivo:</string>
+    <string name="home_sandbox_placeholder">Digite ou cole um texto aqui para experimentar…</string>
+    <string name="home_sandbox_enhance_button">APRIMORAR</string>
+    <string name="home_sandbox_reset_button">REDEFINIR</string>
+    <string name="home_sandbox_sample_text" tools:ignore="Typos">eu acho q a reuniao e amanha pra tomar uma decisao</string>
+
+    <!-- Process Text ad-hoc custom prompt -->
+    <string name="process_text_custom_prompt_placeholder">Digite uma instrução de IA personalizada (ex: traduzir para o francês)…</string>
+</resources>

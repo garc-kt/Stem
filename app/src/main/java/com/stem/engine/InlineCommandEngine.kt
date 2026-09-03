@@ -23,20 +23,27 @@ object InlineCommandEngine {
         object None : CommandResult()
     }
 
-    private val cmdRegex = Regex("(?:\\.\\.cmd:|\\.cmd:|\\?cmd:|\\.\\.savecmd:)([a-zA-Z0-9_-]+):(.+)$", RegexOption.IGNORE_CASE)
-    private val saveRegex = Regex("(?:\\.\\.save:|\\.save:)([a-zA-Z0-9_-]+):(.+)$", RegexOption.IGNORE_CASE)
-    private val dynamicAIRegex = Regex("(?:\\?ai:|\\?prompt:|\\?do:|\\.ai:)\\s*(.+)$", RegexOption.IGNORE_CASE)
-    private val calcRegex = Regex("(?:\\?calc:|\\.c:)\\s*([0-9+\\-*/().^%\\s]+)$", RegexOption.IGNORE_CASE)
+    private val cmdRegex = Regex("(?:\\.\\.cmd:|(?<=\\s|^)\\.cmd:|\\?cmd:|\\.\\.savecmd:|;;cmd:|;;savecmd:)([a-zA-Z0-9_-]+):(.+)$", RegexOption.IGNORE_CASE)
+    private val saveRegex = Regex("(?:\\.\\.save:|(?<=\\s|^)\\.save:|;;save:)([a-zA-Z0-9_-]+):(.+)$", RegexOption.IGNORE_CASE)
+    private val dynamicAIRegex = Regex("(?:\\?ai:|\\?prompt:|\\?do:|(?<=\\s|^)\\.ai:|;;ai:|;;prompt:|;;do:)\\s*(.+)$", RegexOption.IGNORE_CASE)
+    private val calcRegex = Regex("(?:\\?calc:|(?<=\\s|^)\\.c:|;;calc:|;;c:)\\s*([0-9+\\-*/().^%\\s]+)$", RegexOption.IGNORE_CASE)
     private val triggerMap = listOf(
-        Regex("(?:\\?fix|\\.fix)$", RegexOption.IGNORE_CASE) to TransformPreset.FIX,
-        Regex("(?:\\?concise|\\.concise|\\?shorten|\\.shorten)$", RegexOption.IGNORE_CASE) to TransformPreset.CONCISE,
-        Regex("(?:\\?formal|\\.formal|\\?prof|\\.prof)$", RegexOption.IGNORE_CASE) to TransformPreset.PROFESSIONAL,
-        Regex("(?:\\?punchy|\\.punchy)$", RegexOption.IGNORE_CASE) to TransformPreset.PUNCHY,
-        Regex("(?:\\?friendly|\\.friendly)$", RegexOption.IGNORE_CASE) to TransformPreset.FRIENDLY,
-        Regex("(?:\\?summarize|\\.summarize|\\?summary|\\.summary)$", RegexOption.IGNORE_CASE) to TransformPreset.SUMMARIZE,
-        Regex("(?:\\?bullets|\\.bullets|\\?bulletize|\\.bulletize)$", RegexOption.IGNORE_CASE) to TransformPreset.BULLETIZE,
-        Regex("(?:\\?expand|\\.expand)$", RegexOption.IGNORE_CASE) to TransformPreset.EXPAND
+        Regex("(?:\\?fix|(?<=\\s|^)\\.fix|;;fix)$", RegexOption.IGNORE_CASE) to TransformPreset.FIX,
+        Regex("(?:\\?concise|(?<=\\s|^)\\.concise|\\?shorten|(?<=\\s|^)\\.shorten|;;concise|;;shorten)$", RegexOption.IGNORE_CASE) to TransformPreset.CONCISE,
+        Regex("(?:\\?formal|(?<=\\s|^)\\.formal|\\?prof|(?<=\\s|^)\\.prof|;;formal|;;prof)$", RegexOption.IGNORE_CASE) to TransformPreset.PROFESSIONAL,
+        Regex("(?:\\?punchy|(?<=\\s|^)\\.punchy|;;punchy)$", RegexOption.IGNORE_CASE) to TransformPreset.PUNCHY,
+        Regex("(?:\\?friendly|(?<=\\s|^)\\.friendly|;;friendly)$", RegexOption.IGNORE_CASE) to TransformPreset.FRIENDLY,
+        Regex("(?:\\?summarize|(?<=\\s|^)\\.summarize|\\?summary|(?<=\\s|^)\\.summary|;;summarize|;;summary)$", RegexOption.IGNORE_CASE) to TransformPreset.SUMMARIZE,
+        Regex("(?:\\?bullets|(?<=\\s|^)\\.bullets|\\?bulletize|(?<=\\s|^)\\.bulletize|;;bullets|;;bulletize)$", RegexOption.IGNORE_CASE) to TransformPreset.BULLETIZE,
+        Regex("(?:\\?expand|(?<=\\s|^)\\.expand|;;expand)$", RegexOption.IGNORE_CASE) to TransformPreset.EXPAND
     )
+
+    private fun matchesSingleDotTrigger(text: String, command: String): Boolean {
+        val target = ".$command"
+        if (!text.endsWith(target, ignoreCase = true)) return false
+        val charBeforeDotIndex = text.length - target.length - 1
+        return charBeforeDotIndex < 0 || text[charBeforeDotIndex].isWhitespace()
+    }
 
     fun evaluate(
         text: String,
@@ -46,12 +53,12 @@ object InlineCommandEngine {
     ): CommandResult {
         val trimmed = text.trimEnd()
 
-        // Fast bail: every trigger recognized below (?cmd:, ..key, ?fix, ?undo, ?now, ?calc:,
-        // custom commands, ...) requires a literal '.' or '?' somewhere in the trimmed text.
+        // Fast bail: every trigger recognized below (;;cmd:, ..key, ?fix, ;;fix, ?undo, ;;undo, ?now, ;;calc:,
+        // custom commands, ...) requires a literal '.', '?', or ';' somewhere in the trimmed text.
         // This runs once per keystroke on the accessibility hot path, so skipping the entire
         // regex/suffix cascade for ordinary prose (the overwhelming majority of keystrokes)
         // is worth a single linear scan.
-        if (trimmed.none { it == '.' || it == '?' }) {
+        if (trimmed.none { it == '.' || it == '?' || it == ';' }) {
             return CommandResult.None
         }
 
@@ -81,55 +88,65 @@ object InlineCommandEngine {
         }
 
         for ((trigger, prompt) in customCommands) {
+            val semiTrigger = ";;$trigger"
             val qTrigger = "?$trigger"
             val dotDotTrigger = "..$trigger"
-            val dotTrigger = ".$trigger"
             val matchedTrigger = when {
+                trimmed.endsWith(semiTrigger, ignoreCase = true) -> semiTrigger
                 trimmed.endsWith(qTrigger, ignoreCase = true) -> qTrigger
                 trimmed.endsWith(dotDotTrigger, ignoreCase = true) -> dotDotTrigger
-                trimmed.endsWith(dotTrigger, ignoreCase = true) -> dotTrigger
+                matchesSingleDotTrigger(trimmed, trigger) -> ".$trigger"
                 else -> null
             }
             if (matchedTrigger != null) {
                 val body = trimmed.substring(0, trimmed.length - matchedTrigger.length).trimEnd()
                 if (body.isNotBlank()) {
-                    return CommandResult.RunAIPrompt(body, prompt, "?$trigger")
+                    return CommandResult.RunAIPrompt(body, prompt, matchedTrigger)
                 }
             }
         }
 
         for ((key, expansion) in snippets) {
+            val semiTrigger = ";;$key"
             val dotDotTrigger = "..$key"
-            val dotTrigger = ".$key"
-            if (trimmed.endsWith(dotDotTrigger, ignoreCase = true)) {
-                val prefix = trimmed.substring(0, trimmed.length - dotDotTrigger.length).trimEnd()
+            val matchedTrigger = when {
+                trimmed.endsWith(semiTrigger, ignoreCase = true) -> semiTrigger
+                trimmed.endsWith(dotDotTrigger, ignoreCase = true) -> dotDotTrigger
+                matchesSingleDotTrigger(trimmed, key) -> ".$key"
+                else -> null
+            }
+            if (matchedTrigger != null) {
+                val prefix = trimmed.substring(0, trimmed.length - matchedTrigger.length).trimEnd()
                 val newText = if (prefix.isEmpty()) expansion else "$prefix $expansion"
-                return CommandResult.Replaced(newText, "..$key")
-            } else if (trimmed.endsWith(dotTrigger, ignoreCase = true)) {
-                val prefix = trimmed.substring(0, trimmed.length - dotTrigger.length).trimEnd()
-                val newText = if (prefix.isEmpty()) expansion else "$prefix $expansion"
-                return CommandResult.Replaced(newText, "..$key")
+                return CommandResult.Replaced(newText, matchedTrigger)
             }
         }
 
-        if (trimmed.endsWith("?undo", ignoreCase = true) || trimmed.endsWith(".undo", ignoreCase = true)) {
+        val hasUndoTrigger = trimmed.endsWith("?undo", ignoreCase = true) ||
+            trimmed.endsWith(";;undo", ignoreCase = true) ||
+            matchesSingleDotTrigger(trimmed, "undo")
+        if (hasUndoTrigger) {
             if (TransformHistory.canUndo(nodeHashCode) || TransformHistory.canUndo()) {
                 return CommandResult.Undo(nodeHashCode)
             }
         }
 
-        if (trimmed.endsWith("?now", ignoreCase = true) || trimmed.endsWith(".now", ignoreCase = true)) {
+        val nowMatch = listOf(";;now", "?now").firstOrNull { trimmed.endsWith(it, ignoreCase = true) }
+            ?: if (matchesSingleDotTrigger(trimmed, "now")) ".now" else null
+        if (nowMatch != null) {
             val formatted = SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault()).format(Date())
-            val prefix = trimmed.removeSuffix("?now").removeSuffix("?Now").removeSuffix(".now").removeSuffix(".Now").trimEnd()
+            val prefix = trimmed.substring(0, trimmed.length - nowMatch.length).trimEnd()
             val newText = if (prefix.isEmpty()) formatted else "$prefix $formatted"
-            return CommandResult.Replaced(newText, "?now")
+            return CommandResult.Replaced(newText, nowMatch)
         }
 
-        if (trimmed.endsWith("?date", ignoreCase = true) || trimmed.endsWith(".date", ignoreCase = true)) {
+        val dateMatch = listOf(";;date", "?date").firstOrNull { trimmed.endsWith(it, ignoreCase = true) }
+            ?: if (matchesSingleDotTrigger(trimmed, "date")) ".date" else null
+        if (dateMatch != null) {
             val formatted = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val prefix = trimmed.removeSuffix("?date").removeSuffix("?Date").removeSuffix(".date").removeSuffix(".Date").trimEnd()
+            val prefix = trimmed.substring(0, trimmed.length - dateMatch.length).trimEnd()
             val newText = if (prefix.isEmpty()) formatted else "$prefix $formatted"
-            return CommandResult.Replaced(newText, "?date")
+            return CommandResult.Replaced(newText, dateMatch)
         }
 
         val calcMatch = calcRegex.find(trimmed)

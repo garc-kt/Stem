@@ -1,7 +1,9 @@
 package com.stem.ui.screens
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 
+import android.content.Intent
+import androidx.core.net.toUri
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -35,9 +40,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,36 +56,44 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.stem.R
-import com.stem.ui.theme.LocalStemColors
-import com.stem.ui.theme.StemCardShape
-import com.stem.ui.theme.StemMonoBadge
-import com.stem.ui.theme.StemSharpShape
-import com.stem.ui.theme.ThemeMode
 import com.stem.core.models.EngineMode
+import com.stem.core.models.LanguagePreference
 import com.stem.core.models.StemUserSettings
+import com.stem.core.models.TransformPreset
+import com.stem.core.util.AppVersion
 import com.stem.core.util.InstalledAppsHelper
 import com.stem.engine.ClaudeClient
 import com.stem.engine.GeminiClient
 import com.stem.engine.OllamaClient
 import com.stem.engine.OpenAIClient
+import com.stem.ui.components.PresetChipsRow
+import com.stem.ui.components.StemButton
+import com.stem.ui.components.StemCard
+import com.stem.ui.components.StemSectionHeader
+import com.stem.ui.components.StemSegmentedGroup
+import com.stem.ui.theme.GitHubSponsorHeartIcon
+import com.stem.ui.theme.KoFiIcon
+import com.stem.ui.theme.LocalStemColors
+import com.stem.ui.theme.StemCardShape
+import com.stem.ui.theme.StemLogoMark
+import com.stem.ui.theme.StemMonoBadge
+import com.stem.ui.theme.StemPillShape
+import com.stem.ui.theme.StemSharpShape
+import com.stem.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
 
-
-
 /**
- * Returns an onFocusChanged callback that invokes [onSave] only on a genuine focused-to-
- * unfocused transition — never on initial composition. Plain `onFocusChanged { if
- * (!it.isFocused) save() }` also fires the moment the modifier attaches (its first reported
- * state is unfocused), so a field re-entering composition — e.g. its LazyColumn item being
- * recomposed after scrolling off/on screen — resaves its current value unprompted. If that
- * value happens to be a blank/failed decrypt of a Keystore-encrypted API key, this used to
- * overwrite the last-good ciphertext with an empty string.
+ * Focus-loss saver helper.
  */
 @Composable
 private fun rememberFocusLossSaver(onSave: () -> Unit): (FocusState) -> Unit {
@@ -92,10 +107,7 @@ private fun rememberFocusLossSaver(onSave: () -> Unit): (FocusState) -> Unit {
 }
 
 /**
- * Password-style API key field with an explicit "Clear key" action. Overwriting a stored key
- * with a blank value is refused by [com.stem.core.models.PreferencesRepository] (a blind blur
- * or a failed decrypt must never silently erase a working key) — clearing is only ever this
- * deliberate action.
+ * Minimalist password-style API key field.
  */
 @Composable
 private fun ApiKeyField(
@@ -120,7 +132,14 @@ private fun ApiKeyField(
                 .fillMaxWidth()
                 .onFocusChanged(rememberFocusLossSaver(onSave)),
             singleLine = true,
-            shape = StemSharpShape
+            shape = StemSharpShape,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = stemTheme.bg,
+                unfocusedContainerColor = stemTheme.bg,
+                focusedBorderColor = stemTheme.ink,
+                unfocusedBorderColor = stemTheme.borderSubtle,
+                cursorColor = stemTheme.ink
+            )
         )
         if (value.isNotBlank()) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -138,16 +157,20 @@ private fun ApiKeyField(
 
 /**
  * Stem Settings / Engine Screen:
- * - AI Provider selector & inline API configurations
- * - Appearance segmented mode toggle (Light / Dark)
- * - Haptic feedback toggle
- * - Privacy Guarantee card
- * Matches Stem.dc.html design specification.
+ * Clean, minimalist controls for:
+ * - AI Provider selector (horizontal chip row) & Provider configurations
+ * - Generation Tuning (Temperature & Master Directive)
+ * - Language, Default Preset, Theme, & Haptic feedback
+ * - Excluded Apps
+ * - About & Community / Zero-Telemetry Guarantee
  */
 @Composable
 fun EngineScreen(
     userSettings: StemUserSettings,
     onSelectEngineMode: (EngineMode) -> Unit,
+    modifier: Modifier = Modifier,
+    onSelectLanguagePreference: (LanguagePreference) -> Unit = {},
+    onSelectDefaultPreset: (TransformPreset) -> Unit = {},
     onSaveTemperature: (Float) -> Unit = {},
     onSaveOllamaUrl: (String) -> Unit = {},
     onSaveOllamaModel: (String) -> Unit = {},
@@ -160,11 +183,10 @@ fun EngineScreen(
     onSetPackageExcluded: (String, Boolean) -> Unit = { _, _ -> },
     onSaveCustomPromptInstruction: (String) -> Unit = {},
     onSelectThemeMode: (ThemeMode) -> Unit = {},
-    onToggleHaptics: (Boolean) -> Unit = {},
-    modifier: Modifier = Modifier
+    onToggleHaptics: (Boolean) -> Unit = {}
 ) {
     val stemTheme = LocalStemColors.current
-    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
     var ollamaUrlInput by remember(userSettings.ollamaBaseUrl) { mutableStateOf(userSettings.ollamaBaseUrl) }
@@ -178,370 +200,477 @@ fun EngineScreen(
     var claudeModelInput by remember(userSettings.claudeModel) { mutableStateOf(userSettings.claudeModel) }
     var customPromptInput by remember(userSettings.customPromptInstruction) { mutableStateOf(userSettings.customPromptInstruction) }
 
-    // Resolved here (composable context) rather than inside the onTest lambdas below, which
-    // run later inside a launched coroutine and can't call stringResource() directly.
     val connectedMessage = stringResource(R.string.engine_test_connection_connected)
     val ollamaModelsFoundOne = stringResource(R.string.engine_ollama_models_found_one)
     val ollamaModelsFoundOther = stringResource(R.string.engine_ollama_models_found_other)
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = stemTheme.bg,
+        unfocusedContainerColor = stemTheme.bg,
+        focusedBorderColor = stemTheme.ink,
+        unfocusedBorderColor = stemTheme.borderSubtle,
+        cursorColor = stemTheme.ink
+    )
+
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
             .fillMaxSize()
             .background(stemTheme.bg)
     ) {
-        // Section: AI Provider
+        // -------------------------------------------------------------
+        // 1. ENGINE SELECTOR & CONFIGURATION
+        // -------------------------------------------------------------
         item {
             Column {
-                Text(
-                    text = stringResource(R.string.engine_ai_provider_header),
-                    style = StemMonoBadge,
-                    color = stemTheme.inkFaint
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.engine_ai_provider_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = stemTheme.inkMuted
-                )
-            }
-        }
-
-        // Provider Options List
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // 1. On-Device Rules
-                ProviderCard(
-                    title = stringResource(R.string.engine_provider_local_title),
-                    subtitle = stringResource(R.string.engine_provider_local_subtitle),
-                    badge = stringResource(R.string.home_engine_scope_local),
-                    isSelected = userSettings.engineMode == EngineMode.LOCAL_RULES,
-                    onClick = { onSelectEngineMode(EngineMode.LOCAL_RULES) }
+                StemSectionHeader(
+                    title = stringResource(R.string.engine_ai_provider_header),
+                    subtitle = stringResource(R.string.engine_ai_provider_description)
                 )
 
-                // 2. Ollama LAN
-                ProviderCard(
-                    title = stringResource(R.string.engine_provider_ollama_title),
-                    subtitle = stringResource(R.string.engine_provider_ollama_subtitle),
-                    badge = stringResource(R.string.home_engine_scope_lan),
-                    isSelected = userSettings.engineMode == EngineMode.OLLAMA_AI,
-                    onClick = { onSelectEngineMode(EngineMode.OLLAMA_AI) }
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Horizontal scrollable provider chips — clean & uncompressed on all screens
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 2.dp)
                 ) {
-                    Column(modifier = Modifier.padding(top = 10.dp)) {
-                        OutlinedTextField(
-                            value = ollamaUrlInput,
-                            onValueChange = { ollamaUrlInput = it },
-                            label = { Text(stringResource(R.string.engine_server_url_label), style = MaterialTheme.typography.bodySmall) },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveOllamaUrl(ollamaUrlInput); focusManager.clearFocus() }),
+                    items(EngineMode.entries) { mode ->
+                        val isSelected = userSettings.engineMode == mode
+                        val targetBg = if (isSelected) stemTheme.ink else stemTheme.surface
+                        val targetFg = if (isSelected) stemTheme.onInk else stemTheme.ink
+                        val targetBorder = if (isSelected) stemTheme.ink else stemTheme.borderSubtle
+
+                        val bg by animateColorAsState(targetBg, tween(150), label = "engineBg")
+                        val fg by animateColorAsState(targetFg, tween(150), label = "engineFg")
+                        val border by animateColorAsState(targetBorder, tween(150), label = "engineBorder")
+
+                        val labelText = when (mode) {
+                            EngineMode.LOCAL_RULES -> "Local Rules"
+                            EngineMode.OLLAMA_AI -> "Ollama (LAN)"
+                            EngineMode.GEMINI_AI -> "Gemini"
+                            EngineMode.OPENAI_COMPATIBLE -> "OpenAI"
+                            EngineMode.CLAUDE_AI -> "Claude"
+                        }
+
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged(rememberFocusLossSaver { onSaveOllamaUrl(ollamaUrlInput) }),
-                            singleLine = true,
-                            shape = StemSharpShape
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = ollamaModelInput,
-                            onValueChange = { ollamaModelInput = it },
-                            label = { Text(stringResource(R.string.engine_model_name_label), style = MaterialTheme.typography.bodySmall) },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveOllamaModel(ollamaModelInput); focusManager.clearFocus() }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged(rememberFocusLossSaver { onSaveOllamaModel(ollamaModelInput) }),
-                            singleLine = true,
-                            shape = StemSharpShape
-                        )
-                        TestConnectionButton(
-                            resetKey = ollamaUrlInput,
-                            onTest = {
-                                OllamaClient.fetchAvailableModels(ollamaUrlInput).map { models ->
-                                    val template = if (models.size == 1) ollamaModelsFoundOne else ollamaModelsFoundOther
-                                    String.format(template, models.size)
-                                }
-                            }
-                        )
-                        TemperatureControl(
-                            temperature = userSettings.temperature,
-                            onSaveTemperature = onSaveTemperature
-                        )
+                                .defaultMinSize(minHeight = 36.dp)
+                                .clip(StemPillShape)
+                                .background(bg)
+                                .border(1.dp, border, StemPillShape)
+                                .clickable(role = Role.RadioButton) { onSelectEngineMode(mode) }
+                                .semantics { selected = isSelected }
+                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = labelText,
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                ),
+                                color = fg
+                            )
+                        }
                     }
                 }
 
-                // 3. Google Gemini
-                ProviderCard(
-                    title = stringResource(R.string.engine_provider_gemini_title),
-                    subtitle = stringResource(R.string.engine_provider_gemini_subtitle),
-                    badge = stringResource(R.string.home_engine_scope_cloud),
-                    isSelected = userSettings.engineMode == EngineMode.GEMINI_AI,
-                    onClick = { onSelectEngineMode(EngineMode.GEMINI_AI) }
-                ) {
-                    Column(modifier = Modifier.padding(top = 10.dp)) {
-                        ApiKeyField(
-                            value = geminiKeyInput,
-                            onValueChange = { geminiKeyInput = it },
-                            onSave = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput) },
-                            onClear = { geminiKeyInput = ""; onClearGeminiApiKey() }
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = geminiModelInput,
-                            onValueChange = { geminiModelInput = it },
-                            label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput); focusManager.clearFocus() }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged(rememberFocusLossSaver { onSaveGeminiSettings(geminiKeyInput, geminiModelInput) }),
-                            singleLine = true,
-                            shape = StemSharpShape
-                        )
-                        TestConnectionButton(
-                            resetKey = geminiKeyInput,
-                            onTest = { GeminiClient.testConnection(geminiKeyInput).map { connectedMessage } }
-                        )
-                        TemperatureControl(
-                            temperature = userSettings.temperature,
-                            onSaveTemperature = onSaveTemperature
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // 4. OpenAI-Compatible
-                ProviderCard(
-                    title = stringResource(R.string.engine_provider_openai_title),
-                    subtitle = stringResource(R.string.engine_provider_openai_subtitle),
-                    badge = stringResource(R.string.home_engine_scope_cloud),
-                    isSelected = userSettings.engineMode == EngineMode.OPENAI_COMPATIBLE,
-                    onClick = { onSelectEngineMode(EngineMode.OPENAI_COMPATIBLE) }
-                ) {
-                    Column(modifier = Modifier.padding(top = 10.dp)) {
-                        OutlinedTextField(
-                            value = openAiUrlInput,
-                            onValueChange = { openAiUrlInput = it },
-                            label = { Text(stringResource(R.string.engine_base_url_label), style = MaterialTheme.typography.bodySmall) },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged(rememberFocusLossSaver { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) }),
-                            singleLine = true,
-                            shape = StemSharpShape
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        ApiKeyField(
-                            value = openAiKeyInput,
-                            onValueChange = { openAiKeyInput = it },
-                            onSave = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
-                            onClear = { openAiKeyInput = ""; onClearOpenAIApiKey() }
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = openAiModelInput,
-                            onValueChange = { openAiModelInput = it },
-                            label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged(rememberFocusLossSaver { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) }),
-                            singleLine = true,
-                            shape = StemSharpShape
-                        )
-                        TestConnectionButton(
-                            resetKey = openAiUrlInput to openAiKeyInput,
-                            onTest = { OpenAIClient.testConnection(openAiUrlInput, openAiKeyInput).map { connectedMessage } }
-                        )
-                        TemperatureControl(
-                            temperature = userSettings.temperature,
-                            onSaveTemperature = onSaveTemperature
-                        )
-                    }
-                }
-
-                // 5. Anthropic Claude
-                ProviderCard(
-                    title = stringResource(R.string.engine_provider_claude_title),
-                    subtitle = stringResource(R.string.engine_provider_claude_subtitle),
-                    badge = stringResource(R.string.home_engine_scope_cloud),
-                    isSelected = userSettings.engineMode == EngineMode.CLAUDE_AI,
-                    onClick = { onSelectEngineMode(EngineMode.CLAUDE_AI) }
-                ) {
-                    Column(modifier = Modifier.padding(top = 10.dp)) {
-                        ApiKeyField(
-                            value = claudeKeyInput,
-                            onValueChange = { claudeKeyInput = it },
-                            onSave = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput) },
-                            onClear = { claudeKeyInput = ""; onClearClaudeApiKey() }
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = claudeModelInput,
-                            onValueChange = { claudeModelInput = it },
-                            label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput); focusManager.clearFocus() }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusChanged(rememberFocusLossSaver { onSaveClaudeSettings(claudeKeyInput, claudeModelInput) }),
-                            singleLine = true,
-                            shape = StemSharpShape
-                        )
-                        TestConnectionButton(
-                            resetKey = claudeKeyInput,
-                            onTest = { ClaudeClient.testConnection(claudeKeyInput).map { connectedMessage } }
-                        )
-                        // No TemperatureControl here: current Claude models (Sonnet 5 / Opus 5 /
-                        // 4.7+) reject a temperature parameter with a 400, and ClaudeClient
-                        // never sends one — a slider that does nothing is worse than no slider.
-                    }
-                }
-            }
-        }
-
-        // Section: Appearance
-        item {
-            Column {
-                Text(
-                    text = stringResource(R.string.engine_appearance_header),
-                    style = StemMonoBadge,
-                    color = stemTheme.inkFaint
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(StemCardShape)
-                        .background(stemTheme.surface)
-                        .border(1.dp, stemTheme.border, StemCardShape)
-                        .padding(14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf(
-                            ThemeMode.LIGHT to stringResource(R.string.engine_theme_light),
-                            ThemeMode.DARK to stringResource(R.string.engine_theme_dark),
-                            ThemeMode.SYSTEM to stringResource(R.string.engine_theme_system)
-                        ).forEach { (mode, label) ->
-                            val isSelected = userSettings.themeMode == mode
-                            Box(
+                // Engine configuration card
+                StemCard {
+                    when (userSettings.engineMode) {
+                        EngineMode.LOCAL_RULES -> {
+                            Text(
+                                text = stringResource(R.string.engine_provider_local_subtitle),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = stemTheme.inkMuted
+                            )
+                        }
+                        EngineMode.OLLAMA_AI -> {
+                            OutlinedTextField(
+                                value = ollamaUrlInput,
+                                onValueChange = { ollamaUrlInput = it },
+                                label = { Text(stringResource(R.string.engine_server_url_label), style = MaterialTheme.typography.bodySmall) },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { onSaveOllamaUrl(ollamaUrlInput); focusManager.clearFocus() }),
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .clip(StemSharpShape)
-                                    .background(if (isSelected) stemTheme.ink else stemTheme.surface2)
-                                    .border(1.dp, if (isSelected) stemTheme.ink else stemTheme.border, StemSharpShape)
-                                    .clickable(role = Role.RadioButton) { onSelectThemeMode(mode) }
-                                    .padding(vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
+                                    .fillMaxWidth()
+                                    .onFocusChanged(rememberFocusLossSaver { onSaveOllamaUrl(ollamaUrlInput) }),
+                                singleLine = true,
+                                shape = StemSharpShape,
+                                colors = textFieldColors
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = ollamaModelInput,
+                                onValueChange = { ollamaModelInput = it },
+                                label = { Text(stringResource(R.string.engine_model_name_label), style = MaterialTheme.typography.bodySmall) },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { onSaveOllamaModel(ollamaModelInput); focusManager.clearFocus() }),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onFocusChanged(rememberFocusLossSaver { onSaveOllamaModel(ollamaModelInput) }),
+                                singleLine = true,
+                                shape = StemSharpShape,
+                                colors = textFieldColors
+                            )
+                            TestConnectionButton(
+                                resetKey = ollamaUrlInput,
+                                onTest = {
+                                    OllamaClient.fetchAvailableModels(ollamaUrlInput).map { models ->
+                                        val template = if (models.size == 1) ollamaModelsFoundOne else ollamaModelsFoundOther
+                                        String.format(template, models.size)
+                                    }
+                                }
+                            )
+                        }
+                        EngineMode.GEMINI_AI -> {
+                            ApiKeyField(
+                                value = geminiKeyInput,
+                                onValueChange = { geminiKeyInput = it },
+                                onSave = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput) },
+                                onClear = { geminiKeyInput = ""; onClearGeminiApiKey() }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = geminiModelInput,
+                                onValueChange = { geminiModelInput = it },
+                                label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput); focusManager.clearFocus() }),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onFocusChanged(rememberFocusLossSaver { onSaveGeminiSettings(geminiKeyInput, geminiModelInput) }),
+                                singleLine = true,
+                                shape = StemSharpShape,
+                                colors = textFieldColors
+                            )
+                            TestConnectionButton(
+                                resetKey = geminiKeyInput,
+                                onTest = { GeminiClient.testConnection(geminiKeyInput).map { connectedMessage } }
+                            )
+                        }
+                        EngineMode.OPENAI_COMPATIBLE -> {
+                            OutlinedTextField(
+                                value = openAiUrlInput,
+                                onValueChange = { openAiUrlInput = it },
+                                label = { Text(stringResource(R.string.engine_base_url_label), style = MaterialTheme.typography.bodySmall) },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onFocusChanged(rememberFocusLossSaver { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) }),
+                                singleLine = true,
+                                shape = StemSharpShape,
+                                colors = textFieldColors
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            ApiKeyField(
+                                value = openAiKeyInput,
+                                onValueChange = { openAiKeyInput = it },
+                                onSave = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) },
+                                onClear = { openAiKeyInput = ""; onClearOpenAIApiKey() }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = openAiModelInput,
+                                onValueChange = { openAiModelInput = it },
+                                label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onFocusChanged(rememberFocusLossSaver { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput) }),
+                                singleLine = true,
+                                shape = StemSharpShape,
+                                colors = textFieldColors
+                            )
+                            TestConnectionButton(
+                                resetKey = openAiUrlInput to openAiKeyInput,
+                                onTest = { OpenAIClient.testConnection(openAiUrlInput, openAiKeyInput).map { connectedMessage } }
+                            )
+                        }
+                        EngineMode.CLAUDE_AI -> {
+                            ApiKeyField(
+                                value = claudeKeyInput,
+                                onValueChange = { claudeKeyInput = it },
+                                onSave = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput) },
+                                onClear = { claudeKeyInput = ""; onClearClaudeApiKey() }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = claudeModelInput,
+                                onValueChange = { claudeModelInput = it },
+                                label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput); focusManager.clearFocus() }),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onFocusChanged(rememberFocusLossSaver { onSaveClaudeSettings(claudeKeyInput, claudeModelInput) }),
+                                singleLine = true,
+                                shape = StemSharpShape,
+                                colors = textFieldColors
+                            )
+                            TestConnectionButton(
+                                resetKey = claudeKeyInput,
+                                onTest = { ClaudeClient.testConnection(claudeKeyInput).map { connectedMessage } }
+                            )
+                        }
+                    }
+
+                    // Temperature & Master Directive (shown for AI engines)
+                    if (userSettings.engineMode != EngineMode.LOCAL_RULES) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(stemTheme.borderSubtle)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        TemperatureControl(
+                            temperature = userSettings.temperature,
+                            onSaveTemperature = onSaveTemperature
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(stemTheme.borderSubtle)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        var isSaved by remember { mutableStateOf(false) }
+                        Text(
+                            text = stringResource(R.string.engine_master_directive_header),
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = stemTheme.ink
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = customPromptInput,
+                            onValueChange = {
+                                customPromptInput = it
+                                isSaved = false
+                            },
+                            placeholder = {
                                 Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                    ),
-                                    color = if (isSelected) stemTheme.onInk else stemTheme.ink
+                                    stringResource(R.string.engine_master_directive_placeholder),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = stemTheme.inkFaint
                                 )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusChanged(rememberFocusLossSaver {
+                                    onSaveCustomPromptInstruction(customPromptInput)
+                                    isSaved = true
+                                }),
+                            shape = StemSharpShape,
+                            minLines = 2,
+                            maxLines = 3,
+                            colors = textFieldColors
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (isSaved) {
+                                Text(
+                                    text = "✓ " + stringResource(R.string.engine_master_directive_saved),
+                                    style = StemMonoBadge,
+                                    color = stemTheme.add
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
                             }
+                            StemButton(
+                                text = stringResource(R.string.engine_master_directive_save),
+                                onClick = {
+                                    onSaveCustomPromptInstruction(customPromptInput)
+                                    isSaved = true
+                                    focusManager.clearFocus()
+                                },
+                                isPrimary = false
+                            )
                         }
                     }
                 }
             }
         }
 
-        // Section: Haptics
+        // -------------------------------------------------------------
+        // 2. UNIFIED PREFERENCES CARD (Language, Preset, Theme, Haptics)
+        // -------------------------------------------------------------
         item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(StemCardShape)
-                    .background(stemTheme.surface)
-                    .border(1.dp, stemTheme.border, StemCardShape)
-                    .padding(14.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.engine_haptic_feedback_title),
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = stemTheme.ink
-                        )
-                        Text(
-                            text = stringResource(R.string.engine_haptic_feedback_description),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = stemTheme.inkMuted
-                        )
-                    }
+            Column {
+                StemSectionHeader(title = stringResource(R.string.nav_tab_settings))
 
-                    Switch(
-                        checked = userSettings.hapticFeedbackEnabled,
-                        onCheckedChange = onToggleHaptics,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = stemTheme.onInk,
-                            checkedTrackColor = stemTheme.ink,
-                            uncheckedThumbColor = stemTheme.inkMuted,
-                            uncheckedTrackColor = stemTheme.surface2
-                        )
-                    )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                StemCard {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        // Language
+                        Column {
+                            Text(
+                                text = stringResource(R.string.engine_language_header),
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = stemTheme.ink
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            val autoLabel = stringResource(R.string.engine_language_auto)
+                            val englishLabel = stringResource(R.string.engine_language_english)
+                            val spanishLabel = stringResource(R.string.engine_language_spanish)
+                            val portugueseLabel = stringResource(R.string.engine_language_portuguese)
+
+                            StemSegmentedGroup(
+                                options = LanguagePreference.entries,
+                                selected = userSettings.languagePreference,
+                                onSelected = onSelectLanguagePreference,
+                                label = { pref ->
+                                    when (pref) {
+                                        LanguagePreference.AUTO -> autoLabel
+                                        LanguagePreference.ENGLISH -> englishLabel
+                                        LanguagePreference.SPANISH -> spanishLabel
+                                        LanguagePreference.PORTUGUESE -> portugueseLabel
+                                    }
+                                }
+                            )
+                        }
+
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(stemTheme.borderSubtle))
+
+                        // Default Preset
+                        Column {
+                            Text(
+                                text = stringResource(R.string.engine_default_preset_header),
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = stemTheme.ink
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            PresetChipsRow(
+                                selectedPreset = userSettings.defaultPreset,
+                                onPresetSelected = onSelectDefaultPreset,
+                                compact = true,
+                                presets = listOf(
+                                    TransformPreset.FIX,
+                                    TransformPreset.CONCISE,
+                                    TransformPreset.PROFESSIONAL,
+                                    TransformPreset.PUNCHY,
+                                    TransformPreset.FRIENDLY,
+                                    TransformPreset.SUMMARIZE,
+                                    TransformPreset.BULLETIZE
+                                )
+                            )
+                        }
+
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(stemTheme.borderSubtle))
+
+                        // Appearance
+                        Column {
+                            Text(
+                                text = stringResource(R.string.engine_appearance_header),
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = stemTheme.ink
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            val lightLabel = stringResource(R.string.engine_theme_light)
+                            val darkLabel = stringResource(R.string.engine_theme_dark)
+                            val systemLabel = stringResource(R.string.engine_theme_system)
+
+                            StemSegmentedGroup(
+                                options = ThemeMode.entries,
+                                selected = userSettings.themeMode,
+                                onSelected = onSelectThemeMode,
+                                label = { mode ->
+                                    when (mode) {
+                                        ThemeMode.LIGHT -> lightLabel
+                                        ThemeMode.DARK -> darkLabel
+                                        ThemeMode.SYSTEM -> systemLabel
+                                    }
+                                }
+                            )
+                        }
+
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(stemTheme.borderSubtle))
+
+                        // Haptic feedback
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.engine_haptic_feedback_title),
+                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                                    color = stemTheme.ink
+                                )
+                                Text(
+                                    text = stringResource(R.string.engine_haptic_feedback_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = stemTheme.inkMuted
+                                )
+                            }
+                            Switch(
+                                checked = userSettings.hapticFeedbackEnabled,
+                                onCheckedChange = onToggleHaptics,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = stemTheme.onInk,
+                                    checkedTrackColor = stemTheme.ink,
+                                    uncheckedThumbColor = stemTheme.inkMuted,
+                                    uncheckedTrackColor = stemTheme.surface2,
+                                    uncheckedBorderColor = stemTheme.borderSubtle
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        // Section: Excluded Apps
-        item {
-            Column {
-                Text(
-                    text = stringResource(R.string.engine_excluded_apps_header),
-                    style = StemMonoBadge,
-                    color = stemTheme.inkFaint
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.engine_excluded_apps_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = stemTheme.inkMuted
-                )
-            }
-        }
+        // -------------------------------------------------------------
+        // 3. EXCLUDED APPS CARD
+        // -------------------------------------------------------------
         item {
             var showAppPicker by remember { mutableStateOf(false) }
             val excludedCount = userSettings.excludedPackages.size
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(StemCardShape)
-                    .background(stemTheme.surface)
-                    .border(1.dp, stemTheme.border, StemCardShape)
-                    .clickable(role = Role.Button, onClick = { showAppPicker = true })
-                    .padding(16.dp)
+            StemCard(
+                onClick = { showAppPicker = true }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.engine_excluded_apps_header),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = stemTheme.ink
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = if (excludedCount == 0) {
+                                stringResource(R.string.engine_excluded_apps_none)
+                            } else {
+                                pluralStringResource(R.plurals.engine_excluded_apps_count, excludedCount, excludedCount)
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = stemTheme.inkMuted
+                        )
+                    }
                     Text(
-                        text = if (excludedCount == 0) {
-                            stringResource(R.string.engine_excluded_apps_none)
-                        } else {
-                            pluralStringResource(R.plurals.engine_excluded_apps_count, excludedCount, excludedCount)
-                        },
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = stemTheme.ink
-                    )
-                    Text(
-                        text = stringResource(R.string.engine_manage_button),
-                        style = StemMonoBadge,
+                        text = stringResource(R.string.engine_manage_button) + " →",
+                        style = StemMonoBadge.copy(fontWeight = FontWeight.Bold),
                         color = stemTheme.ink
                     )
                 }
@@ -556,118 +685,101 @@ fun EngineScreen(
             }
         }
 
-        // Section: Privacy Guarantee Card
+        // -------------------------------------------------------------
+        // 4. ABOUT & OPEN SOURCE COMMUNITY
+        // -------------------------------------------------------------
         item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(StemCardShape)
-                    .background(stemTheme.surface)
-                    .border(1.dp, stemTheme.border, StemCardShape)
-                    .padding(16.dp)
-            ) {
-                Column {
+            StemCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        StemLogoMark(size = 20.dp, tint = stemTheme.ink)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = stemTheme.ink
+                        )
+                    }
                     Text(
-                        text = stringResource(R.string.engine_privacy_guarantee_header),
+                        text = AppVersion.displayString,
                         style = StemMonoBadge,
-                        color = stemTheme.ink
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.engine_privacy_guarantee_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = stemTheme.inkMuted
+                        color = stemTheme.inkFaint
                     )
                 }
-            }
-        }
-    }
-}
 
-@Composable
-private fun ProviderCard(
-    title: String,
-    subtitle: String,
-    badge: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    content: (@Composable () -> Unit)? = null
-) {
-    val stemTheme = LocalStemColors.current
+                Spacer(modifier = Modifier.height(10.dp))
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(StemCardShape)
-            .background(stemTheme.surface)
-            .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) stemTheme.ink else stemTheme.border,
-                shape = StemCardShape
-            )
-            .clickable(role = Role.RadioButton, onClick = onClick)
-            .padding(14.dp)
-    ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.engine_privacy_guarantee_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = stemTheme.inkMuted,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Ko-fi action
                     Box(
                         modifier = Modifier
-                            .size(16.dp)
-                            .border(1.5.dp, if (isSelected) stemTheme.ink else stemTheme.border, StemSharpShape),
+                            .weight(1f)
+                            .clip(StemSharpShape)
+                            .background(stemTheme.surface2)
+                            .border(1.dp, stemTheme.borderSubtle, StemSharpShape)
+                            .clickable(role = Role.Button) {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, "https://ko-fi.com/X5R825DY4X".toUri())
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {
+                                }
+                            }
+                            .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (isSelected) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .background(stemTheme.ink)
-                            )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            KoFiIcon(color = Color(0xFF72A4F2), size = 14.dp)
+                            Text(text = "Ko-fi", style = StemMonoBadge.copy(fontWeight = FontWeight.Bold), color = stemTheme.ink)
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(10.dp))
-
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = stemTheme.ink
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .clip(StemSharpShape)
-                        .background(stemTheme.surface2)
-                        .border(1.dp, stemTheme.border, StemSharpShape)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = badge,
-                        style = StemMonoBadge,
-                        color = stemTheme.inkMuted
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = stemTheme.inkMuted,
-                modifier = Modifier.padding(start = 26.dp)
-            )
-
-            if (isSelected && content != null) {
-                Box(modifier = Modifier.padding(start = 26.dp)) {
-                    content()
+                    // GitHub Sponsors action
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(StemSharpShape)
+                            .background(stemTheme.surface2)
+                            .border(1.dp, stemTheme.borderSubtle, StemSharpShape)
+                            .clickable(role = Role.Button) {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, "https://github.com/sponsors/garc-kt".toUri())
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {
+                                }
+                            }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            GitHubSponsorHeartIcon(color = Color(0xFFEA4AAA), size = 14.dp)
+                            Text(text = stringResource(R.string.nav_sponsor_button), style = StemMonoBadge.copy(fontWeight = FontWeight.Bold), color = stemTheme.ink)
+                        }
+                    }
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -679,16 +791,8 @@ private sealed class TestConnectionStatus {
     data class Failure(val message: String) : TestConnectionStatus()
 }
 
-/**
- * Lets a provider's key be verified before saving — today a bad key just silently degrades to
- * local rules with no signal. [onTest] should probe a lightweight endpoint (models list, not a
- * full generation call) so testing doesn't spend the user's completion quota.
- */
 @Composable
 private fun TestConnectionButton(
-    // Included in the remembered state's key so editing the tested value(s) after a completed
-    // test discards the stale result instead of continuing to show "✓ Connected" (or a stale
-    // error) for a key/URL that was never actually tested. Pass every input onTest reads.
     resetKey: Any,
     onTest: suspend () -> Result<String>
 ) {
@@ -699,33 +803,21 @@ private fun TestConnectionButton(
 
     Spacer(modifier = Modifier.height(8.dp))
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .clip(StemSharpShape)
-                .background(stemTheme.surface2)
-                .border(1.dp, stemTheme.border, StemSharpShape)
-                .clickable(
-                    role = Role.Button,
-                    enabled = status !is TestConnectionStatus.Testing,
-                    onClick = {
-                        status = TestConnectionStatus.Testing
-                        scope.launch {
-                            val result = onTest()
-                            status = result.fold(
-                                onSuccess = { TestConnectionStatus.Success(it) },
-                                onFailure = { TestConnectionStatus.Failure(it.message ?: genericFailureMessage) }
-                            )
-                        }
-                    }
-                )
-                .padding(horizontal = 10.dp, vertical = 6.dp)
-        ) {
-            Text(
-                text = stringResource(if (status is TestConnectionStatus.Testing) R.string.engine_test_connection_testing else R.string.engine_test_connection_button),
-                style = StemMonoBadge,
-                color = stemTheme.ink
-            )
-        }
+        StemButton(
+            text = stringResource(if (status is TestConnectionStatus.Testing) R.string.engine_test_connection_testing else R.string.engine_test_connection_button),
+            onClick = {
+                status = TestConnectionStatus.Testing
+                scope.launch {
+                    val result = onTest()
+                    status = result.fold(
+                        onSuccess = { TestConnectionStatus.Success(it) },
+                        onFailure = { TestConnectionStatus.Failure(it.message ?: genericFailureMessage) }
+                    )
+                }
+            },
+            enabled = status !is TestConnectionStatus.Testing,
+            isPrimary = false
+        )
 
         when (val s = status) {
             is TestConnectionStatus.Success -> {
@@ -747,7 +839,7 @@ private fun TemperatureControl(
     onSaveTemperature: (Float) -> Unit
 ) {
     val stemTheme = LocalStemColors.current
-    Spacer(modifier = Modifier.height(10.dp))
+    Spacer(modifier = Modifier.height(4.dp))
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -869,7 +961,8 @@ private fun AppExclusionDialog(
                                         checkedThumbColor = stemTheme.onInk,
                                         checkedTrackColor = stemTheme.ink,
                                         uncheckedThumbColor = stemTheme.inkMuted,
-                                        uncheckedTrackColor = stemTheme.surface2
+                                        uncheckedTrackColor = stemTheme.surface2,
+                                        uncheckedBorderColor = stemTheme.borderSubtle
                                     )
                                 )
                             }
@@ -880,4 +973,3 @@ private fun AppExclusionDialog(
         }
     }
 }
-

@@ -3,11 +3,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
 import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.core.net.toUri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -111,7 +114,6 @@ fun StemNavDisplay(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            // Clean TopBar with Status Bar Insets Protection
             Surface(
                 color = stemTheme.surface,
                 modifier = Modifier
@@ -120,7 +122,7 @@ fun StemNavDisplay(
                         val strokeWidth = 1.dp.toPx()
                         val y = size.height - strokeWidth / 2
                         drawLine(
-                            color = stemTheme.border,
+                            color = stemTheme.borderSubtle,
                             start = Offset(0f, y),
                             end = Offset(size.width, y),
                             strokeWidth = strokeWidth
@@ -131,7 +133,7 @@ fun StemNavDisplay(
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
-                        .height(58.dp)
+                        .height(56.dp)
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
@@ -145,7 +147,7 @@ fun StemNavDisplay(
                         when (currentTab) {
                             StemTab.HOME -> {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    StemLogoMark(size = 26.dp, tint = stemTheme.ink)
+                                    StemLogoMark(size = 24.dp, tint = stemTheme.ink)
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
                                         text = stringResource(R.string.app_name),
@@ -177,69 +179,36 @@ fun StemNavDisplay(
                             }
                         }
 
-                        // Right: Top-Right Sponsor Icons & Direct Links
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        // Right: Minimalist subtle support button
+                        val sponsorContentDescription = stringResource(R.string.nav_sponsor_button)
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(stemTheme.surface2)
+                                .border(1.dp, stemTheme.borderSubtle, CircleShape)
+                                .clickable(
+                                    role = Role.Button,
+                                    onClick = {
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW, "https://github.com/sponsors/garc-kt".toUri())
+                                            context.startActivity(intent)
+                                        } catch (_: Exception) {
+                                        }
+                                    }
+                                )
+                                .clearAndSetSemantics {
+                                    contentDescription = sponsorContentDescription
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
-                            // Ko-fi direct button
-                            Box(
-                                modifier = Modifier
-                                    .clip(StemSharpShape)
-                                    .background(stemTheme.surface2)
-                                    .border(1.dp, stemTheme.border, StemSharpShape)
-                                    .clickable(role = Role.Button) {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/X5R825DY4X"))
-                                        context.startActivity(intent)
-                                    }
-                                    .padding(horizontal = 7.dp, vertical = 5.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    KoFiIcon(color = Color(0xFF72A4F2), size = 14.dp)
-                                    Text(
-                                        text = "KO-FI",
-                                        style = StemMonoBadge,
-                                        color = stemTheme.ink
-                                    )
-                                }
-                            }
-
-                            // GitHub Sponsors direct button
-                            Box(
-                                modifier = Modifier
-                                    .clip(StemSharpShape)
-                                    .background(stemTheme.surface2)
-                                    .border(1.dp, stemTheme.border, StemSharpShape)
-                                    .clickable(role = Role.Button) {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/garc-kt"))
-                                        context.startActivity(intent)
-                                    }
-                                    .padding(horizontal = 7.dp, vertical = 5.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    GitHubSponsorHeartIcon(color = Color(0xFFEA4AAA), size = 14.dp)
-                                    Text(
-                                        text = stringResource(R.string.nav_sponsor_button),
-                                        style = StemMonoBadge,
-                                        color = stemTheme.ink
-                                    )
-                                }
-                            }
+                            GitHubSponsorHeartIcon(color = stemTheme.inkMuted, size = 15.dp)
                         }
                     }
                 }
             }
         },
         bottomBar = {
-            // Fixed BottomBar elevated above Android navigation bar
             Surface(
                 color = stemTheme.surface,
                 modifier = Modifier
@@ -248,7 +217,7 @@ fun StemNavDisplay(
                         val strokeWidth = 1.dp.toPx()
                         val y = strokeWidth / 2
                         drawLine(
-                            color = stemTheme.border,
+                            color = stemTheme.borderSubtle,
                             start = Offset(0f, y),
                             end = Offset(size.width, y),
                             strokeWidth = strokeWidth
@@ -259,12 +228,22 @@ fun StemNavDisplay(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .height(64.dp),
+                        .height(60.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     StemTab.entries.forEach { tab ->
                         val isSelected = currentTab == tab
-                        val color = if (isSelected) stemTheme.ink else stemTheme.inkMuted
+                        val targetColor = if (isSelected) stemTheme.ink else stemTheme.inkMuted
+                        val animatedColor by androidx.compose.animation.animateColorAsState(
+                            targetValue = targetColor,
+                            animationSpec = androidx.compose.animation.core.tween(150),
+                            label = "tabColor"
+                        )
+                        val indicatorAlpha by androidx.compose.animation.core.animateFloatAsState(
+                            targetValue = if (isSelected) 1f else 0f,
+                            animationSpec = androidx.compose.animation.core.tween(150),
+                            label = "tabIndicatorAlpha"
+                        )
 
                         Column(
                             modifier = Modifier
@@ -274,12 +253,21 @@ fun StemNavDisplay(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            StemTabIcon(tab = tab, color = color)
-                            Spacer(modifier = Modifier.height(4.dp))
+                            StemTabIcon(tab = tab, color = animatedColor)
+                            Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = stringResource(tab.titleRes).uppercase(),
-                                style = StemMonoBadge,
-                                color = color
+                                style = StemMonoBadge.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                ),
+                                color = animatedColor
+                            )
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 12.dp, height = 2.dp)
+                                    .clip(StemSharpShape)
+                                    .background(stemTheme.ink.copy(alpha = indicatorAlpha))
                             )
                         }
                     }
@@ -327,6 +315,8 @@ fun StemNavDisplay(
                     EngineScreen(
                         userSettings = userSettings,
                         onSelectEngineMode = viewModel::selectEngineMode,
+                        onSelectLanguagePreference = viewModel::selectLanguagePreference,
+                        onSelectDefaultPreset = viewModel::selectDefaultPreset,
                         onSaveTemperature = viewModel::saveTemperature,
                         onSaveOllamaUrl = viewModel::saveOllamaUrl,
                         onSaveOllamaModel = viewModel::saveOllamaModel,
