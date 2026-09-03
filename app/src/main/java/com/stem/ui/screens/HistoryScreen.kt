@@ -30,11 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.stem.R
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemCardShape
 import com.stem.ui.theme.StemMonoBadge
@@ -77,14 +79,14 @@ fun HistoryScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Transformations from the last 7 days.",
+                    text = stringResource(R.string.history_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = stemTheme.inkMuted
                 )
 
                 if (history.isNotEmpty()) {
                     Text(
-                        text = "CLEAR",
+                        text = stringResource(R.string.history_clear_button),
                         style = StemMonoBadge,
                         color = stemTheme.remove,
                         modifier = Modifier
@@ -108,13 +110,13 @@ fun HistoryScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "No transformation history yet.",
+                            text = stringResource(R.string.history_empty_title),
                             style = MaterialTheme.typography.bodyMedium,
                             color = stemTheme.inkMuted
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Rewrites applied via Stem will appear here.",
+                            text = stringResource(R.string.history_empty_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = stemTheme.inkFaint
                         )
@@ -203,7 +205,7 @@ fun HistoryScreen(
                                         .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Text(
-                                        text = "COPY",
+                                        text = stringResource(R.string.history_copy_button),
                                         style = StemMonoBadge,
                                         color = stemTheme.ink
                                     )
@@ -226,14 +228,15 @@ fun formatHistoryCommand(presetName: String): String {
     }
 }
 
+@Composable
 private fun formatTimeAgo(timestamp: Long): String {
     val deltaMs = System.currentTimeMillis() - timestamp
     val deltaMins = deltaMs / (1000 * 60)
     return when {
-        deltaMins < 1 -> "JUST NOW"
-        deltaMins < 60 -> "${deltaMins}M AGO"
-        deltaMins < 1440 -> "${deltaMins / 60}H AGO"
-        else -> "${deltaMins / 1440}D AGO"
+        deltaMins < 1 -> stringResource(R.string.history_time_just_now)
+        deltaMins < 60 -> stringResource(R.string.history_time_minutes_ago, deltaMins)
+        deltaMins < 1440 -> stringResource(R.string.history_time_hours_ago, deltaMins / 60)
+        else -> stringResource(R.string.history_time_days_ago, deltaMins / 1440)
     }
 }
 

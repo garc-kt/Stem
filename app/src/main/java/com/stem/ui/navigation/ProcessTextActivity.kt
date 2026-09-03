@@ -39,11 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.stem.R
 import com.stem.app.StemApplication
 import com.stem.core.models.StemUserSettings
 import com.stem.core.models.TextPayload
@@ -127,7 +130,7 @@ class ProcessTextActivity : ComponentActivity() {
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = "STEM SELECTION",
+                                        text = stringResource(R.string.process_text_selection_badge),
                                         style = StemMonoBadge,
                                         color = stemTheme.inkMuted
                                     )
@@ -145,7 +148,7 @@ class ProcessTextActivity : ComponentActivity() {
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.Close,
-                                        contentDescription = "Close",
+                                        contentDescription = stringResource(R.string.action_close),
                                         tint = stemTheme.inkMuted,
                                         modifier = Modifier.size(16.dp)
                                     )
@@ -167,7 +170,7 @@ class ProcessTextActivity : ComponentActivity() {
                             if (isLoading) {
                                 ThinkingWordSkeleton(
                                     text = selectedText,
-                                    label = "Applying ${activePreset.title}..."
+                                    label = stringResource(R.string.thinking_applying_preset, activePreset.title)
                                 )
                             } else {
                                 result?.let { res ->
@@ -183,7 +186,7 @@ class ProcessTextActivity : ComponentActivity() {
                                     if (res.wordsSaved > 0) {
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Text(
-                                            text = "-${res.wordsSaved} words",
+                                            text = pluralStringResource(R.plurals.words_saved_count, res.wordsSaved, res.wordsSaved),
                                             style = StemMonoBadge,
                                             color = stemTheme.add
                                         )
@@ -192,7 +195,7 @@ class ProcessTextActivity : ComponentActivity() {
                                     if (res.errorMessage != null) {
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Text(
-                                            text = "Engine unavailable (${res.errorMessage}) — used local rules",
+                                            text = stringResource(R.string.engine_unavailable_fallback_message, res.errorMessage),
                                             style = StemMonoBadge,
                                             color = stemTheme.remove
                                         )
@@ -201,6 +204,8 @@ class ProcessTextActivity : ComponentActivity() {
                             }
 
                             Spacer(modifier = Modifier.height(14.dp))
+
+                            val copiedMessage = stringResource(R.string.action_copied)
 
                             // Actions: Copy & Replace
                             Row(
@@ -219,14 +224,14 @@ class ProcessTextActivity : ComponentActivity() {
                                                 val textToCopy = result?.transformedText ?: selectedText
                                                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                                 clipboard.setPrimaryClip(ClipData.newPlainText("Stem", textToCopy))
-                                                Toast.makeText(this@ProcessTextActivity, "Copied", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(this@ProcessTextActivity, copiedMessage, Toast.LENGTH_SHORT).show()
                                             }
                                         )
                                         .padding(vertical = 10.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "Copy",
+                                        text = stringResource(R.string.action_copy),
                                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                                         color = stemTheme.ink
                                     )
@@ -254,7 +259,7 @@ class ProcessTextActivity : ComponentActivity() {
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = "Replace",
+                                            text = stringResource(R.string.action_replace),
                                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                             color = if (!isLoading && result?.hasChanges == true) stemTheme.onInk else stemTheme.inkFaint
                                         )

@@ -31,11 +31,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.stem.R
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemCardShape
 import com.stem.ui.theme.StemGeometricIcon
@@ -66,6 +68,9 @@ fun OnboardingScreen(
     var step by remember { mutableIntStateOf(0) }
     val totalSteps = 3
     val stemTheme = LocalStemColors.current
+    // Resolved here, not inside clearAndSetSemantics { } below — that lambda runs in the
+    // semantics DSL, not composition, so it can't call stringResource() directly.
+    val stepDescription = stringResource(R.string.onboarding_step_indicator, step + 1, totalSteps)
 
     Column(
         modifier = modifier
@@ -85,7 +90,7 @@ fun OnboardingScreen(
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 16.dp)
-                    .clearAndSetSemantics { contentDescription = "Step ${step + 1} of $totalSteps" },
+                    .clearAndSetSemantics { contentDescription = stepDescription },
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 repeat(totalSteps) { index ->
@@ -104,7 +109,7 @@ fun OnboardingScreen(
 
             if (step < totalSteps - 1) {
                 Text(
-                    text = "SKIP",
+                    text = stringResource(R.string.onboarding_skip_button),
                     style = StemMonoBadge,
                     color = stemTheme.inkMuted,
                     modifier = Modifier
@@ -156,11 +161,13 @@ fun OnboardingScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = when (step) {
-                    0 -> "Get started"
-                    1 -> if (hasAccessibilityPermission) "Continue" else "Next"
-                    else -> "Open Stem"
-                },
+                text = stringResource(
+                    when (step) {
+                        0 -> R.string.onboarding_cta_get_started
+                        1 -> if (hasAccessibilityPermission) R.string.onboarding_cta_continue else R.string.onboarding_cta_next
+                        else -> R.string.onboarding_cta_open_stem
+                    }
+                ),
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 color = stemTheme.onInk
             )
@@ -181,7 +188,7 @@ private fun WelcomeStep() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Stem",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.displayMedium,
             color = stemTheme.ink
         )
@@ -189,7 +196,7 @@ private fun WelcomeStep() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Ambient writing help, wherever you type.",
+            text = stringResource(R.string.onboarding_tagline),
             style = MaterialTheme.typography.bodyLarge,
             color = stemTheme.inkMuted
         )
@@ -208,15 +215,15 @@ private fun WelcomeStep() {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 FeatureRow(
                     iconType = StemIconType.SQUARE_OUTLINE,
-                    title = "Fix typos & grammar in real time"
+                    title = stringResource(R.string.onboarding_feature_fix)
                 )
                 FeatureRow(
                     iconType = StemIconType.TRIANGLE,
-                    title = "Transform tone: punchy, formal, friendly"
+                    title = stringResource(R.string.onboarding_feature_tone)
                 )
                 FeatureRow(
                     iconType = StemIconType.CIRCLE_OUTLINE,
-                    title = "Never leaves your device (unless you ask)"
+                    title = stringResource(R.string.onboarding_feature_privacy)
                 )
             }
         }
@@ -255,7 +262,7 @@ private fun AccessibilityStep(
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = "STEP 1 OF 2",
+            text = stringResource(R.string.onboarding_accessibility_step_badge),
             style = StemMonoBadge,
             color = stemTheme.inkFaint
         )
@@ -263,7 +270,7 @@ private fun AccessibilityStep(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Read & replace text",
+            text = stringResource(R.string.onboarding_accessibility_headline),
             style = MaterialTheme.typography.headlineMedium,
             color = stemTheme.ink
         )
@@ -271,7 +278,7 @@ private fun AccessibilityStep(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Stem needs Accessibility permission to detect when you're typing and offer instant inline rewrites.",
+            text = stringResource(R.string.onboarding_accessibility_description),
             style = MaterialTheme.typography.bodyMedium,
             color = stemTheme.inkMuted
         )
@@ -294,13 +301,13 @@ private fun AccessibilityStep(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Android Accessibility Service",
+                        text = stringResource(R.string.onboarding_accessibility_card_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = stemTheme.ink
                     )
                     if (isGranted) {
                         Text(
-                            text = "Granted ✓",
+                            text = stringResource(R.string.onboarding_accessibility_granted),
                             style = StemMonoBadge,
                             color = stemTheme.add
                         )
@@ -310,7 +317,7 @@ private fun AccessibilityStep(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Only reads the active input field. Never sends keystrokes off-device.",
+                    text = stringResource(R.string.onboarding_accessibility_card_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = stemTheme.inkMuted
                 )
@@ -328,7 +335,7 @@ private fun AccessibilityStep(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Enable in Settings",
+                            text = stringResource(R.string.onboarding_enable_in_settings_button),
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                             color = stemTheme.ink
                         )
@@ -345,7 +352,7 @@ private fun DoneStep() {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = "READY",
+            text = stringResource(R.string.onboarding_ready_badge),
             style = StemMonoBadge,
             color = stemTheme.add
         )
@@ -353,7 +360,7 @@ private fun DoneStep() {
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "You're all set.",
+            text = stringResource(R.string.onboarding_ready_headline),
             style = MaterialTheme.typography.headlineMedium,
             color = stemTheme.ink
         )
@@ -361,7 +368,7 @@ private fun DoneStep() {
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Type any text followed by ?fix, ?concise, ?formal or ..snippet to transform inline instantly.",
+            text = stringResource(R.string.onboarding_ready_description),
             style = MaterialTheme.typography.bodyMedium,
             color = stemTheme.inkMuted
         )
@@ -379,7 +386,7 @@ private fun DoneStep() {
         ) {
             Column {
                 Text(
-                    text = "TRY IT OUT",
+                    text = stringResource(R.string.onboarding_try_it_out_badge),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
@@ -388,10 +395,10 @@ private fun DoneStep() {
 
                 DiffViewer(
                     diffTokens = listOf(
-                        DiffToken("Fix: ", DiffType.UNMODIFIED),
-                        DiffToken("thier", DiffType.DELETED),
-                        DiffToken("there", DiffType.ADDED),
-                        DiffToken(" was no problem with the presentation", DiffType.UNMODIFIED)
+                        DiffToken(stringResource(R.string.onboarding_demo_prefix), DiffType.UNMODIFIED),
+                        DiffToken(stringResource(R.string.onboarding_demo_wrong), DiffType.DELETED),
+                        DiffToken(stringResource(R.string.onboarding_demo_right), DiffType.ADDED),
+                        DiffToken(stringResource(R.string.onboarding_demo_suffix), DiffType.UNMODIFIED)
                     )
                 )
             }

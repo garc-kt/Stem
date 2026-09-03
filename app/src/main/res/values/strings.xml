@@ -1,5 +1,182 @@
 <resources>
     <string name="app_name">Stem</string>
+    <string name="assistant_label">Stem Assistant</string>
     <string name="accessibility_service_label">Stem Text Assistant</string>
     <string name="accessibility_service_description">Stem detects active text fields to provide inline, on-device writing enhancements, grammar corrections, and instant tone presets without leaving your app.</string>
+
+    <!-- Shared actions -->
+    <string name="action_close">Close</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_copied">Copied</string>
+    <string name="action_replace">Replace</string>
+
+    <!-- Bottom/top navigation -->
+    <string name="nav_tab_home">Home</string>
+    <string name="nav_tab_snippets">Snippets</string>
+    <string name="nav_tab_history">History</string>
+    <string name="nav_tab_settings">Settings</string>
+    <string name="nav_sponsor_button">SPONSOR</string>
+
+    <!-- Diff viewer -->
+    <string name="diff_before">BEFORE</string>
+    <string name="diff_after">AFTER</string>
+    <string name="diff_added_announcement">" added: %1$s "</string>
+    <string name="diff_removed_announcement">" removed: %1$s "</string>
+
+    <!-- Thinking / loading indicator -->
+    <string name="thinking_default_label">Thinking…</string>
+    <string name="thinking_rewriting_badge">REWRITING</string>
+    <string name="thinking_applying_preset">Applying %1$s…</string>
+
+    <!-- Process Text (share-menu) dialog -->
+    <string name="process_text_selection_badge">STEM SELECTION</string>
+    <string name="engine_unavailable_fallback_message">Engine unavailable (%1$s) — used local rules</string>
+
+    <plurals name="words_saved_count">
+        <item quantity="one">-%1$d word</item>
+        <item quantity="other">-%1$d words</item>
+    </plurals>
+
+    <!-- History screen -->
+    <string name="history_subtitle">Your recent transformations.</string>
+    <string name="history_clear_button">CLEAR</string>
+    <string name="history_empty_title">No transformation history yet.</string>
+    <string name="history_empty_subtitle">Rewrites applied via Stem will appear here.</string>
+    <string name="history_copy_button">COPY</string>
+    <string name="history_time_just_now">JUST NOW</string>
+    <string name="history_time_minutes_ago">%1$dM AGO</string>
+    <string name="history_time_hours_ago">%1$dH AGO</string>
+    <string name="history_time_days_ago">%1$dD AGO</string>
+
+    <!-- Home screen -->
+    <string name="home_status_active">Stem is active</string>
+    <string name="home_status_paused">Stem is paused</string>
+    <string name="home_status_active_description">Inline text assistant is ready across all apps.</string>
+    <string name="home_status_paused_description">Enable accessibility service to start transforming text.</string>
+    <string name="home_enable_accessibility_button">Enable Accessibility</string>
+    <string name="home_active_engine_badge">ACTIVE ENGINE</string>
+    <string name="home_engine_scope_local">LOCAL</string>
+    <string name="home_engine_scope_lan">LAN</string>
+    <string name="home_engine_scope_cloud">CLOUD</string>
+    <string name="home_engine_summary_local">On-Device Rule Engine (Instant)</string>
+    <string name="home_engine_summary_ollama">Ollama Local AI (%1$s)</string>
+    <string name="home_engine_summary_gemini">Google Gemini (%1$s)</string>
+    <string name="home_engine_summary_openai">OpenAI Compatible (%1$s)</string>
+    <string name="home_engine_summary_claude">Anthropic Claude (%1$s)</string>
+    <string name="home_engine_tap_to_configure">Tap to configure model keys and rules in Settings →</string>
+    <string name="home_snippets_tile_description">Inline math, date, &amp; custom triggers →</string>
+    <string name="home_history_tile_description">Visual diffs and undo journal →</string>
+    <string name="home_recent_transforms_header">RECENT TRANSFORMS</string>
+    <string name="home_see_all_button">See all →</string>
+    <string name="home_recent_transforms_empty">No recent transformations yet. Type in any app (e.g. text + ?fix or ?concise) to see results here.</string>
+    <string name="home_recent_badge">recent</string>
+
+    <!-- Snippets screen -->
+    <string name="snippets_builtin_fix">Fix grammar, spelling, and punctuation</string>
+    <string name="snippets_builtin_concise">Trim wordiness and remove fluff</string>
+    <string name="snippets_builtin_formal">Elevate to clear professional tone</string>
+    <string name="snippets_builtin_punchy">Direct, impactful, and active</string>
+    <string name="snippets_builtin_friendly">Warm, open, and approachable</string>
+    <string name="snippets_builtin_bullets">Convert paragraphs to clear bullet points</string>
+    <string name="snippets_builtin_summarize">Condense into key takeaways</string>
+    <string name="snippets_builtin_expand">Elaborate with details and depth</string>
+    <string name="snippets_builtin_ai">Run ad-hoc AI instruction (e.g. ?ai: translate to spanish)</string>
+    <string name="snippets_builtin_calc">Calculate math inline (e.g. ?calc: 25 * 4 + 10)</string>
+    <string name="snippets_builtin_now_date">Insert formatted current timestamp or date</string>
+    <string name="snippets_builtin_undo">Revert last transformation in active field</string>
+    <string name="snippets_builtin_cmd">Quick-save a custom AI command inline while typing</string>
+    <string name="snippets_builtin_save">Quick-save a new snippet expansion inline while typing</string>
+    <string name="snippets_inline_commands_header">INLINE COMMANDS</string>
+    <string name="snippets_inline_commands_description">Type any command at the end of your text in any app to transform or calculate instantly.</string>
+    <string name="snippets_custom_commands_header">CUSTOM COMMANDS (%1$d)</string>
+    <string name="snippets_custom_commands_description">Define custom AI prompt shortcuts. Type ?&lt;trigger&gt; in any text field to invoke.</string>
+    <string name="snippets_add_custom_command_header">ADD NEW CUSTOM COMMAND</string>
+    <string name="snippets_command_trigger_placeholder">Trigger (e.g. roast, translate, reply)</string>
+    <string name="snippets_command_prompt_placeholder">AI instruction (e.g. Rewrite in a witty, humorous roast tone)</string>
+    <string name="snippets_save_command_button">Save custom command</string>
+    <string name="snippets_delete_command_description">Delete command</string>
+    <string name="snippets_expansions_header">SNIPPET EXPANSIONS (%1$d)</string>
+    <string name="snippets_expansions_description">Expand short triggers into long text phrases. Type ..&lt;trigger&gt; or .&lt;trigger&gt; to expand.</string>
+    <string name="snippets_add_snippet_header">ADD NEW SNIPPET</string>
+    <string name="snippets_trigger_placeholder">Trigger (e.g. email, addr, shrug)</string>
+    <string name="snippets_expansion_placeholder">Full phrase expansion</string>
+    <string name="snippets_save_snippet_button">Save snippet</string>
+    <string name="snippets_delete_snippet_description">Delete snippet</string>
+
+    <!-- Engine (Settings) screen -->
+    <string name="engine_api_key_label">API Key</string>
+    <string name="engine_clear_key_button">Clear key</string>
+    <string name="engine_ai_provider_header">AI PROVIDER</string>
+    <string name="engine_ai_provider_description">Choose how Stem processes text. On-device rules work offline with zero latency.</string>
+    <string name="engine_provider_local_title">On-device rules</string>
+    <string name="engine_provider_local_subtitle">Fast, private, zero setup. 40+ grammar &amp; style rules.</string>
+    <string name="engine_provider_ollama_title">Ollama (Local LAN)</string>
+    <string name="engine_provider_ollama_subtitle">Llama, Mistral, Gemma, local models</string>
+    <string name="engine_provider_gemini_title">Google Gemini</string>
+    <string name="engine_provider_gemini_subtitle">Gemini Models (Flash, Pro)</string>
+    <string name="engine_provider_openai_title">OpenAI-compatible</string>
+    <string name="engine_provider_openai_subtitle">ChatGPT, DeepSeek, Groq, OpenRouter models</string>
+    <string name="engine_provider_claude_title">Anthropic Claude</string>
+    <string name="engine_provider_claude_subtitle">Claude Models (Sonnet, Haiku)</string>
+    <string name="engine_server_url_label">Server URL</string>
+    <string name="engine_model_name_label">Model Name</string>
+    <string name="engine_model_label">Model</string>
+    <string name="engine_base_url_label">Base URL</string>
+    <string name="engine_appearance_header">APPEARANCE</string>
+    <string name="engine_theme_light">Light</string>
+    <string name="engine_theme_dark">Dark</string>
+    <string name="engine_theme_system">System</string>
+    <string name="engine_haptic_feedback_title">Haptic feedback</string>
+    <string name="engine_haptic_feedback_description">Gentle vibration on text replacement</string>
+    <string name="engine_excluded_apps_header">EXCLUDED APPS</string>
+    <string name="engine_excluded_apps_description">Stem reads text from every app by default. Exclude apps you don\'t want it active in — password managers and banking apps are good candidates.</string>
+    <string name="engine_excluded_apps_none">No apps excluded</string>
+    <plurals name="engine_excluded_apps_count">
+        <item quantity="one">%1$d app excluded</item>
+        <item quantity="other">%1$d apps excluded</item>
+    </plurals>
+    <string name="engine_manage_button">MANAGE</string>
+    <string name="engine_privacy_guarantee_header">PRIVACY GUARANTEE</string>
+    <string name="engine_privacy_guarantee_description">Text is only sent to the provider you select. Keystrokes are never logged or stored off-device.</string>
+    <string name="engine_temperature_label">Temperature</string>
+    <string name="engine_temperature_precise">(Precise)</string>
+    <string name="engine_temperature_balanced">(Balanced)</string>
+    <string name="engine_temperature_creative">(Creative)</string>
+    <string name="engine_temperature_experimental">(Experimental)</string>
+    <string name="engine_no_apps_found">No other apps found on this device.</string>
+    <string name="engine_test_connection_failed">Connection failed</string>
+    <string name="engine_test_connection_testing">TESTING…</string>
+    <string name="engine_test_connection_button">TEST CONNECTION</string>
+    <string name="engine_test_connection_success">✓ %1$s</string>
+    <string name="engine_test_connection_failure">✗ %1$s</string>
+    <string name="engine_test_connection_connected">Connected</string>
+    <string name="engine_ollama_models_found_one">%1$d model found</string>
+    <string name="engine_ollama_models_found_other">%1$d models found</string>
+
+    <!-- Onboarding screen -->
+    <string name="onboarding_step_indicator">Step %1$d of %2$d</string>
+    <string name="onboarding_skip_button">SKIP</string>
+    <string name="onboarding_cta_get_started">Get started</string>
+    <string name="onboarding_cta_continue">Continue</string>
+    <string name="onboarding_cta_next">Next</string>
+    <string name="onboarding_cta_open_stem">Open Stem</string>
+    <string name="onboarding_tagline">Ambient writing help, wherever you type.</string>
+    <string name="onboarding_feature_fix">Fix typos &amp; grammar in real time</string>
+    <string name="onboarding_feature_tone">Transform tone: punchy, formal, friendly</string>
+    <string name="onboarding_feature_privacy">Never leaves your device (unless you ask)</string>
+    <string name="onboarding_accessibility_step_badge">STEP 1 OF 2</string>
+    <string name="onboarding_accessibility_headline">Read &amp; replace text</string>
+    <string name="onboarding_accessibility_description">Stem needs Accessibility permission to detect when you\'re typing and offer instant inline rewrites.</string>
+    <string name="onboarding_accessibility_card_title">Android Accessibility Service</string>
+    <string name="onboarding_accessibility_granted">Granted ✓</string>
+    <string name="onboarding_accessibility_card_description">Only reads the active input field. Never sends keystrokes off-device.</string>
+    <string name="onboarding_enable_in_settings_button">Enable in Settings</string>
+    <string name="onboarding_ready_badge">READY</string>
+    <string name="onboarding_ready_headline">You\'re all set.</string>
+    <string name="onboarding_ready_description">Type any text followed by ?fix, ?concise, ?formal or ..snippet to transform inline instantly.</string>
+    <string name="onboarding_try_it_out_badge">TRY IT OUT</string>
+    <string name="onboarding_demo_prefix">"Fix: "</string>
+    <string name="onboarding_demo_wrong">thier</string>
+    <string name="onboarding_demo_right">there</string>
+    <string name="onboarding_demo_suffix">" was no problem with the presentation"</string>
 </resources>

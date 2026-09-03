@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.stem.R
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -249,11 +251,11 @@ fun StemTabIcon(
     }
 }
 
-enum class StemTab(val title: String) {
-    HOME("Home"),
-    SNIPPETS("Snippets"),
-    HISTORY("History"),
-    SETTINGS("Settings")
+enum class StemTab(@param:StringRes val titleRes: Int) {
+    HOME(R.string.nav_tab_home),
+    SNIPPETS(R.string.nav_tab_snippets),
+    HISTORY(R.string.nav_tab_history),
+    SETTINGS(R.string.nav_tab_settings)
 }
 
 /**

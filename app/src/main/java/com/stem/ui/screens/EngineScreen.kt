@@ -46,12 +46,15 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.stem.R
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemCardShape
 import com.stem.ui.theme.StemMonoBadge
@@ -109,7 +112,7 @@ private fun ApiKeyField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            label = { Text("API Key", style = MaterialTheme.typography.bodySmall) },
+            label = { Text(stringResource(R.string.engine_api_key_label), style = MaterialTheme.typography.bodySmall) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onSave(); focusManager.clearFocus() }),
@@ -122,7 +125,7 @@ private fun ApiKeyField(
         if (value.isNotBlank()) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Clear key",
+                text = stringResource(R.string.engine_clear_key_button),
                 style = StemMonoBadge,
                 color = stemTheme.remove,
                 modifier = Modifier
@@ -175,6 +178,12 @@ fun EngineScreen(
     var claudeModelInput by remember(userSettings.claudeModel) { mutableStateOf(userSettings.claudeModel) }
     var customPromptInput by remember(userSettings.customPromptInstruction) { mutableStateOf(userSettings.customPromptInstruction) }
 
+    // Resolved here (composable context) rather than inside the onTest lambdas below, which
+    // run later inside a launched coroutine and can't call stringResource() directly.
+    val connectedMessage = stringResource(R.string.engine_test_connection_connected)
+    val ollamaModelsFoundOne = stringResource(R.string.engine_ollama_models_found_one)
+    val ollamaModelsFoundOther = stringResource(R.string.engine_ollama_models_found_other)
+
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -186,13 +195,13 @@ fun EngineScreen(
         item {
             Column {
                 Text(
-                    text = "AI PROVIDER",
+                    text = stringResource(R.string.engine_ai_provider_header),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Choose how Stem processes text. On-device rules work offline with zero latency.",
+                    text = stringResource(R.string.engine_ai_provider_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = stemTheme.inkMuted
                 )
@@ -204,18 +213,18 @@ fun EngineScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // 1. On-Device Rules
                 ProviderCard(
-                    title = "On-device rules",
-                    subtitle = "Fast, private, zero setup. 40+ grammar & style rules.",
-                    badge = "LOCAL",
+                    title = stringResource(R.string.engine_provider_local_title),
+                    subtitle = stringResource(R.string.engine_provider_local_subtitle),
+                    badge = stringResource(R.string.home_engine_scope_local),
                     isSelected = userSettings.engineMode == EngineMode.LOCAL_RULES,
                     onClick = { onSelectEngineMode(EngineMode.LOCAL_RULES) }
                 )
 
                 // 2. Ollama LAN
                 ProviderCard(
-                    title = "Ollama (Local LAN)",
-                    subtitle = "Llama, Mistral, Gemma, local models",
-                    badge = "LAN",
+                    title = stringResource(R.string.engine_provider_ollama_title),
+                    subtitle = stringResource(R.string.engine_provider_ollama_subtitle),
+                    badge = stringResource(R.string.home_engine_scope_lan),
                     isSelected = userSettings.engineMode == EngineMode.OLLAMA_AI,
                     onClick = { onSelectEngineMode(EngineMode.OLLAMA_AI) }
                 ) {
@@ -223,7 +232,7 @@ fun EngineScreen(
                         OutlinedTextField(
                             value = ollamaUrlInput,
                             onValueChange = { ollamaUrlInput = it },
-                            label = { Text("Server URL", style = MaterialTheme.typography.bodySmall) },
+                            label = { Text(stringResource(R.string.engine_server_url_label), style = MaterialTheme.typography.bodySmall) },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { onSaveOllamaUrl(ollamaUrlInput); focusManager.clearFocus() }),
                             modifier = Modifier
@@ -236,7 +245,7 @@ fun EngineScreen(
                         OutlinedTextField(
                             value = ollamaModelInput,
                             onValueChange = { ollamaModelInput = it },
-                            label = { Text("Model Name", style = MaterialTheme.typography.bodySmall) },
+                            label = { Text(stringResource(R.string.engine_model_name_label), style = MaterialTheme.typography.bodySmall) },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { onSaveOllamaModel(ollamaModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
@@ -247,7 +256,10 @@ fun EngineScreen(
                         )
                         TestConnectionButton(
                             onTest = {
-                                OllamaClient.fetchAvailableModels(ollamaUrlInput).map { models -> "${models.size} model${if (models.size != 1) "s" else ""} found" }
+                                OllamaClient.fetchAvailableModels(ollamaUrlInput).map { models ->
+                                    val template = if (models.size == 1) ollamaModelsFoundOne else ollamaModelsFoundOther
+                                    String.format(template, models.size)
+                                }
                             }
                         )
                         TemperatureControl(
@@ -259,9 +271,9 @@ fun EngineScreen(
 
                 // 3. Google Gemini
                 ProviderCard(
-                    title = "Google Gemini",
-                    subtitle = "Gemini Models (Flash, Pro)",
-                    badge = "CLOUD",
+                    title = stringResource(R.string.engine_provider_gemini_title),
+                    subtitle = stringResource(R.string.engine_provider_gemini_subtitle),
+                    badge = stringResource(R.string.home_engine_scope_cloud),
                     isSelected = userSettings.engineMode == EngineMode.GEMINI_AI,
                     onClick = { onSelectEngineMode(EngineMode.GEMINI_AI) }
                 ) {
@@ -276,7 +288,7 @@ fun EngineScreen(
                         OutlinedTextField(
                             value = geminiModelInput,
                             onValueChange = { geminiModelInput = it },
-                            label = { Text("Model", style = MaterialTheme.typography.bodySmall) },
+                            label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { onSaveGeminiSettings(geminiKeyInput, geminiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
@@ -286,7 +298,7 @@ fun EngineScreen(
                             shape = StemSharpShape
                         )
                         TestConnectionButton(
-                            onTest = { GeminiClient.testConnection(geminiKeyInput).map { "Connected" } }
+                            onTest = { GeminiClient.testConnection(geminiKeyInput).map { connectedMessage } }
                         )
                         TemperatureControl(
                             temperature = userSettings.temperature,
@@ -297,9 +309,9 @@ fun EngineScreen(
 
                 // 4. OpenAI-Compatible
                 ProviderCard(
-                    title = "OpenAI-compatible",
-                    subtitle = "ChatGPT, DeepSeek, Groq, OpenRouter models",
-                    badge = "CLOUD",
+                    title = stringResource(R.string.engine_provider_openai_title),
+                    subtitle = stringResource(R.string.engine_provider_openai_subtitle),
+                    badge = stringResource(R.string.home_engine_scope_cloud),
                     isSelected = userSettings.engineMode == EngineMode.OPENAI_COMPATIBLE,
                     onClick = { onSelectEngineMode(EngineMode.OPENAI_COMPATIBLE) }
                 ) {
@@ -307,7 +319,7 @@ fun EngineScreen(
                         OutlinedTextField(
                             value = openAiUrlInput,
                             onValueChange = { openAiUrlInput = it },
-                            label = { Text("Base URL", style = MaterialTheme.typography.bodySmall) },
+                            label = { Text(stringResource(R.string.engine_base_url_label), style = MaterialTheme.typography.bodySmall) },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
@@ -327,7 +339,7 @@ fun EngineScreen(
                         OutlinedTextField(
                             value = openAiModelInput,
                             onValueChange = { openAiModelInput = it },
-                            label = { Text("Model", style = MaterialTheme.typography.bodySmall) },
+                            label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { onSaveOpenAISettings(openAiUrlInput, openAiKeyInput, openAiModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
@@ -337,7 +349,7 @@ fun EngineScreen(
                             shape = StemSharpShape
                         )
                         TestConnectionButton(
-                            onTest = { OpenAIClient.testConnection(openAiUrlInput, openAiKeyInput).map { "Connected" } }
+                            onTest = { OpenAIClient.testConnection(openAiUrlInput, openAiKeyInput).map { connectedMessage } }
                         )
                         TemperatureControl(
                             temperature = userSettings.temperature,
@@ -348,9 +360,9 @@ fun EngineScreen(
 
                 // 5. Anthropic Claude
                 ProviderCard(
-                    title = "Anthropic Claude",
-                    subtitle = "Claude Models (Sonnet, Haiku)",
-                    badge = "CLOUD",
+                    title = stringResource(R.string.engine_provider_claude_title),
+                    subtitle = stringResource(R.string.engine_provider_claude_subtitle),
+                    badge = stringResource(R.string.home_engine_scope_cloud),
                     isSelected = userSettings.engineMode == EngineMode.CLAUDE_AI,
                     onClick = { onSelectEngineMode(EngineMode.CLAUDE_AI) }
                 ) {
@@ -365,7 +377,7 @@ fun EngineScreen(
                         OutlinedTextField(
                             value = claudeModelInput,
                             onValueChange = { claudeModelInput = it },
-                            label = { Text("Model", style = MaterialTheme.typography.bodySmall) },
+                            label = { Text(stringResource(R.string.engine_model_label), style = MaterialTheme.typography.bodySmall) },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { onSaveClaudeSettings(claudeKeyInput, claudeModelInput); focusManager.clearFocus() }),
                             modifier = Modifier
@@ -375,7 +387,7 @@ fun EngineScreen(
                             shape = StemSharpShape
                         )
                         TestConnectionButton(
-                            onTest = { ClaudeClient.testConnection(claudeKeyInput).map { "Connected" } }
+                            onTest = { ClaudeClient.testConnection(claudeKeyInput).map { connectedMessage } }
                         )
                         // No TemperatureControl here: current Claude models (Sonnet 5 / Opus 5 /
                         // 4.7+) reject a temperature parameter with a 400, and ClaudeClient
@@ -389,7 +401,7 @@ fun EngineScreen(
         item {
             Column {
                 Text(
-                    text = "APPEARANCE",
+                    text = stringResource(R.string.engine_appearance_header),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
@@ -409,9 +421,9 @@ fun EngineScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         listOf(
-                            ThemeMode.LIGHT to "Light",
-                            ThemeMode.DARK to "Dark",
-                            ThemeMode.SYSTEM to "System"
+                            ThemeMode.LIGHT to stringResource(R.string.engine_theme_light),
+                            ThemeMode.DARK to stringResource(R.string.engine_theme_dark),
+                            ThemeMode.SYSTEM to stringResource(R.string.engine_theme_system)
                         ).forEach { (mode, label) ->
                             val isSelected = userSettings.themeMode == mode
                             Box(
@@ -455,12 +467,12 @@ fun EngineScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Haptic feedback",
+                            text = stringResource(R.string.engine_haptic_feedback_title),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = stemTheme.ink
                         )
                         Text(
-                            text = "Gentle vibration on text replacement",
+                            text = stringResource(R.string.engine_haptic_feedback_description),
                             style = MaterialTheme.typography.bodySmall,
                             color = stemTheme.inkMuted
                         )
@@ -484,13 +496,13 @@ fun EngineScreen(
         item {
             Column {
                 Text(
-                    text = "EXCLUDED APPS",
+                    text = stringResource(R.string.engine_excluded_apps_header),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Stem reads text from every app by default. Exclude apps you don't want it active in — password managers and banking apps are good candidates.",
+                    text = stringResource(R.string.engine_excluded_apps_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = stemTheme.inkMuted
                 )
@@ -515,12 +527,16 @@ fun EngineScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = if (excludedCount == 0) "No apps excluded" else "$excludedCount app${if (excludedCount != 1) "s" else ""} excluded",
+                        text = if (excludedCount == 0) {
+                            stringResource(R.string.engine_excluded_apps_none)
+                        } else {
+                            pluralStringResource(R.plurals.engine_excluded_apps_count, excludedCount, excludedCount)
+                        },
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = stemTheme.ink
                     )
                     Text(
-                        text = "MANAGE",
+                        text = stringResource(R.string.engine_manage_button),
                         style = StemMonoBadge,
                         color = stemTheme.ink
                     )
@@ -548,13 +564,13 @@ fun EngineScreen(
             ) {
                 Column {
                     Text(
-                        text = "PRIVACY GUARANTEE",
+                        text = stringResource(R.string.engine_privacy_guarantee_header),
                         style = StemMonoBadge,
                         color = stemTheme.ink
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Text is only sent to the provider you select. Keystrokes are never logged or stored off-device.",
+                        text = stringResource(R.string.engine_privacy_guarantee_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = stemTheme.inkMuted
                     )
@@ -671,6 +687,7 @@ private fun TestConnectionButton(
     val stemTheme = LocalStemColors.current
     val scope = rememberCoroutineScope()
     var status by remember { mutableStateOf<TestConnectionStatus>(TestConnectionStatus.Idle) }
+    val genericFailureMessage = stringResource(R.string.engine_test_connection_failed)
 
     Spacer(modifier = Modifier.height(8.dp))
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -688,7 +705,7 @@ private fun TestConnectionButton(
                             val result = onTest()
                             status = result.fold(
                                 onSuccess = { TestConnectionStatus.Success(it) },
-                                onFailure = { TestConnectionStatus.Failure(it.message ?: "Connection failed") }
+                                onFailure = { TestConnectionStatus.Failure(it.message ?: genericFailureMessage) }
                             )
                         }
                     }
@@ -696,7 +713,7 @@ private fun TestConnectionButton(
                 .padding(horizontal = 10.dp, vertical = 6.dp)
         ) {
             Text(
-                text = if (status is TestConnectionStatus.Testing) "TESTING..." else "TEST CONNECTION",
+                text = stringResource(if (status is TestConnectionStatus.Testing) R.string.engine_test_connection_testing else R.string.engine_test_connection_button),
                 style = StemMonoBadge,
                 color = stemTheme.ink
             )
@@ -705,11 +722,11 @@ private fun TestConnectionButton(
         when (val s = status) {
             is TestConnectionStatus.Success -> {
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("✓ ${s.message}", style = MaterialTheme.typography.bodySmall, color = stemTheme.add)
+                Text(stringResource(R.string.engine_test_connection_success, s.message), style = MaterialTheme.typography.bodySmall, color = stemTheme.add)
             }
             is TestConnectionStatus.Failure -> {
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("✗ ${s.message}", style = MaterialTheme.typography.bodySmall, color = stemTheme.remove, maxLines = 2)
+                Text(stringResource(R.string.engine_test_connection_failure, s.message), style = MaterialTheme.typography.bodySmall, color = stemTheme.remove, maxLines = 2)
             }
             else -> {}
         }
@@ -730,18 +747,20 @@ private fun TemperatureControl(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "Temperature",
+                text = stringResource(R.string.engine_temperature_label),
                 style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
                 color = stemTheme.ink
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = when {
-                    temperature < 0.2f -> "(Precise)"
-                    temperature < 0.5f -> "(Balanced)"
-                    temperature < 0.8f -> "(Creative)"
-                    else -> "(Experimental)"
-                },
+                text = stringResource(
+                    when {
+                        temperature < 0.2f -> R.string.engine_temperature_precise
+                        temperature < 0.5f -> R.string.engine_temperature_balanced
+                        temperature < 0.8f -> R.string.engine_temperature_creative
+                        else -> R.string.engine_temperature_experimental
+                    }
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = stemTheme.inkMuted
             )
@@ -794,14 +813,14 @@ private fun AppExclusionDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "EXCLUDED APPS",
+                        text = stringResource(R.string.engine_excluded_apps_header),
                         style = StemMonoBadge,
                         color = stemTheme.inkFaint
                     )
                     IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
-                            contentDescription = "Close",
+                            contentDescription = stringResource(R.string.action_close),
                             tint = stemTheme.inkMuted,
                             modifier = Modifier.size(16.dp)
                         )
@@ -812,7 +831,7 @@ private fun AppExclusionDialog(
 
                 if (apps.isEmpty()) {
                     Text(
-                        text = "No other apps found on this device.",
+                        text = stringResource(R.string.engine_no_apps_found),
                         style = MaterialTheme.typography.bodySmall,
                         color = stemTheme.inkMuted,
                         modifier = Modifier.padding(vertical = 16.dp)

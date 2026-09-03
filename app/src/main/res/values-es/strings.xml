@@ -1,0 +1,182 @@
+<resources>
+    <string name="app_name">Stem</string>
+    <string name="assistant_label">Asistente Stem</string>
+    <string name="accessibility_service_label">Asistente de Texto Stem</string>
+    <string name="accessibility_service_description">Stem detecta los campos de texto activos para ofrecer mejoras de escritura integradas y en el dispositivo, correcciones gramaticales y ajustes de tono instantáneos sin salir de tu aplicación.</string>
+
+    <!-- Shared actions -->
+    <string name="action_close">Cerrar</string>
+    <string name="action_copy">Copiar</string>
+    <string name="action_copied">Copiado</string>
+    <string name="action_replace">Reemplazar</string>
+
+    <!-- Bottom/top navigation -->
+    <string name="nav_tab_home">Inicio</string>
+    <string name="nav_tab_snippets">Fragmentos</string>
+    <string name="nav_tab_history">Historial</string>
+    <string name="nav_tab_settings">Ajustes</string>
+    <string name="nav_sponsor_button">PATROCINAR</string>
+
+    <!-- Diff viewer -->
+    <string name="diff_before">ANTES</string>
+    <string name="diff_after">DESPUÉS</string>
+    <string name="diff_added_announcement">" añadido: %1$s "</string>
+    <string name="diff_removed_announcement">" eliminado: %1$s "</string>
+
+    <!-- Thinking / loading indicator -->
+    <string name="thinking_default_label">Pensando…</string>
+    <string name="thinking_rewriting_badge">REESCRIBIENDO</string>
+    <string name="thinking_applying_preset">Aplicando %1$s…</string>
+
+    <!-- Process Text (share-menu) dialog -->
+    <string name="process_text_selection_badge">SELECCIÓN DE STEM</string>
+    <string name="engine_unavailable_fallback_message">Motor no disponible (%1$s): se usaron reglas locales</string>
+
+    <plurals name="words_saved_count">
+        <item quantity="one">-%1$d palabra</item>
+        <item quantity="other">-%1$d palabras</item>
+    </plurals>
+
+    <!-- History screen -->
+    <string name="history_subtitle">Tus transformaciones recientes.</string>
+    <string name="history_clear_button">BORRAR</string>
+    <string name="history_empty_title">Aún no hay historial de transformaciones.</string>
+    <string name="history_empty_subtitle">Las reescrituras aplicadas con Stem aparecerán aquí.</string>
+    <string name="history_copy_button">COPIAR</string>
+    <string name="history_time_just_now">AHORA MISMO</string>
+    <string name="history_time_minutes_ago">HACE %1$dM</string>
+    <string name="history_time_hours_ago">HACE %1$dH</string>
+    <string name="history_time_days_ago">HACE %1$dD</string>
+
+    <!-- Home screen -->
+    <string name="home_status_active">Stem está activo</string>
+    <string name="home_status_paused">Stem está en pausa</string>
+    <string name="home_status_active_description">El asistente de texto integrado está listo en todas las apps.</string>
+    <string name="home_status_paused_description">Activa el servicio de accesibilidad para empezar a transformar texto.</string>
+    <string name="home_enable_accessibility_button">Activar accesibilidad</string>
+    <string name="home_active_engine_badge">MOTOR ACTIVO</string>
+    <string name="home_engine_scope_local">LOCAL</string>
+    <string name="home_engine_scope_lan">LAN</string>
+    <string name="home_engine_scope_cloud">NUBE</string>
+    <string name="home_engine_summary_local">Motor de reglas en el dispositivo (instantáneo)</string>
+    <string name="home_engine_summary_ollama">Ollama IA local (%1$s)</string>
+    <string name="home_engine_summary_gemini">Google Gemini (%1$s)</string>
+    <string name="home_engine_summary_openai">Compatible con OpenAI (%1$s)</string>
+    <string name="home_engine_summary_claude">Anthropic Claude (%1$s)</string>
+    <string name="home_engine_tap_to_configure">Toca para configurar claves y reglas del modelo en Ajustes →</string>
+    <string name="home_snippets_tile_description">Fórmulas, fechas y disparadores personalizados →</string>
+    <string name="home_history_tile_description">Diferencias visuales y registro de deshacer →</string>
+    <string name="home_recent_transforms_header">TRANSFORMACIONES RECIENTES</string>
+    <string name="home_see_all_button">Ver todo →</string>
+    <string name="home_recent_transforms_empty">Aún no hay transformaciones recientes. Escribe en cualquier app (por ejemplo, texto + ?fix o ?concise) para ver los resultados aquí.</string>
+    <string name="home_recent_badge">reciente</string>
+
+    <!-- Snippets screen -->
+    <string name="snippets_builtin_fix">Corrige gramática, ortografía y puntuación</string>
+    <string name="snippets_builtin_concise">Recorta la verbosidad y elimina relleno</string>
+    <string name="snippets_builtin_formal">Eleva a un tono profesional claro</string>
+    <string name="snippets_builtin_punchy">Directo, contundente y activo</string>
+    <string name="snippets_builtin_friendly">Cálido, abierto y cercano</string>
+    <string name="snippets_builtin_bullets">Convierte párrafos en viñetas claras</string>
+    <string name="snippets_builtin_summarize">Condensa en las ideas clave</string>
+    <string name="snippets_builtin_expand">Amplía con detalles y profundidad</string>
+    <string name="snippets_builtin_ai">Ejecuta una instrucción de IA puntual (p. ej. ?ai: traducir al español)</string>
+    <string name="snippets_builtin_calc">Calcula matemáticas en línea (p. ej. ?calc: 25 * 4 + 10)</string>
+    <string name="snippets_builtin_now_date">Inserta la fecha u hora actual con formato</string>
+    <string name="snippets_builtin_undo">Revierte la última transformación en el campo activo</string>
+    <string name="snippets_builtin_cmd">Guarda rápidamente un comando de IA personalizado mientras escribes</string>
+    <string name="snippets_builtin_save">Guarda rápidamente una nueva expansión de fragmento mientras escribes</string>
+    <string name="snippets_inline_commands_header">COMANDOS EN LÍNEA</string>
+    <string name="snippets_inline_commands_description">Escribe cualquier comando al final de tu texto en cualquier app para transformarlo o calcularlo al instante.</string>
+    <string name="snippets_custom_commands_header">COMANDOS PERSONALIZADOS (%1$d)</string>
+    <string name="snippets_custom_commands_description">Define atajos de instrucciones de IA personalizados. Escribe ?&lt;disparador&gt; en cualquier campo de texto para invocarlos.</string>
+    <string name="snippets_add_custom_command_header">AÑADIR NUEVO COMANDO PERSONALIZADO</string>
+    <string name="snippets_command_trigger_placeholder">Disparador (p. ej. roast, translate, reply)</string>
+    <string name="snippets_command_prompt_placeholder">Instrucción de IA (p. ej. Reescribe con un tono de burla ingenioso y humorístico)</string>
+    <string name="snippets_save_command_button">Guardar comando personalizado</string>
+    <string name="snippets_delete_command_description">Eliminar comando</string>
+    <string name="snippets_expansions_header">EXPANSIONES DE FRAGMENTOS (%1$d)</string>
+    <string name="snippets_expansions_description">Expande disparadores cortos en frases de texto largas. Escribe ..&lt;disparador&gt; o .&lt;disparador&gt; para expandir.</string>
+    <string name="snippets_add_snippet_header">AÑADIR NUEVO FRAGMENTO</string>
+    <string name="snippets_trigger_placeholder">Disparador (p. ej. email, addr, shrug)</string>
+    <string name="snippets_expansion_placeholder">Frase completa de expansión</string>
+    <string name="snippets_save_snippet_button">Guardar fragmento</string>
+    <string name="snippets_delete_snippet_description">Eliminar fragmento</string>
+
+    <!-- Engine (Settings) screen -->
+    <string name="engine_api_key_label">Clave de API</string>
+    <string name="engine_clear_key_button">Borrar clave</string>
+    <string name="engine_ai_provider_header">PROVEEDOR DE IA</string>
+    <string name="engine_ai_provider_description">Elige cómo procesa Stem el texto. Las reglas en el dispositivo funcionan sin conexión y con latencia cero.</string>
+    <string name="engine_provider_local_title">Reglas en el dispositivo</string>
+    <string name="engine_provider_local_subtitle">Rápido, privado, sin configuración. Más de 40 reglas de gramática y estilo.</string>
+    <string name="engine_provider_ollama_title">Ollama (LAN local)</string>
+    <string name="engine_provider_ollama_subtitle">Llama, Mistral, Gemma, modelos locales</string>
+    <string name="engine_provider_gemini_title">Google Gemini</string>
+    <string name="engine_provider_gemini_subtitle">Modelos Gemini (Flash, Pro)</string>
+    <string name="engine_provider_openai_title">Compatible con OpenAI</string>
+    <string name="engine_provider_openai_subtitle">Modelos de ChatGPT, DeepSeek, Groq, OpenRouter</string>
+    <string name="engine_provider_claude_title">Anthropic Claude</string>
+    <string name="engine_provider_claude_subtitle">Modelos Claude (Sonnet, Haiku)</string>
+    <string name="engine_server_url_label">URL del servidor</string>
+    <string name="engine_model_name_label">Nombre del modelo</string>
+    <string name="engine_model_label">Modelo</string>
+    <string name="engine_base_url_label">URL base</string>
+    <string name="engine_appearance_header">APARIENCIA</string>
+    <string name="engine_theme_light">Claro</string>
+    <string name="engine_theme_dark">Oscuro</string>
+    <string name="engine_theme_system">Sistema</string>
+    <string name="engine_haptic_feedback_title">Vibración táctil</string>
+    <string name="engine_haptic_feedback_description">Vibración suave al reemplazar texto</string>
+    <string name="engine_excluded_apps_header">APPS EXCLUIDAS</string>
+    <string name="engine_excluded_apps_description">De forma predeterminada, Stem lee texto en todas las apps. Excluye las apps donde no quieras que esté activo: los gestores de contraseñas y las apps bancarias son buenos candidatos.</string>
+    <string name="engine_excluded_apps_none">Ninguna app excluida</string>
+    <plurals name="engine_excluded_apps_count">
+        <item quantity="one">%1$d app excluida</item>
+        <item quantity="other">%1$d apps excluidas</item>
+    </plurals>
+    <string name="engine_manage_button">GESTIONAR</string>
+    <string name="engine_privacy_guarantee_header">GARANTÍA DE PRIVACIDAD</string>
+    <string name="engine_privacy_guarantee_description">El texto solo se envía al proveedor que elijas. Las pulsaciones nunca se registran ni se almacenan fuera del dispositivo.</string>
+    <string name="engine_temperature_label">Temperatura</string>
+    <string name="engine_temperature_precise">(Precisa)</string>
+    <string name="engine_temperature_balanced">(Equilibrada)</string>
+    <string name="engine_temperature_creative">(Creativa)</string>
+    <string name="engine_temperature_experimental">(Experimental)</string>
+    <string name="engine_no_apps_found">No se encontraron otras apps en este dispositivo.</string>
+    <string name="engine_test_connection_failed">Error de conexión</string>
+    <string name="engine_test_connection_testing">PROBANDO…</string>
+    <string name="engine_test_connection_button">PROBAR CONEXIÓN</string>
+    <string name="engine_test_connection_success">✓ %1$s</string>
+    <string name="engine_test_connection_failure">✗ %1$s</string>
+    <string name="engine_test_connection_connected">Conectado</string>
+    <string name="engine_ollama_models_found_one">%1$d modelo encontrado</string>
+    <string name="engine_ollama_models_found_other">%1$d modelos encontrados</string>
+
+    <!-- Onboarding screen -->
+    <string name="onboarding_step_indicator">Paso %1$d de %2$d</string>
+    <string name="onboarding_skip_button">OMITIR</string>
+    <string name="onboarding_cta_get_started">Empezar</string>
+    <string name="onboarding_cta_continue">Continuar</string>
+    <string name="onboarding_cta_next">Siguiente</string>
+    <string name="onboarding_cta_open_stem">Abrir Stem</string>
+    <string name="onboarding_tagline">Ayuda de escritura ambiental, dondequiera que escribas.</string>
+    <string name="onboarding_feature_fix">Corrige errores tipográficos y gramática en tiempo real</string>
+    <string name="onboarding_feature_tone">Transforma el tono: contundente, formal, cercano</string>
+    <string name="onboarding_feature_privacy">Nunca sale de tu dispositivo (a menos que lo pidas)</string>
+    <string name="onboarding_accessibility_step_badge">PASO 1 DE 2</string>
+    <string name="onboarding_accessibility_headline">Leer y reemplazar texto</string>
+    <string name="onboarding_accessibility_description">Stem necesita el permiso de Accesibilidad para detectar cuándo estás escribiendo y ofrecer reescrituras integradas al instante.</string>
+    <string name="onboarding_accessibility_card_title">Servicio de accesibilidad de Android</string>
+    <string name="onboarding_accessibility_granted">Concedido ✓</string>
+    <string name="onboarding_accessibility_card_description">Solo lee el campo de entrada activo. Nunca envía pulsaciones fuera del dispositivo.</string>
+    <string name="onboarding_enable_in_settings_button">Activar en Ajustes</string>
+    <string name="onboarding_ready_badge">LISTO</string>
+    <string name="onboarding_ready_headline">Todo listo.</string>
+    <string name="onboarding_ready_description">Escribe cualquier texto seguido de ?fix, ?concise, ?formal o ..fragmento para transformarlo al instante.</string>
+    <string name="onboarding_try_it_out_badge">PRUÉBALO</string>
+    <string name="onboarding_demo_prefix">"Corregir: "</string>
+    <string name="onboarding_demo_wrong">aver</string>
+    <string name="onboarding_demo_right">a ver</string>
+    <string name="onboarding_demo_suffix">" si podemos terminar hoy"</string>
+</resources>

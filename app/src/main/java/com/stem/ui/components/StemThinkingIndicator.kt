@@ -33,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.stem.R
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemMonoBadge
 import com.stem.ui.theme.StemSharpShape
@@ -49,7 +51,7 @@ import com.stem.ui.theme.StemSharpShape
 @Composable
 fun ThinkingWordSkeleton(
     text: String = "",
-    label: String = "Thinking...",
+    label: String = stringResource(R.string.thinking_default_label),
     modifier: Modifier = Modifier
 ) {
     val stemTheme = LocalStemColors.current
@@ -105,7 +107,7 @@ fun ThinkingWordSkeleton(
                 }
 
                 Text(
-                    text = "REWRITING",
+                    text = stringResource(R.string.thinking_rewriting_badge),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
@@ -162,7 +164,7 @@ fun StemThinkingBadge(
     ) {
         Icon(
             imageVector = Icons.Rounded.AutoAwesome,
-            contentDescription = "Thinking",
+            contentDescription = stringResource(R.string.thinking_default_label),
             tint = stemTheme.ink,
             modifier = Modifier
                 .size(13.dp)

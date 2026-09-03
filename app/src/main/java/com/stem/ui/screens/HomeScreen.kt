@@ -26,11 +26,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.stem.R
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemCardShape
 import com.stem.ui.theme.StemMonoBadge
@@ -94,7 +96,7 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = if (isFullyEnabled) "Stem is active" else "Stem is paused",
+                                text = stringResource(if (isFullyEnabled) R.string.home_status_active else R.string.home_status_paused),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = stemTheme.ink
                             )
@@ -118,8 +120,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = if (isFullyEnabled) "Inline text assistant is ready across all apps."
-                        else "Enable accessibility service to start transforming text.",
+                        text = stringResource(if (isFullyEnabled) R.string.home_status_active_description else R.string.home_status_paused_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = stemTheme.inkMuted
                     )
@@ -134,7 +135,7 @@ fun HomeScreen(
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = "Enable Accessibility",
+                                text = stringResource(R.string.home_enable_accessibility_button),
                                 style = StemMonoBadge,
                                 color = stemTheme.onInk
                             )
@@ -162,7 +163,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "ACTIVE ENGINE",
+                            text = stringResource(R.string.home_active_engine_badge),
                             style = StemMonoBadge,
                             color = stemTheme.inkFaint
                         )
@@ -175,11 +176,13 @@ fun HomeScreen(
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = when (userSettings.engineMode) {
-                                    EngineMode.LOCAL_RULES -> "LOCAL"
-                                    EngineMode.OLLAMA_AI -> "LAN"
-                                    else -> "CLOUD"
-                                },
+                                text = stringResource(
+                                    when (userSettings.engineMode) {
+                                        EngineMode.LOCAL_RULES -> R.string.home_engine_scope_local
+                                        EngineMode.OLLAMA_AI -> R.string.home_engine_scope_lan
+                                        else -> R.string.home_engine_scope_cloud
+                                    }
+                                ),
                                 style = StemMonoBadge,
                                 color = stemTheme.ink
                             )
@@ -190,11 +193,11 @@ fun HomeScreen(
 
                     Text(
                         text = when (userSettings.engineMode) {
-                            EngineMode.LOCAL_RULES -> "On-Device Rule Engine (Instant)"
-                            EngineMode.OLLAMA_AI -> "Ollama Local AI (${userSettings.ollamaModel})"
-                            EngineMode.GEMINI_AI -> "Google Gemini (${userSettings.geminiModel})"
-                            EngineMode.OPENAI_COMPATIBLE -> "OpenAI Compatible (${userSettings.openaiModel})"
-                            EngineMode.CLAUDE_AI -> "Anthropic Claude (${userSettings.claudeModel})"
+                            EngineMode.LOCAL_RULES -> stringResource(R.string.home_engine_summary_local)
+                            EngineMode.OLLAMA_AI -> stringResource(R.string.home_engine_summary_ollama, userSettings.ollamaModel)
+                            EngineMode.GEMINI_AI -> stringResource(R.string.home_engine_summary_gemini, userSettings.geminiModel)
+                            EngineMode.OPENAI_COMPATIBLE -> stringResource(R.string.home_engine_summary_openai, userSettings.openaiModel)
+                            EngineMode.CLAUDE_AI -> stringResource(R.string.home_engine_summary_claude, userSettings.claudeModel)
                         },
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = stemTheme.ink
@@ -203,7 +206,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = "Tap to configure model keys and rules in Settings →",
+                        text = stringResource(R.string.home_engine_tap_to_configure),
                         style = MaterialTheme.typography.bodySmall,
                         color = stemTheme.inkMuted
                     )
@@ -228,13 +231,13 @@ fun HomeScreen(
                 ) {
                     Column {
                         Text(
-                            text = "SNIPPETS",
+                            text = stringResource(R.string.nav_tab_snippets).uppercase(),
                             style = StemMonoBadge,
                             color = stemTheme.ink
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Inline math, date, & custom triggers →",
+                            text = stringResource(R.string.home_snippets_tile_description),
                             style = MaterialTheme.typography.bodySmall,
                             color = stemTheme.inkMuted,
                             lineHeight = 16.sp
@@ -253,13 +256,13 @@ fun HomeScreen(
                 ) {
                     Column {
                         Text(
-                            text = "HISTORY",
+                            text = stringResource(R.string.nav_tab_history).uppercase(),
                             style = StemMonoBadge,
                             color = stemTheme.ink
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Visual diffs and undo journal →",
+                            text = stringResource(R.string.home_history_tile_description),
                             style = MaterialTheme.typography.bodySmall,
                             color = stemTheme.inkMuted,
                             lineHeight = 16.sp
@@ -277,13 +280,13 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "RECENT TRANSFORMS",
+                    text = stringResource(R.string.home_recent_transforms_header),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
 
                 Text(
-                    text = "See all →",
+                    text = stringResource(R.string.home_see_all_button),
                     style = StemMonoBadge,
                     color = stemTheme.inkMuted,
                     modifier = Modifier
@@ -304,7 +307,7 @@ fun HomeScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "No recent transformations yet. Type in any app (e.g. text + ?fix or ?concise) to see results here.",
+                        text = stringResource(R.string.home_recent_transforms_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = stemTheme.inkMuted
                     )
@@ -332,7 +335,7 @@ fun HomeScreen(
                                 color = stemTheme.ink
                             )
                             Text(
-                                text = "recent",
+                                text = stringResource(R.string.home_recent_badge),
                                 style = StemMonoBadge,
                                 color = stemTheme.inkFaint
                             )

@@ -5,8 +5,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
-    <!-- Android 11+ package visibility: the per-app rules screen needs to enumerate
-         launchable apps to let the user allow/deny Stem per app. -->
+    <!-- Android 11+ package visibility: the Excluded Apps screen (Settings) needs to enumerate
+         launchable apps to let the user exclude Stem from specific ones (see
+         core.util.InstalledAppsHelper). -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -38,7 +39,7 @@
 
         <activity
             android:name=".ui.navigation.ProcessTextActivity"
-            android:label="Stem Assistant"
+            android:label="@string/assistant_label"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:exported="true">
             <intent-filter>
@@ -64,7 +65,7 @@
         <service
             android:name=".service.StemTileService"
             android:icon="@drawable/ic_tile_stem"
-            android:label="Stem Assistant"
+            android:label="@string/assistant_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>

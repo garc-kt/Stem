@@ -37,12 +37,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.stem.R
 import com.stem.ui.theme.GitHubSponsorHeartIcon
 import com.stem.ui.theme.KoFiIcon
 import com.stem.ui.theme.LocalStemColors
@@ -146,7 +148,7 @@ fun StemNavDisplay(
                                     StemLogoMark(size = 26.dp, tint = stemTheme.ink)
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
-                                        text = "Stem",
+                                        text = stringResource(R.string.app_name),
                                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                         color = stemTheme.ink
                                     )
@@ -154,21 +156,21 @@ fun StemNavDisplay(
                             }
                             StemTab.SNIPPETS -> {
                                 Text(
-                                    text = "Snippets",
+                                    text = stringResource(R.string.nav_tab_snippets),
                                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                     color = stemTheme.ink
                                 )
                             }
                             StemTab.HISTORY -> {
                                 Text(
-                                    text = "History",
+                                    text = stringResource(R.string.nav_tab_history),
                                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                     color = stemTheme.ink
                                 )
                             }
                             StemTab.SETTINGS -> {
                                 Text(
-                                    text = "Settings",
+                                    text = stringResource(R.string.nav_tab_settings),
                                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                     color = stemTheme.ink
                                 )
@@ -225,7 +227,7 @@ fun StemNavDisplay(
                                 ) {
                                     GitHubSponsorHeartIcon(color = Color(0xFFEA4AAA), size = 14.dp)
                                     Text(
-                                        text = "SPONSOR",
+                                        text = stringResource(R.string.nav_sponsor_button),
                                         style = StemMonoBadge,
                                         color = stemTheme.ink
                                     )
@@ -275,7 +277,7 @@ fun StemNavDisplay(
                             StemTabIcon(tab = tab, color = color)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = tab.title.uppercase(),
+                                text = stringResource(tab.titleRes).uppercase(),
                                 style = StemMonoBadge,
                                 color = color
                             )

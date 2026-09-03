@@ -33,9 +33,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.stem.R
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemCardShape
 import com.stem.ui.theme.StemMonoBadge
@@ -68,20 +70,20 @@ fun SnippetsScreen(
     var commandPromptInput by remember { mutableStateOf("") }
 
     val builtInCommands = listOf(
-        Pair("?fix", "Fix grammar, spelling, and punctuation"),
-        Pair("?concise", "Trim wordiness and remove fluff"),
-        Pair("?formal", "Elevate to clear professional tone"),
-        Pair("?punchy", "Direct, impactful, and active"),
-        Pair("?friendly", "Warm, open, and approachable"),
-        Pair("?bullets", "Convert paragraphs to clear bullet points"),
-        Pair("?summarize", "Condense into key takeaways"),
-        Pair("?expand", "Elaborate with details and depth"),
-        Pair("?ai: <prompt>", "Run ad-hoc AI instruction (e.g. ?ai: translate to spanish)"),
-        Pair("?calc: <math>", "Calculate math inline (e.g. ?calc: 25 * 4 + 10)"),
-        Pair("?now / ?date", "Insert formatted current timestamp or date"),
-        Pair("?undo", "Revert last transformation in active field"),
-        Pair("..cmd:key:prompt", "Quick-save a custom AI command inline while typing"),
-        Pair("..save:key:text", "Quick-save a new snippet expansion inline while typing")
+        Pair("?fix", stringResource(R.string.snippets_builtin_fix)),
+        Pair("?concise", stringResource(R.string.snippets_builtin_concise)),
+        Pair("?formal", stringResource(R.string.snippets_builtin_formal)),
+        Pair("?punchy", stringResource(R.string.snippets_builtin_punchy)),
+        Pair("?friendly", stringResource(R.string.snippets_builtin_friendly)),
+        Pair("?bullets", stringResource(R.string.snippets_builtin_bullets)),
+        Pair("?summarize", stringResource(R.string.snippets_builtin_summarize)),
+        Pair("?expand", stringResource(R.string.snippets_builtin_expand)),
+        Pair("?ai: <prompt>", stringResource(R.string.snippets_builtin_ai)),
+        Pair("?calc: <math>", stringResource(R.string.snippets_builtin_calc)),
+        Pair("?now / ?date", stringResource(R.string.snippets_builtin_now_date)),
+        Pair("?undo", stringResource(R.string.snippets_builtin_undo)),
+        Pair("..cmd:key:prompt", stringResource(R.string.snippets_builtin_cmd)),
+        Pair("..save:key:text", stringResource(R.string.snippets_builtin_save))
     )
 
     LazyColumn(
@@ -97,13 +99,13 @@ fun SnippetsScreen(
         item {
             Column {
                 Text(
-                    text = "INLINE COMMANDS",
+                    text = stringResource(R.string.snippets_inline_commands_header),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Type any command at the end of your text in any app to transform or calculate instantly.",
+                    text = stringResource(R.string.snippets_inline_commands_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = stemTheme.inkMuted
                 )
@@ -160,13 +162,13 @@ fun SnippetsScreen(
             Spacer(modifier = Modifier.height(10.dp))
             Column {
                 Text(
-                    text = "CUSTOM COMMANDS (${customCommands.size})",
+                    text = stringResource(R.string.snippets_custom_commands_header, customCommands.size),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Define custom AI prompt shortcuts. Type ?<trigger> in any text field to invoke.",
+                    text = stringResource(R.string.snippets_custom_commands_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = stemTheme.inkMuted
                 )
@@ -185,7 +187,7 @@ fun SnippetsScreen(
             ) {
                 Column {
                     Text(
-                        text = "ADD NEW CUSTOM COMMAND",
+                        text = stringResource(R.string.snippets_add_custom_command_header),
                         style = StemMonoBadge,
                         color = stemTheme.inkFaint
                     )
@@ -196,7 +198,7 @@ fun SnippetsScreen(
                         value = commandTriggerInput,
                         onValueChange = { commandTriggerInput = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Trigger (e.g. roast, translate, reply)", style = MaterialTheme.typography.bodySmall, color = stemTheme.inkFaint) },
+                        placeholder = { Text(stringResource(R.string.snippets_command_trigger_placeholder), style = MaterialTheme.typography.bodySmall, color = stemTheme.inkFaint) },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = stemTheme.ink),
                         shape = StemSharpShape,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -214,7 +216,7 @@ fun SnippetsScreen(
                         value = commandPromptInput,
                         onValueChange = { commandPromptInput = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("AI instruction (e.g. Rewrite in a witty, humorous roast tone)", style = MaterialTheme.typography.bodySmall, color = stemTheme.inkFaint) },
+                        placeholder = { Text(stringResource(R.string.snippets_command_prompt_placeholder), style = MaterialTheme.typography.bodySmall, color = stemTheme.inkFaint) },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = stemTheme.ink),
                         shape = StemSharpShape,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -251,7 +253,7 @@ fun SnippetsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Save custom command",
+                            text = stringResource(R.string.snippets_save_command_button),
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                             color = if (canSaveCommand) stemTheme.onInk else stemTheme.inkFaint
                         )
@@ -306,7 +308,7 @@ fun SnippetsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
-                            contentDescription = "Delete command",
+                            contentDescription = stringResource(R.string.snippets_delete_command_description),
                             tint = stemTheme.inkMuted,
                             modifier = Modifier.size(16.dp)
                         )
@@ -322,13 +324,13 @@ fun SnippetsScreen(
             Spacer(modifier = Modifier.height(10.dp))
             Column {
                 Text(
-                    text = "SNIPPET EXPANSIONS (${snippets.size})",
+                    text = stringResource(R.string.snippets_expansions_header, snippets.size),
                     style = StemMonoBadge,
                     color = stemTheme.inkFaint
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Expand short triggers into long text phrases. Type ..<trigger> or .<trigger> to expand.",
+                    text = stringResource(R.string.snippets_expansions_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = stemTheme.inkMuted
                 )
@@ -347,7 +349,7 @@ fun SnippetsScreen(
             ) {
                 Column {
                     Text(
-                        text = "ADD NEW SNIPPET",
+                        text = stringResource(R.string.snippets_add_snippet_header),
                         style = StemMonoBadge,
                         color = stemTheme.inkFaint
                     )
@@ -358,7 +360,7 @@ fun SnippetsScreen(
                         value = snippetTriggerInput,
                         onValueChange = { snippetTriggerInput = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Trigger (e.g. email, addr, shrug)", style = MaterialTheme.typography.bodySmall, color = stemTheme.inkFaint) },
+                        placeholder = { Text(stringResource(R.string.snippets_trigger_placeholder), style = MaterialTheme.typography.bodySmall, color = stemTheme.inkFaint) },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = stemTheme.ink),
                         shape = StemSharpShape,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -376,7 +378,7 @@ fun SnippetsScreen(
                         value = snippetExpansionInput,
                         onValueChange = { snippetExpansionInput = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Full phrase expansion", style = MaterialTheme.typography.bodySmall, color = stemTheme.inkFaint) },
+                        placeholder = { Text(stringResource(R.string.snippets_expansion_placeholder), style = MaterialTheme.typography.bodySmall, color = stemTheme.inkFaint) },
                         textStyle = MaterialTheme.typography.bodyMedium.copy(color = stemTheme.ink),
                         shape = StemSharpShape,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -413,7 +415,7 @@ fun SnippetsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Save snippet",
+                            text = stringResource(R.string.snippets_save_snippet_button),
                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                             color = if (canSaveSnippet) stemTheme.onInk else stemTheme.inkFaint
                         )
@@ -468,7 +470,7 @@ fun SnippetsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Close,
-                            contentDescription = "Delete snippet",
+                            contentDescription = stringResource(R.string.snippets_delete_snippet_description),
                             tint = stemTheme.inkMuted,
                             modifier = Modifier.size(16.dp)
                         )

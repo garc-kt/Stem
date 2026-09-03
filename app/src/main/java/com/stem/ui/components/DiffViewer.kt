@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.SpanStyle
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.stem.R
 import com.stem.ui.theme.LocalStemColors
 import com.stem.ui.theme.StemMonoBadge
 import com.stem.ui.theme.StemSharpShape
@@ -40,6 +42,8 @@ fun DiffViewer(
     modifier: Modifier = Modifier
 ) {
     val stemTheme = LocalStemColors.current
+    val addedAnnouncement = stringResource(R.string.diff_added_announcement)
+    val removedAnnouncement = stringResource(R.string.diff_removed_announcement)
 
     val annotatedString = remember(diffTokens, stemTheme) {
         buildAnnotatedString {
@@ -82,13 +86,13 @@ fun DiffViewer(
         }
     }
 
-    val accessibilitySummary = remember(diffTokens) {
+    val accessibilitySummary = remember(diffTokens, addedAnnouncement, removedAnnouncement) {
         buildString {
             diffTokens.forEach { token ->
                 when (token.type) {
                     DiffType.UNMODIFIED -> append(token.text)
-                    DiffType.ADDED -> append(" added: ${token.text} ")
-                    DiffType.DELETED -> append(" removed: ${token.text} ")
+                    DiffType.ADDED -> append(String.format(addedAnnouncement, token.text))
+                    DiffType.DELETED -> append(String.format(removedAnnouncement, token.text))
                 }
             }
         }
@@ -133,7 +137,7 @@ fun BeforeAfterDiffBlock(
     ) {
         Column {
             Text(
-                text = "BEFORE",
+                text = stringResource(R.string.diff_before),
                 style = StemMonoBadge,
                 color = stemTheme.inkFaint
             )
@@ -147,7 +151,7 @@ fun BeforeAfterDiffBlock(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "AFTER",
+                text = stringResource(R.string.diff_after),
                 style = StemMonoBadge,
                 color = stemTheme.inkFaint
             )
