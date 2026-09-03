@@ -175,9 +175,11 @@ object SpanishRules : LanguageRules {
     override val abbreviationPattern =
         Regex("\\b(?:Sr\\.|Sra\\.|Srta\\.|Dr\\.|Dra\\.|etc\\.|p\\.\\s?ej\\.|Ud\\.|Uds\\.)", RegexOption.IGNORE_CASE)
 
+    private val sentenceSplitRegex = Regex("(?<=[.!?])\\s+")
+
     override fun applyLanguageSpecificFixes(text: String): String {
         if (text.isBlank()) return text
-        val sentences = Regex("(?<=[.!?])\\s+").split(text)
+        val sentences = sentenceSplitRegex.split(text)
         return sentences.joinToString(" ") { sentence ->
             val trimmed = sentence.trimStart()
             val leading = sentence.substring(0, sentence.length - trimmed.length)

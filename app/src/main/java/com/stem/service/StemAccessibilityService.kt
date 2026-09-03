@@ -374,8 +374,13 @@ class StemAccessibilityService : AccessibilityService() {
         val isStillValid = targetNode?.refresh() == true
         if (!isStillValid) {
             val staleNode = targetNode
-            val freshlyFound = rootInActiveWindow?.let {
-                AccessibilityUtils.findFocusedEditableNode(AccessibilityNodeInfoCompat.wrap(it))
+            val freshlyFound = rootInActiveWindow?.let { root ->
+                val rootCompat = AccessibilityNodeInfoCompat.wrap(root)
+                val focused = AccessibilityUtils.findFocusedEditableNode(rootCompat)
+                if (focused !== rootCompat) {
+                    rootCompat.recycle()
+                }
+                focused
             }
             staleNode?.recycle()
             if (freshlyFound == null) {

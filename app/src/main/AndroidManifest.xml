@@ -25,11 +25,11 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:windowSoftInputMode="adjustResize"
         android:theme="@style/Theme.Stem">
         
         <activity
             android:name=".ui.navigation.MainActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

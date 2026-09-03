@@ -44,6 +44,7 @@ object HapticHelper {
 
     private fun vibrate(context: Context, durationMs: Long, amplitude: Int) {
         val vibrator = getVibrator(context) ?: return
+        if (!vibrator.hasVibrator()) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val clampedAmp = amplitude.coerceIn(1, 255)
             vibrator.vibrate(VibrationEffect.createOneShot(durationMs, clampedAmp))
