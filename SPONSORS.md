@@ -1,7 +1,7 @@
-<div align="center">
+﻿<div align="center">
 
-  <h1>💖 Sponsor VeggieBit Studios & garc-kt</h1>
-  <p><b>Empowering independent, zero-telemetry, and high-craft mobile engineering.</b></p>
+  <h1>💖 Sponsor garc-kt</h1>
+  <p><b>Supporting independent, local-first Android open-source development.</b></p>
 
   <p align="center">
     <a href="https://github.com/sponsors/garc-kt">
@@ -19,18 +19,15 @@
 
 ## 🌟 Why Sponsor?
 
-Hi! I'm **garc-kt**, an independent software architect and the developer behind **VeggieBit Studios**. I engineer privacy-first, ambient utilities for Android and the open-source ecosystem, including:
+Hi! I'm **Garc (@garc-kt)**, an independent Android developer. I build open-source mobile tools focused on:
 
-- 🌿 [**Stem**](https://github.com/garc-kt/Stem): Ambient writing and text enhancement assistant (0ms on-device rules, local Ollama over Wi-Fi, and cloud LLMs).
-- 🌱 [**RadishTop**](https://github.com/garc-kt/RadishTop): Dynamic camera cutout and hardware notch morphing overlay.
-- 🍊 [**Juicer**](https://github.com/garc-kt/Juicer): High-performance Android media downloader powered by yt-dlp & FFmpeg.
+- 🌿 **Stem**: An ambient writing and inline AI text enhancement assistant for Android with 0ms on-device heuristics, local Ollama over Wi-Fi, and BYO-key cloud LLMs.
+- 🛡️ **Radical Privacy**: Zero trackers, zero telemetry, no user analytics, and 100% local-first computing.
+- 🎯 **Tactile Craft**: Micro-interactions, spring physics, and native Android system integration without keyboard lock-in.
 
-### 🛡️ The VeggieBit Pledge
-1. **Zero Telemetry by Principle**: My apps collect 0 bytes of tracking data, analytics, or behavioral telemetry.
-2. **No Paywalls or Adware**: Every feature is open source under permissive licenses (Apache 2.0 / GPL / MIT).
-3. **High-Craft Quality**: Tactile haptic feedback, fluid spring animations, and native system integration.
+Stem is distributed for **free, without ads, paywalls, or data monetization**.
 
-Your sponsorship directly funds independent open-source maintenance, freeing me to prioritize user freedom over commercial ad-tech monetization.
+Your sponsorship provides the sustainability needed to maintain the codebase, test across diverse physical Android devices, and dedicate time to developing new features and bug fixes.
 
 ---
 
@@ -38,10 +35,10 @@ Your sponsorship directly funds independent open-source maintenance, freeing me 
 
 | Tier | Contribution | Perks & Benefits |
 |---|---|---|
-| 🌱 **Sprout Supporter** | **$3 / month** | • GitHub Sponsor badge on your public profile.<br>• Name featured in the official GitHub release notes of all active projects.<br>• Keeps the coffee flowing and code shipping! ☕ |
-| 🌿 **Stem Backer** | **$10 / month** | • Everything in Sprout Supporter.<br>• Access to early canary test builds and pre-release APKs.<br>• Direct vote in quarterly feature and roadmap priority polls. |
+| 🌱 **Supporter** | **$3 / month** | • GitHub Sponsor badge on your public profile.<br>• Name featured in the official GitHub release notes of Stem.<br>• Keeps the coffee flowing and code shipping! ☕ |
+| 🌿 **Stem Backer** | **$10 / month** | • Everything in Supporter.<br>• Access to early canary test builds and pre-release APKs.<br>• Direct vote in quarterly feature and roadmap priority polls. |
 | ⚡ **Power Backer** | **$25 / month** | • Everything in Stem Backer.<br>• Avatar and profile link featured on the **Sponsors Wall** in project READMEs.<br>• Priority bug triage and expedited issue investigation. |
-| 🏢 **Studio Partner / Org** | **$100 / month** | • Everything in Power Backer.<br>• Your company logo & link placed prominently in the README header.<br>• Direct technical consultation for integrating or deploying these tools. |
+| 🏢 **Partner / Org** | **$100 / month** | • Everything in Power Backer.<br>• Your company logo & link placed prominently in the README header.<br>• Direct technical consultation for integrating or deploying Stem. |
 
 > [!TIP]
 > Prefer a single contribution without a recurring subscription? One-time sponsorships can be made directly via [**GitHub Sponsors (One-time)**](https://github.com/sponsors/garc-kt) or [**Ko-fi**](https://ko-fi.com/X5R825DY4X).
@@ -50,8 +47,8 @@ Your sponsorship directly funds independent open-source maintenance, freeing me 
 
 ## 🛠️ How Funds Are Utilized
 
-- 📱 **Physical Android Test Devices**: Testing gesture, notch morphing, and accessibility behavior across diverse OEM skins (Google Pixel, Samsung One UI, Xiaomi HyperOS, OnePlus OxygenOS).
-- ⚡ **Build Runners & Infrastructure**: High-performance CI/CD runners, signing keystore security, and release bandwidth.
+- 📱 **Physical Android Test Devices**: Testing gesture, IME, and accessibility behavior across diverse OEM skins (Google Pixel, Samsung One UI, Xiaomi HyperOS, OnePlus OxygenOS).
+- ⚡ **Build Infrastructure**: High-performance CI/CD runners, signing keystore security, and release distribution.
 - ⏱️ **Dedicated Open-Source Hours**: Writing documentation, patching edge-case Android OS bugs, and maintaining compatibility across Android 8 through Android 16.
 
 ---
@@ -70,14 +67,14 @@ Absolutely. You can upgrade, downgrade, or cancel your monthly sponsorship at an
 
 <details>
 <summary><b>Does my employer match GitHub Sponsors?</b></summary>
-Many employers (especially in tech) match donations made through GitHub Sponsors or Benevity 100%. Check with your HR or workplace benefits portal to double your impact!
+Many employers match donations made through GitHub Sponsors or Benevity 100%. Check with your HR or workplace benefits portal to double your impact!
 </details>
 
 ---
 
 ## 🏆 Sponsors Wall
 
-*Special thanks to the individuals and organizations powering this ecosystem:*
+*Special thanks to the individuals and organizations powering this project:*
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 <!-- ALL-CONTRIBUTORS-BADGE:END -->

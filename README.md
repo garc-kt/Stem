@@ -165,7 +165,7 @@ Compiled APKs will be located in:
 
 ## ☕ Support & Sponsorship
 
-Stem is independently crafted and maintained under **VeggieBit Studios**. If Stem saves you time and enhances your Android experience, please consider supporting ongoing development:
+Stem is an independent, open-source project created and maintained by [**Garc (@garc-kt)**](https://github.com/garc-kt). If Stem enhances your daily writing and saves you time, please consider supporting ongoing development:
 
 <p align="center">
   <a href="https://github.com/sponsors/garc-kt" target="_blank">
