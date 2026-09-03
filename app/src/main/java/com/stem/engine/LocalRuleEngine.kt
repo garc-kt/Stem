@@ -6,6 +6,7 @@ import com.stem.core.models.TransformPreset
 import com.stem.core.models.TransformResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 
 
 
@@ -125,8 +126,13 @@ object LocalRuleEngine : TextEngine {
     // the per-call recompilation. Plain-match patterns don't depend on which LanguageRules is
     // active, so a flat cache keyed by target is safe; guarded patterns additionally depend on
     // rules.phrasalVerbGuards, so that cache is keyed by (rules, target).
-    private val plainPatternCache = HashMap<String, Regex>()
-    private val guardedPatternCache = HashMap<Pair<LanguageRules, String>, Regex>()
+    // LocalRuleEngine is a singleton object whose transform() runs on Dispatchers.Default (a
+    // real multi-threaded pool), reachable concurrently from the accessibility service and
+    // ProcessTextActivity — a plain HashMap mutated via getOrPut is not safe under concurrent
+    // structural modification (the earlier per-call `Regex(...)` construction held no shared
+    // state, so it never needed this).
+    private val plainPatternCache = ConcurrentHashMap<String, Regex>()
+    private val guardedPatternCache = ConcurrentHashMap<Pair<LanguageRules, String>, Regex>()
 
     private fun protectSpans(input: String, rules: LanguageRules): Pair<String, List<String>> {
         val saved = mutableListOf<String>()
@@ -364,7 +370,11 @@ object LocalRuleEngine : TextEngine {
     }
 
     private fun replacePreservingCase(source: String, target: String, replacement: String): String {
-        val pattern = plainPatternCache.getOrPut(target) {
+        // computeIfAbsent, not getOrPut: getOrPut is get-then-put, not atomic even on a
+        // ConcurrentHashMap, so two racing threads could both compile the same pattern (harmless
+        // here since Regex compilation is pure, but computeIfAbsent is genuinely atomic and just
+        // as simple).
+        val pattern = plainPatternCache.computeIfAbsent(target) {
             Regex("\\b" + Regex.escape(target) + "\\b", RegexOption.IGNORE_CASE)
         }
         return pattern.replace(source) { matchResult ->
@@ -378,7 +388,7 @@ object LocalRuleEngine : TextEngine {
     }
 
     private fun replaceFormalGuarded(source: String, target: String, replacement: String, rules: LanguageRules): String {
-        val pattern = guardedPatternCache.getOrPut(rules to target) {
+        val pattern = guardedPatternCache.computeIfAbsent(rules to target) {
             val particles = rules.phrasalVerbGuards[target.lowercase()]
             if (particles != null) {
                 Regex(

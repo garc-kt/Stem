@@ -255,6 +255,7 @@ fun EngineScreen(
                             shape = StemSharpShape
                         )
                         TestConnectionButton(
+                            resetKey = ollamaUrlInput,
                             onTest = {
                                 OllamaClient.fetchAvailableModels(ollamaUrlInput).map { models ->
                                     val template = if (models.size == 1) ollamaModelsFoundOne else ollamaModelsFoundOther
@@ -298,6 +299,7 @@ fun EngineScreen(
                             shape = StemSharpShape
                         )
                         TestConnectionButton(
+                            resetKey = geminiKeyInput,
                             onTest = { GeminiClient.testConnection(geminiKeyInput).map { connectedMessage } }
                         )
                         TemperatureControl(
@@ -349,6 +351,7 @@ fun EngineScreen(
                             shape = StemSharpShape
                         )
                         TestConnectionButton(
+                            resetKey = openAiUrlInput to openAiKeyInput,
                             onTest = { OpenAIClient.testConnection(openAiUrlInput, openAiKeyInput).map { connectedMessage } }
                         )
                         TemperatureControl(
@@ -387,6 +390,7 @@ fun EngineScreen(
                             shape = StemSharpShape
                         )
                         TestConnectionButton(
+                            resetKey = claudeKeyInput,
                             onTest = { ClaudeClient.testConnection(claudeKeyInput).map { connectedMessage } }
                         )
                         // No TemperatureControl here: current Claude models (Sonnet 5 / Opus 5 /
@@ -682,11 +686,15 @@ private sealed class TestConnectionStatus {
  */
 @Composable
 private fun TestConnectionButton(
+    // Included in the remembered state's key so editing the tested value(s) after a completed
+    // test discards the stale result instead of continuing to show "✓ Connected" (or a stale
+    // error) for a key/URL that was never actually tested. Pass every input onTest reads.
+    resetKey: Any,
     onTest: suspend () -> Result<String>
 ) {
     val stemTheme = LocalStemColors.current
     val scope = rememberCoroutineScope()
-    var status by remember { mutableStateOf<TestConnectionStatus>(TestConnectionStatus.Idle) }
+    var status by remember(resetKey) { mutableStateOf<TestConnectionStatus>(TestConnectionStatus.Idle) }
     val genericFailureMessage = stringResource(R.string.engine_test_connection_failed)
 
     Spacer(modifier = Modifier.height(8.dp))

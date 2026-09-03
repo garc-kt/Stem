@@ -91,13 +91,19 @@ object AccessibilityUtils {
         return rect
     }
 
-    fun extractTextPayload(node: AccessibilityNodeInfoCompat?): TextPayload? {
+    /** [fallbackPackageName] covers nodes whose own packageName reports null — a real,
+     * documented Android behavior for some descendant/virtual nodes (e.g. WebView-hosted text
+     * inputs) even though the hosting app's package is well defined. Callers should pass the
+     * originating AccessibilityEvent's packageName, which the OS populates independently of node
+     * traversal. Without this, package-based checks (the self-package skip, per-app exclusions)
+     * silently fail open for exactly those nodes: `null in excludedPackages` is always false. */
+    fun extractTextPayload(node: AccessibilityNodeInfoCompat?, fallbackPackageName: String? = null): TextPayload? {
         if (node == null) return null
         val text = node.text?.toString() ?: ""
         val bounds = getNodeBounds(node)
         val selectionStart = node.textSelectionStart
         val selectionEnd = node.textSelectionEnd
-        val pkg = node.packageName?.toString()
+        val pkg = node.packageName?.toString() ?: fallbackPackageName
         val cls = node.className?.toString()
 
         return TextPayload(

@@ -288,7 +288,13 @@ class PreferencesRepository(private val context: Context) {
     ) {
         val trimmed = apiKey.trim()
         if (trimmed.isBlank()) {
-            if (decryptStored(this[key]).isBlank()) this[key] = ""
+            // Check the raw stored ciphertext, not whether it currently decrypts — decryptStored
+            // collapses a genuine decrypt failure (e.g. a transient Keystore hiccup) into the same
+            // "" as real emptiness, which previously let an ordinary blank-and-blur (not the
+            // explicit "Clear key" action) wipe a working key precisely when the Keystore was
+            // briefly unavailable. The raw preference value tells us unambiguously whether
+            // something is actually stored there.
+            if (this[key].isNullOrBlank()) this[key] = ""
             return
         }
         val encrypted = CryptoBox.encrypt(trimmed) ?: return

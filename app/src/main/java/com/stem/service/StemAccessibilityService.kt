@@ -21,6 +21,7 @@ import com.stem.engine.TransformHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
@@ -28,6 +29,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
 
@@ -49,19 +51,27 @@ class StemAccessibilityService : AccessibilityService() {
     // A boolean flag cleared synchronously right after injectText() returns doesn't work here:
     // the OS delivers the resulting AccessibilityEvent asynchronously, arriving after the flag
     // is already false, so the service would reprocess its own output as if the user had typed
-    // it — replaying whatever inline command just triggered. A short time window keyed to the
-    // specific node closes that race without blocking real input from a different field.
+    // it — replaying whatever inline command just triggered. A time window keyed to the specific
+    // node AND the exact injected text closes that race: node+time alone would also swallow
+    // genuine keystrokes landing on the same field within the window (e.g. chaining a second
+    // command right after a snippet expansion) — content has to match too, since a real edit
+    // necessarily produces text different from what we just injected.
     @Volatile
     private var suppressedNodeHash: Int = 0
     @Volatile
+    private var suppressedText: String? = null
+    @Volatile
     private var suppressUntilMs: Long = 0L
 
-    private fun isSuppressed(nodeHashCode: Int): Boolean {
-        return nodeHashCode == suppressedNodeHash && System.currentTimeMillis() < suppressUntilMs
+    private fun isSuppressed(nodeHashCode: Int, currentText: String): Boolean {
+        return nodeHashCode == suppressedNodeHash &&
+            currentText == suppressedText &&
+            System.currentTimeMillis() < suppressUntilMs
     }
 
-    private fun markSuppressed(nodeHashCode: Int) {
+    private fun markSuppressed(nodeHashCode: Int, injectedText: String) {
         suppressedNodeHash = nodeHashCode
+        suppressedText = injectedText
         suppressUntilMs = System.currentTimeMillis() + SUPPRESSION_WINDOW_MS
     }
 
@@ -104,8 +114,8 @@ class StemAccessibilityService : AccessibilityService() {
                 }
                 currentActiveNode = focusedNode
 
-                val payload = AccessibilityUtils.extractTextPayload(focusedNode)
-                if (payload != null && payload.isValid && !isSuppressed(payload.nodeHashCode)) {
+                val payload = AccessibilityUtils.extractTextPayload(focusedNode, fallbackPackageName = event.packageName?.toString())
+                if (payload != null && payload.isValid && !isSuppressed(payload.nodeHashCode, payload.text)) {
                     handleTextPayload(payload)
                 }
             } else {
@@ -318,7 +328,14 @@ class StemAccessibilityService : AccessibilityService() {
                 errorMessage = "Request timed out"
             } finally {
                 isDone = true
-                animationJob.cancelAndJoin()
+                // NonCancellable: if this whole coroutine was cancelled (a newer trigger calling
+                // activeThinkingJob?.cancel()), a plain cancelAndJoin() here throws immediately —
+                // Job.join() checks the *caller's* own cancellation state before returning,
+                // regardless of animationJob's — which would skip everything below and leave the
+                // field stuck showing the last "thinking" animation frame forever.
+                withContext(NonCancellable) {
+                    animationJob.cancelAndJoin()
+                }
             }
 
             if (finalResult.isNotBlank()) {
@@ -379,23 +396,30 @@ class StemAccessibilityService : AccessibilityService() {
                 presetName = presetName
             )
             // TransformHistory above is the in-memory undo stack, cleared on every service
-            // restart. This is the separate, persisted browsing log the History tab reads.
+            // restart. This is the separate, persisted browsing log the History tab reads. This
+            // is best-effort logging on the same scope that runs every inline transform —
+            // serviceScope has no CoroutineExceptionHandler, so an uncaught exception here (e.g.
+            // a DataStore IOException) would crash the whole process and silently disable the
+            // accessibility service, taking down the entire feature over a failed log write.
             serviceScope.launch {
-                StemApplication.instance.preferencesRepository.addHistoryEntry(
-                    PersistedHistoryEntry(
-                        id = java.util.UUID.randomUUID().toString(),
-                        originalText = originalToRecord,
-                        replacedText = newText,
-                        presetName = presetName,
-                        timestamp = System.currentTimeMillis()
+                try {
+                    StemApplication.instance.preferencesRepository.addHistoryEntry(
+                        PersistedHistoryEntry(
+                            id = java.util.UUID.randomUUID().toString(),
+                            originalText = originalToRecord,
+                            replacedText = newText,
+                            presetName = presetName,
+                            timestamp = System.currentTimeMillis()
+                        )
                     )
-                )
+                } catch (_: Exception) {
+                }
             }
         }
 
         val success = AccessibilityUtils.injectText(targetNode, newText, this)
         if (success) {
-            markSuppressed(targetNode.hashCode())
+            markSuppressed(targetNode.hashCode(), newText)
         } else {
             targetNode.recycle()
             currentActiveNode = null

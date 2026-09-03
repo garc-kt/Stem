@@ -54,6 +54,16 @@ object HttpClientFactory {
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(15, TimeUnit.SECONDS)
+            // Bounds the WHOLE call (DNS + connect + write + server processing + read), and
+            // actually interrupts a stuck blocking execute() call by cancelling the underlying
+            // Call when it fires. readTimeout above only bounds the gap between individual reads
+            // on an already-open socket — a server that trickles a byte just often enough never
+            // trips it, so it alone can't be relied on to bound a hung request. This is also what
+            // makes the coroutine-level withTimeout(TRANSFORM_TIMEOUT_MS) around callers of these
+            // clients actually work: withTimeout can only preempt at a suspension point, and a
+            // blocking OkHttp execute() has none — without this, only OkHttp's own readTimeout
+            // would eventually stop it, ~10s later than the app-level timeout claims.
+            .callTimeout(20, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .build()
     }
